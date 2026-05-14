@@ -7,7 +7,7 @@ import GithubActivity from "./_components/GithubActivity";
 export const metadata: Metadata = {
   title: "About — Emre Doğan",
   description:
-    "19. Self-taught. Building production AWS infrastructure between 04:30 bakery shifts and high-school exams. Two years of Monk Mode.",
+    "19. Self-taught. Building production AWS infrastructure between 01:30 bakery shifts and high-school exams. Two years of Monk Mode.",
 };
 
 const PRINCIPLES = [
@@ -98,7 +98,7 @@ const FEATURED = [
 
 const DAY_TIMELINE = [
   {
-    time: "04:30",
+    time: "01:30",
     title: "Bakery shift begins.",
     detail:
       "Five mornings a week. Physical labor before the city wakes. The hardest hour of the day — done first.",
@@ -159,7 +159,7 @@ export default function AboutPage() {
             <span className="block text-white/60">Monk Mode.</span>
           </h1>
           <p className="text-gray-400 max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
-            I&apos;m Emre Doğan — at 19, between 04:30 bakery shifts and
+            I&apos;m Emre Doğan — at 19, between 01:30 bakery shifts and
             high-school exams, I architect production-grade AWS infrastructure
             and ship AI-native SaaS products. No bootcamp. No CS degree.
             Just two years of compound discipline.
@@ -291,7 +291,7 @@ export default function AboutPage() {
             </h2>
             <p className="text-gray-500 text-sm md:text-base leading-relaxed max-w-2xl mb-10">
               Monk Mode is a discipline, not a slogan. Every cyan square below
-              is a day production code was committed — between 04:30 bakery
+              is a day production code was committed — between 01:30 bakery
               shifts and high-school exams.
             </p>
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 md:p-8 overflow-x-auto">

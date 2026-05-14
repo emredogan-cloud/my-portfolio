@@ -19,7 +19,7 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "Emre Doğan — Cloud & SaaS Engineer",
   description:
-    "19. Self-taught. Architecting AWS infrastructure and AI-native SaaS between 04:30 bakery shifts and high-school exams. Monk Mode.",
+    "19. Self-taught. Architecting AWS infrastructure and AI-native SaaS between 01:30 bakery shifts and high-school exams. Monk Mode.",
 };
 
 export default function RootLayout({

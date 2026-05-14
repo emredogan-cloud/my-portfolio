@@ -88,7 +88,7 @@ export default function HeroSection() {
                 transition={{ duration: 0.9, delay: 0.55, ease: EASE }}
               >
                 AWS infrastructure, AI-native SaaS, and mobile systems — built
-                between 04:30 bakery shifts and high-school exams. Two years
+                between 01:30 bakery shifts and high-school exams. Two years
                 self-taught. Zero shortcuts.
               </motion.p>
 

@@ -36,7 +36,7 @@ export default function Footer() {
         "
       >
         <p className="text-xs text-gray-500">
-          ED. — Built between 04:30 bakery shifts and high-school exams. © 2026
+          ED. — Built between 01:30 bakery shifts and high-school exams. © 2026
         </p>
         <nav className="flex items-center gap-6">
           <Link

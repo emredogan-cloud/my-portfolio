@@ -2,7 +2,7 @@ import { Reveal } from "@/components/ui/Reveal";
 
 const METRICS = [
   { value: "19", label: "Years Old" },
-  { value: "04:30", label: "Bakery Shift Starts" },
+  { value: "01:30", label: "Bakery Shift Starts" },
   { value: "2 yrs", label: "Fully Self-Taught" },
 ] as const;
 
