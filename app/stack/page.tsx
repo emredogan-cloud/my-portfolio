@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import { TechCard } from "./_components/TechCard";
+import CertificationRadar from "@/components/sections/CertificationRadar";
 
 export const metadata: Metadata = {
   title: "Stack — Emre Doğan",
@@ -224,6 +225,9 @@ export default function StackPage() {
             );
           })}
         </div>
+
+        {/* ───────── CERTIFICATIONS & OBJECTIVES ───────── */}
+        <CertificationRadar />
 
         {/* ───────── FOOTER NOTE ───────── */}
         <Reveal duration={0.7} margin="-50px" className="mt-24 pt-12 border-t border-white/[0.06]">

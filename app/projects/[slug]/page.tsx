@@ -6,6 +6,7 @@ import { projectsData } from "@/data/projects";
 import { Reveal } from "@/components/ui/Reveal";
 import { HoverScaleAnchor } from "./_components/HoverScaleAnchor";
 import { GalleryItem } from "./_components/GalleryItem";
+import ProductionMetrics from "./_components/ProductionMetrics";
 
 const STATUS_LABEL: Record<string, string> = {
   shipped: "Live",
@@ -176,6 +177,9 @@ export default async function ProjectDetailPage({
             ))}
           </div>
         </Reveal>
+
+        {/* ── Production Metrics (Cloud Waste Hunter only) ── */}
+        {slug === "aws-waste-hunter" && <ProductionMetrics />}
 
         {/* ── Detailed description ── */}
         <Reveal mode="mount" duration={0.65} delay={0.4} className="mt-14 pt-10 border-t border-white/[0.08] space-y-6">

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Download } from "lucide-react";
 
 /* ─── Inline brand SVGs (lucide v1.14 has no Github/Linkedin) ─── */
@@ -38,6 +39,12 @@ export default function Footer() {
           ED. — Built between 04:30 bakery shifts and high-school exams. © 2026
         </p>
         <nav className="flex items-center gap-6">
+          <Link
+            href="/notes"
+            className="text-xs font-medium text-gray-400 hover:text-white transition-colors duration-200"
+          >
+            Notes
+          </Link>
           <a
             href="https://github.com/emredogan-cloud"
             target="_blank"
