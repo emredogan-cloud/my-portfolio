@@ -13,6 +13,8 @@ type LogEntry = {
   text: string;
   highlight?: string;
   highlightClass?: string;
+  suffix?: string;
+  suffixClass?: string;
 };
 
 /**
@@ -57,9 +59,11 @@ const LOGS: LogEntry[] = [
   {
     tag: "SAVINGS",
     tagClass: "text-emerald-400",
-    text: "Estimated annual reduction: ",
+    text: "Estimated potential reduction: ",
     highlight: "$17,040",
     highlightClass: "text-emerald-200 font-semibold",
+    suffix: "  (Demo Output)",
+    suffixClass: "text-white/35 italic",
   },
 ];
 
@@ -188,6 +192,9 @@ export default function TerminalShowcase() {
             <span className="text-white/70"> {log.text}</span>
             {log.highlight && (
               <span className={log.highlightClass}>{log.highlight}</span>
+            )}
+            {log.suffix && (
+              <span className={log.suffixClass}>{log.suffix}</span>
             )}
           </motion.div>
         ))}

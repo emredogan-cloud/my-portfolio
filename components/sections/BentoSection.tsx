@@ -30,6 +30,9 @@ const PROJECTS = [
       "Cost analytics with Glue + Athena data lake",
       "Lemon Squeezy subscription monetization",
     ],
+    /* Flagship — spans 2 cols on md, plus 2 rows on lg for a
+       cinematic Apple-style asymmetric bento. */
+    spanClass: "md:col-span-2 lg:row-span-2",
   },
   {
     id: "vibing-coder-ai",
@@ -41,6 +44,7 @@ const PROJECTS = [
       "Next.js 16 + AWS Lambda decoupled monorepo",
       "Full Terraform infrastructure as code",
     ],
+    spanClass: "",
   },
   {
     id: "sixpack-ai",
@@ -52,144 +56,17 @@ const PROJECTS = [
       "Flutter native with RevenueCat subscriptions",
       "Supabase + Sentry + PostHog analytics stack",
     ],
+    spanClass: "",
   },
 ] as const;
 
 const CARD_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-/* ─── Inline brand SVGs (lucide v1.14 has no Github/Linkedin) ─── */
-function GitHubIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23A11.51 11.51 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.29-1.552 3.297-1.23 3.297-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z" />
-    </svg>
-  );
-}
-
-function LinkedInIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-    </svg>
-  );
-}
-
 /* ─────────────────────────────────────────────────────────────
-   CARD 1 — Developer Presence / Social Hub
-   Dot grid background + pulsing availability indicator +
-   social links with arrow micro-animation
-   ───────────────────────────────────────────────────────────── */
-function SocialHubCard({ isInView }: { isInView: boolean }) {
-  return (
-    <motion.div
-      className="relative bg-[#0d0d0d] rounded-2xl p-6 flex flex-col h-full min-h-[320px] lg:min-h-0 overflow-hidden"
-      initial={{ scale: 0.95, opacity: 0 }}
-      animate={isInView ? { scale: 1, opacity: 1 } : { scale: 0.95, opacity: 0 }}
-      transition={{ duration: 0.7, delay: 0, ease: CARD_EASE }}
-    >
-      {/* Subtle dot-grid background */}
-      <div
-        className="absolute inset-0 opacity-30 pointer-events-none"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, rgba(222,219,200,0.08) 1px, transparent 1px)",
-          backgroundSize: "18px 18px",
-        }}
-      />
-      {/* Warm radial highlight */}
-      <div
-        className="absolute -top-24 -right-24 w-72 h-72 rounded-full blur-3xl opacity-25 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(222,219,200,0.18) 0%, transparent 70%)",
-        }}
-      />
-
-      <div className="relative flex flex-col h-full">
-        {/* Status indicator */}
-        <div className="flex items-center gap-2 mb-6">
-          <motion.span
-            className="w-1.5 h-1.5 rounded-full bg-emerald-400"
-            animate={{ opacity: [1, 0.35, 1], scale: [1, 1.4, 1] }}
-            transition={{
-              duration: 2.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-          <span className="text-primary/40 text-[10px] uppercase tracking-widest">
-            Available
-          </span>
-        </div>
-
-        {/* Title */}
-        <h3 className="text-primary font-medium text-xl sm:text-2xl leading-tight mb-3">
-          Let&apos;s connect.
-        </h3>
-
-        {/* Supporting copy */}
-        <p className="text-gray-400 text-xs sm:text-sm leading-relaxed mb-auto pb-6">
-          Building cloud-native systems, AI tooling, and developer
-          infrastructure.
-        </p>
-
-        {/* Social links */}
-        <div className="space-y-1.5">
-          <a
-            href="https://github.com/emredogan-cloud"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-center justify-between gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-white/[0.04] transition-colors duration-200"
-          >
-            <div className="flex items-center gap-2.5">
-              <GitHubIcon className="w-4 h-4 text-primary/70 group-hover:text-primary transition-colors" />
-              <div>
-                <p className="text-primary text-xs sm:text-sm font-medium leading-none">
-                  GitHub
-                </p>
-                <p className="text-gray-500 text-[10px] sm:text-xs mt-0.5">
-                  @emredogan-cloud
-                </p>
-              </div>
-            </div>
-            <ArrowRight
-              className="w-3.5 h-3.5 text-gray-600 group-hover:text-primary transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              style={{ transform: "rotate(-45deg)" }}
-            />
-          </a>
-
-          <a
-            href="https://www.linkedin.com/in/emre-do%C4%9Fan-657a99388/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-center justify-between gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-white/[0.04] transition-colors duration-200"
-          >
-            <div className="flex items-center gap-2.5">
-              <LinkedInIcon className="w-4 h-4 text-primary/70 group-hover:text-primary transition-colors" />
-              <div>
-                <p className="text-primary text-xs sm:text-sm font-medium leading-none">
-                  LinkedIn
-                </p>
-                <p className="text-gray-500 text-[10px] sm:text-xs mt-0.5">
-                  Emre Doğan
-                </p>
-              </div>
-            </div>
-            <ArrowRight
-              className="w-3.5 h-3.5 text-gray-600 group-hover:text-primary transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              style={{ transform: "rotate(-45deg)" }}
-            />
-          </a>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   CARDS 2-4 — Image background project cards
-   Full-cover background image + cinematic dark gradient
-   + vignette + bottom-aligned text hierarchy
+   ImageProjectCard — full-cover background image + cinematic
+   dark gradient + vignette + bottom-aligned text hierarchy.
+   spanClass is applied to the outer wrapper so the same component
+   composes both the flagship (2x2) cell and the standard (1x1) cells.
    ───────────────────────────────────────────────────────────── */
 interface ImageProjectCardProps {
   id: string;
@@ -199,6 +76,7 @@ interface ImageProjectCardProps {
   items: readonly string[];
   index: number;
   isInView: boolean;
+  spanClass?: string;
 }
 
 function ImageProjectCard({
@@ -209,15 +87,16 @@ function ImageProjectCard({
   items,
   index,
   isInView,
+  spanClass = "",
 }: ImageProjectCardProps) {
   return (
     <motion.div
-      className="relative rounded-2xl overflow-hidden h-full min-h-[320px] lg:min-h-0 group"
+      className={`relative rounded-2xl overflow-hidden h-full min-h-[320px] lg:min-h-0 group ${spanClass}`}
       initial={{ scale: 0.95, opacity: 0 }}
       animate={isInView ? { scale: 1, opacity: 1 } : { scale: 0.95, opacity: 0 }}
       transition={{
         duration: 0.7,
-        delay: (index + 1) * 0.15,
+        delay: index * 0.12,
         ease: CARD_EASE,
       }}
     >
@@ -227,7 +106,7 @@ function ImageProjectCard({
         alt={title}
         fill
         className="object-cover object-center transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
-        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
       />
 
       {/* Cinematic readability gradient — heaviest at bottom */}
@@ -302,15 +181,16 @@ export default function BentoSection() {
           </div>
         </div>
 
-        {/* 4-column bento grid */}
+        {/* ── Asymmetric Apple-style bento ──
+            Mobile (1 col):      stacked
+            Tablet (md, 2 cols): CWH spans both rows, VCAI+SixPack share row 2
+            Desktop (lg, 3 cols × 2 rows):
+              CWH 2×2 flagship | VCAI    (top-right)
+                               | SixPack (bottom-right)                       */}
         <div
           ref={gridRef}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-2 md:gap-1 lg:h-[480px]"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2 gap-3 sm:gap-4 lg:h-[640px]"
         >
-          {/* Card 1 — Social Hub */}
-          <SocialHubCard isInView={isInView} />
-
-          {/* Cards 2-4 — Image project cards */}
           {PROJECTS.map((project, i) => (
             <ImageProjectCard
               key={project.id}

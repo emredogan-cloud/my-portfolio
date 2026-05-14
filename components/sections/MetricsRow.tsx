@@ -1,9 +1,9 @@
 import { Reveal } from "@/components/ui/Reveal";
 
 const METRICS = [
-  { value: "10k+", label: "Lines of IaC" },
-  { value: "5+", label: "Cloud Services" },
-  { value: "3", label: "Apps Shipped" },
+  { value: "19", label: "Years Old" },
+  { value: "04:30", label: "Bakery Shift Starts" },
+  { value: "2 yrs", label: "Fully Self-Taught" },
 ] as const;
 
 /**

@@ -45,12 +45,11 @@ export default function LuminaChat() {
       /* ignore */
     }
 
-    /* No sessionStorage flag → fresh first visit. Auto-open after
-       the hero animations have had time to settle. Strict Mode-safe:
-       cleanup clears the timer; even if React re-runs the effect,
-       only one final timer fires. The sessionStorage check inside
-       the timer prevents reopening if the user has already
-       minimized in the meantime. */
+    /* No sessionStorage flag → fresh first visit. Auto-open at 1.5s —
+       snappy enough that Lumina feels like a reactive intelligence,
+       late enough that the hero's identity reveal lands first.
+       Strict Mode-safe: cleanup clears the timer; even if React
+       re-runs the effect, only one final timer fires. */
     const timer = setTimeout(() => {
       try {
         if (!sessionStorage.getItem(STORAGE_KEY)) {
@@ -59,7 +58,7 @@ export default function LuminaChat() {
       } catch {
         setIsOpen(true);
       }
-    }, 3500);
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);

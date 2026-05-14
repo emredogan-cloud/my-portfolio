@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
 import Link from "next/link";
 import WordsPullUp from "@/components/ui/WordsPullUp";
 import TerminalShowcase from "@/components/home/TerminalShowcase";
@@ -71,7 +71,7 @@ export default function HeroSection() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.3, ease: EASE }}
               >
-                Cloud Architect. SaaS Builder. Mobile Developer.
+                19. Self-taught. Monk Mode.
               </motion.p>
 
               {/* Giant identity heading */}
@@ -86,9 +86,9 @@ export default function HeroSection() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.9, delay: 0.55, ease: EASE }}
               >
-                Architecting scalable AWS infrastructure, building AI-native
-                SaaS products, and shipping cross-platform mobile apps designed
-                for maximum leverage.
+                AWS infrastructure, AI-native SaaS, and mobile systems — built
+                between 04:30 bakery shifts and high-school exams. Two years
+                self-taught. Zero shortcuts.
               </motion.p>
 
               {/* Availability indicator */}
@@ -110,13 +110,14 @@ export default function HeroSection() {
                 Available for Cloud, SaaS &amp; Mobile work.
               </motion.div>
 
-              {/* CTA */}
+              {/* CTAs — primary for general visitors, secondary for recruiters. */}
               <motion.div
-                className="pt-2"
+                className="pt-2 flex flex-wrap items-center gap-3"
                 initial={{ y: 16, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.9, delay: 0.85, ease: EASE }}
               >
+                {/* Primary — Explore Projects */}
                 <Link
                   href="/projects"
                   className="group inline-flex items-center gap-2 rounded-full pl-4 pr-1 py-1 bg-white hover:gap-3 transition-all duration-300"
@@ -128,6 +129,17 @@ export default function HeroSection() {
                     <ArrowRight className="w-4 h-4 text-white" />
                   </div>
                 </Link>
+
+                {/* Secondary — Download CV (recruiter-targeted ghost button) */}
+                <a
+                  href="/resume/emre-dogan.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 glass-panel text-sm font-medium text-white/80 hover:text-white transition-colors"
+                >
+                  <Download className="w-4 h-4" aria-hidden="true" />
+                  Download CV
+                </a>
               </motion.div>
             </div>
 

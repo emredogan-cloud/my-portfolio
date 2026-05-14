@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import OpeningSequence from "@/components/cinematic/OpeningSequence";
 import Footer from "@/components/layout/Footer";
@@ -18,7 +19,7 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "Emre Doğan — Cloud & SaaS Engineer",
   description:
-    "Architecting scalable AWS infrastructure, building AI-native SaaS products, and shipping cross-platform mobile apps designed for maximum leverage.",
+    "19. Self-taught. Architecting AWS infrastructure and AI-native SaaS between 04:30 bakery shifts and high-school exams. Monk Mode.",
 };
 
 export default function RootLayout({
@@ -42,6 +43,7 @@ export default function RootLayout({
         {children}
         <Footer />
         <LuminaChat />
+        <Analytics />
       </body>
     </html>
   );

@@ -6,7 +6,7 @@ import { Reveal } from "@/components/ui/Reveal";
 export const metadata: Metadata = {
   title: "About — Emre Doğan",
   description:
-    "Cloud, AI, and SaaS engineer building production-grade systems across infrastructure, AI, and mobile.",
+    "19. Self-taught. Building production AWS infrastructure between 04:30 bakery shifts and high-school exams. Two years of Monk Mode.",
 };
 
 const PRINCIPLES = [
@@ -95,6 +95,33 @@ const FEATURED = [
   },
 ] as const;
 
+const DAY_TIMELINE = [
+  {
+    time: "04:30",
+    title: "Bakery shift begins.",
+    detail:
+      "Five mornings a week. Physical labor before the city wakes. The hardest hour of the day — done first.",
+  },
+  {
+    time: "08:00",
+    title: "High school.",
+    detail:
+      "Final year. Academics stay non-negotiable. Showing up rested means showing up sharp.",
+  },
+  {
+    time: "16:00",
+    title: "The build window opens.",
+    detail:
+      "AWS infrastructure. Terraform IaC. Claude orchestration. Production systems get shipped here.",
+  },
+  {
+    time: "22:00",
+    title: "Sleep. Repeat.",
+    detail:
+      "Two years of compound discipline. No bootcamp. No CS degree. Only relentless iteration.",
+  },
+] as const;
+
 export default function AboutPage() {
   return (
     <main className="relative min-h-screen bg-black">
@@ -127,16 +154,53 @@ export default function AboutPage() {
             About
           </span>
           <h1 className="text-5xl md:text-7xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5">
-            <span className="block">Engineering systems</span>
-            <span className="block text-white/60">that scale.</span>
+            <span className="block">19. Self-taught.</span>
+            <span className="block text-white/60">Monk Mode.</span>
           </h1>
           <p className="text-gray-400 max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
-            I&apos;m Emre Dogan — Cloud &amp; DevOps Engineer building
-            production-grade AI-native infrastructure and SaaS products.
-            Currently shipping tools that help engineering teams eliminate
-            cloud waste, automate remediation, and ship faster.
+            I&apos;m Emre Doğan — at 19, between 04:30 bakery shifts and
+            high-school exams, I architect production-grade AWS infrastructure
+            and ship AI-native SaaS products. No bootcamp. No CS degree.
+            Just two years of compound discipline.
           </p>
         </Reveal>
+
+        {/* ───────── MONK MODE TIMELINE ───────── */}
+        <section className="mb-24">
+          <Reveal duration={0.7}>
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              Monk Mode
+            </span>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-12">
+              A day in the discipline.
+            </h2>
+            <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
+              {DAY_TIMELINE.map((entry, i) => (
+                <Reveal
+                  key={entry.time}
+                  duration={0.5}
+                  delay={i * 0.08}
+                  y={12}
+                  margin="-40px"
+                >
+                  <div className="grid grid-cols-[72px_1fr] md:grid-cols-[140px_1fr] gap-5 md:gap-10 items-baseline py-6">
+                    <span className="text-primary/40 text-sm md:text-base font-mono tracking-wider">
+                      {entry.time}
+                    </span>
+                    <div>
+                      <p className="text-primary font-medium text-base md:text-lg leading-snug">
+                        {entry.title}
+                      </p>
+                      <p className="text-gray-500 text-xs md:text-sm leading-relaxed mt-1.5">
+                        {entry.detail}
+                      </p>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </Reveal>
+        </section>
 
         {/* ───────── PHILOSOPHY ───────── */}
         <section className="mb-24">

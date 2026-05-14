@@ -17,16 +17,16 @@ const WELCOME = [
   },
 ] as const;
 
-const T_MSG_1 = 700;
-const T_MSG_2 = 2000;
-const T_MSG_3 = 3400;
-/* Unlock immediately after message 3 finishes its fade-up (≈400ms).
-   Cinematic anticipation, but never a noticeable wait once msg 3 lands. */
-const T_READY = 3800;
-const T_FAILSAFE = 5000;
-/* Absolute defense — independent timer in its own effect. Even if the
-   welcome sequence breaks entirely, this guarantees input unlocks. */
-const T_ABSOLUTE_UNLOCK = 6000;
+const T_MSG_1 = 300;
+const T_MSG_2 = 900;
+const T_MSG_3 = 1500;
+/* Unlock ~500ms after message 3 lands. Tight cinematic anticipation,
+   visitor can type within 2 seconds of Lumina opening. */
+const T_READY = 2000;
+const T_FAILSAFE = 2500;
+/* Absolute defense — independent timer in its own effect. Final safety
+   net even if the welcome sequence breaks entirely. */
+const T_ABSOLUTE_UNLOCK = 3000;
 
 interface Props {
   isOpen: boolean;
