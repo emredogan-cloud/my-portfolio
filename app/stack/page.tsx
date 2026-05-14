@@ -1,4 +1,14 @@
 import type { Metadata } from "next";
+import type { LucideIcon } from "lucide-react";
+import {
+  Cloud,
+  Code2,
+  Server,
+  Sparkles,
+  Database,
+  KeyRound,
+  Activity,
+} from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import { TechCard } from "./_components/TechCard";
 
@@ -18,6 +28,7 @@ interface Category {
   index: string;
   title: string;
   intro: string;
+  icon: LucideIcon;
   items: Tech[];
 }
 
@@ -28,6 +39,7 @@ const STACK: Category[] = [
     title: "Cloud & Infrastructure",
     intro:
       "The foundation. Provisioned as code, scaled by demand, observable end-to-end.",
+    icon: Cloud,
     items: [
       { name: "AWS", role: "Cloud platform" },
       { name: "Terraform", role: "IaC, single source of truth" },
@@ -46,6 +58,7 @@ const STACK: Category[] = [
     title: "Application Layer",
     intro:
       "Next.js App Router with RSC by default. TypeScript strict throughout the stack.",
+    icon: Code2,
     items: [
       { name: "Next.js 16", role: "App Router, RSC, edge" },
       { name: "React 19", role: "UI primitives" },
@@ -61,6 +74,7 @@ const STACK: Category[] = [
     title: "Backend & Services",
     intro:
       "Async Python on Lambda. Self-invoke patterns for long-running jobs. Function URLs for streaming.",
+    icon: Server,
     items: [
       { name: "Python 3.11", role: "Service language" },
       { name: "FastAPI", role: "Async REST framework" },
@@ -75,6 +89,7 @@ const STACK: Category[] = [
     title: "AI Systems",
     intro:
       "Claude on Bedrock for production reliability. Streaming patterns that bypass API Gateway timeouts.",
+    icon: Sparkles,
     items: [
       { name: "Claude (Anthropic)", role: "Primary LLM" },
       { name: "AWS Bedrock", role: "Managed inference" },
@@ -89,6 +104,7 @@ const STACK: Category[] = [
     title: "Data & State",
     intro:
       "DynamoDB for app state, Postgres for relational, CUR + Athena for cost analytics.",
+    icon: Database,
     items: [
       { name: "DynamoDB", role: "NoSQL primary" },
       { name: "PostgreSQL", role: "Relational, via Supabase" },
@@ -104,6 +120,7 @@ const STACK: Category[] = [
     title: "Identity & Commerce",
     intro:
       "User pools with social IdP, custom email Lambdas, and tax-handled subscription billing.",
+    icon: KeyRound,
     items: [
       { name: "AWS Cognito", role: "User pools + Google IdP" },
       { name: "Clerk", role: "Drop-in auth" },
@@ -117,6 +134,7 @@ const STACK: Category[] = [
     title: "Observability & DevOps",
     intro:
       "Sentry for errors, PostHog for funnels, GitHub Actions for everything else.",
+    icon: Activity,
     items: [
       { name: "Sentry", role: "Error tracking + perf" },
       { name: "PostHog", role: "Product analytics" },
@@ -170,33 +188,41 @@ export default function StackPage() {
 
         {/* ───────── CATEGORIES ───────── */}
         <div className="space-y-20">
-          {STACK.map((cat, catIdx) => (
-            <Reveal key={cat.id} duration={0.7}>
-              {/* Category header */}
-              <div className="flex items-baseline gap-4 mb-3">
-                <span className="text-primary/30 text-xs font-mono">
-                  {cat.index}
-                </span>
-                <h2 className="text-2xl md:text-3xl font-medium tracking-[-0.02em] text-primary">
-                  {cat.title}
-                </h2>
-              </div>
-              <p className="text-gray-500 text-sm md:text-base leading-relaxed max-w-2xl mb-8">
-                {cat.intro}
-              </p>
-
-              {/* Tech grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {cat.items.map((tech, i) => (
-                  <TechCard
-                    key={tech.name}
-                    tech={tech}
-                    delay={(catIdx === 0 ? i : 0) * 0.04}
+          {STACK.map((cat, catIdx) => {
+            const Icon = cat.icon;
+            return (
+              <Reveal key={cat.id} duration={0.7}>
+                {/* Category header — index, icon, title in one baseline row */}
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-quiet text-xs font-mono">
+                    {cat.index}
+                  </span>
+                  <Icon
+                    className="w-4 h-4 text-secondary"
+                    strokeWidth={1.75}
+                    aria-hidden="true"
                   />
-                ))}
-              </div>
-            </Reveal>
-          ))}
+                  <h2 className="text-2xl md:text-3xl font-medium tracking-[-0.02em] text-primary">
+                    {cat.title}
+                  </h2>
+                </div>
+                <p className="text-gray-500 text-sm md:text-base leading-relaxed max-w-2xl mb-8">
+                  {cat.intro}
+                </p>
+
+                {/* Tech grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {cat.items.map((tech, i) => (
+                    <TechCard
+                      key={tech.name}
+                      tech={tech}
+                      delay={(catIdx === 0 ? i : 0) * 0.04}
+                    />
+                  ))}
+                </div>
+              </Reveal>
+            );
+          })}
         </div>
 
         {/* ───────── FOOTER NOTE ───────── */}

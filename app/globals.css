@@ -1,13 +1,25 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────
-   Design tokens — single source of typography + palette truth.
-   Primary text color is white (#ffffff); the "primary" semantic
-   token is preserved so semantic references (text-primary,
-   bg-primary) continue to work after the palette unification.
+   Design tokens — text palette truth.
+   Five-stop monochrome ramp replaces the ad-hoc `text-white/45`,
+   `text-white/65`, `text-primary/75` etc. that accumulated across
+   the codebase. Anchor brightness levels:
+     primary    100% — headings, name, focused text
+     secondary   70% — body copy, eyebrow taglines, nav links
+     tertiary   45% — supporting metadata, "View project" links
+     quiet      30% — labels, status pills, decorative badges
+     faint      15% — dividers, hairline tones
+   Tailwind v4 generates `text-secondary`, `bg-tertiary`, etc.
+   from each entry. Opacity modifiers (`text-secondary/50`)
+   still work but should be avoided to keep the palette closed.
    ───────────────────────────────────────────────────────────── */
 @theme {
   --color-primary: #ffffff;
+  --color-secondary: rgba(255, 255, 255, 0.7);
+  --color-tertiary: rgba(255, 255, 255, 0.45);
+  --color-quiet: rgba(255, 255, 255, 0.3);
+  --color-faint: rgba(255, 255, 255, 0.15);
 }
 
 /* ─────────────────────────────────────────────────────────────

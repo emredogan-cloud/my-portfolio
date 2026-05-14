@@ -47,7 +47,7 @@ export default function HeroSection() {
               <Link
                 key={item.label}
                 href={item.href}
-                className="text-[10px] sm:text-xs md:text-sm whitespace-nowrap text-white/65 hover:text-white transition-colors duration-200"
+                className="text-[10px] sm:text-xs md:text-sm whitespace-nowrap text-secondary hover:text-primary transition-colors duration-200"
               >
                 {item.label}
               </Link>
@@ -66,7 +66,7 @@ export default function HeroSection() {
 
               {/* Eyebrow tagline */}
               <motion.p
-                className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-white/55"
+                className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-secondary"
                 initial={{ y: 12, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.3, ease: EASE }}
@@ -81,7 +81,7 @@ export default function HeroSection() {
 
               {/* Description */}
               <motion.p
-                className="text-sm md:text-base text-white/65 leading-relaxed max-w-lg"
+                className="text-sm md:text-base text-secondary leading-relaxed max-w-lg"
                 initial={{ y: 16, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.9, delay: 0.55, ease: EASE }}

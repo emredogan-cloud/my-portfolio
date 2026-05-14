@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
+import GithubActivity from "./_components/GithubActivity";
 
 export const metadata: Metadata = {
   title: "About — Emre Doğan",
@@ -275,6 +276,26 @@ export default function AboutPage() {
                   </div>
                 </Reveal>
               ))}
+            </div>
+          </Reveal>
+        </section>
+
+        {/* ───────── SHIPPING CONSISTENCY ───────── */}
+        <section className="mb-24">
+          <Reveal duration={0.7}>
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              Shipping Consistency
+            </span>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-4">
+              The receipts.
+            </h2>
+            <p className="text-gray-500 text-sm md:text-base leading-relaxed max-w-2xl mb-10">
+              Monk Mode is a discipline, not a slogan. Every cyan square below
+              is a day production code was committed — between 04:30 bakery
+              shifts and high-school exams.
+            </p>
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 md:p-8 overflow-x-auto">
+              <GithubActivity />
             </div>
           </Reveal>
         </section>

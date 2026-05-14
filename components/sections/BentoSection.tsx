@@ -122,7 +122,7 @@ function ImageProjectCard({
       <div className="relative h-full p-6 flex flex-col">
         {/* Top: number badge */}
         <div className="flex justify-end">
-          <span className="text-primary/30 text-xs font-light">{number}</span>
+          <span className="text-quiet text-xs font-light">{number}</span>
         </div>
 
         {/* Bottom: title + checklist + view link */}
@@ -135,7 +135,7 @@ function ImageProjectCard({
             {items.map((item, i) => (
               <li key={i} className="flex items-start gap-2">
                 <Check className="w-3 h-3 text-primary/80 mt-1 flex-shrink-0" />
-                <span className="text-primary/75 text-xs leading-snug">
+                <span className="text-secondary text-xs leading-snug">
                   {item}
                 </span>
               </li>
@@ -145,7 +145,7 @@ function ImageProjectCard({
           <div className="pt-3 border-t border-white/[0.08]">
             <Link
               href={`/projects/${id}`}
-              className="flex items-center gap-1.5 text-primary/70 text-xs sm:text-sm hover:text-primary transition-colors duration-200"
+              className="flex items-center gap-1.5 text-secondary text-xs sm:text-sm hover:text-primary transition-colors duration-200"
             >
               View project
               <ArrowRight

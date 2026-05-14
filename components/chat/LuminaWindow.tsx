@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, type FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useChat } from "@ai-sdk/react";
-import { X, ArrowUp } from "lucide-react";
+import { X, ArrowUp, Copy, Check, RotateCcw } from "lucide-react";
 import { LuminaAvatar } from "./LuminaAvatar";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -69,6 +69,30 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
     (status === "submitted" || status === "streaming") && !error;
   const isOnboarding = !isReady && !hasBeenMinimized;
   const inputDisabled = isLoading || isOnboarding;
+
+  /* ── Conversation tools ──
+     copiedId tracks the most recently copied message so its Copy icon
+     can flash to Check for 2s before reverting. handleCopy is silent
+     on older browsers / insecure contexts (no Clipboard API).
+     handleNewConversation wipes the message array; the welcome
+     sequence does NOT replay because sequenceFiredRef has already
+     latched true — visitor gets a clean slate without re-onboarding. */
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = async (id: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      /* clipboard unavailable — silent no-op */
+    }
+  };
+
+  const handleNewConversation = () => {
+    setMessages([]);
+    inputRef.current?.focus();
+  };
 
   /* hasBeenMinimized rehydration — skip onboarding on subsequent opens. */
   useEffect(() => {
@@ -235,14 +259,26 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
               {statusLabel}
             </span>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-white/40 hover:text-white/85 transition-colors duration-200 p-1 rounded"
-            aria-label="Minimize Lumina"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleNewConversation}
+              className="text-white/40 hover:text-white/85 transition-colors duration-200 p-1 rounded"
+              aria-label="New conversation"
+              title="New conversation"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-white/40 hover:text-white/85 transition-colors duration-200 p-1 rounded"
+              aria-label="Minimize Lumina"
+              title="Minimize"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </header>
 
         {/* Messages — stacked, sequential reveals, strict L/R alignment.
@@ -282,9 +318,36 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
                       {text}
                     </div>
                   ) : (
-                    /* Lumina: left, no bubble, crisp typography */
-                    <div className="text-sm text-white/90 leading-[1.7] max-w-[88%] whitespace-pre-line">
-                      {text}
+                    /* Lumina: left, no bubble, crisp typography + Copy
+                       button below. opacity-40 baseline keeps the
+                       affordance discoverable; group-hover brings it
+                       to full presence on desktop. */
+                    <div className="group max-w-[88%]">
+                      <div className="text-sm text-white/90 leading-[1.7] whitespace-pre-line">
+                        {text}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(message.id, text)}
+                        className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-white/30 hover:text-white/70 transition-colors opacity-40 group-hover:opacity-100 focus:opacity-100"
+                        aria-label={
+                          copiedId === message.id
+                            ? "Copied"
+                            : "Copy message"
+                        }
+                      >
+                        {copiedId === message.id ? (
+                          <>
+                            <Check className="w-3 h-3" aria-hidden="true" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" aria-hidden="true" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   )}
                 </motion.div>
