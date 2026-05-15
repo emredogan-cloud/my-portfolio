@@ -48,7 +48,7 @@ export default function HeroSection() {
               <Link
                 key={item.label}
                 href={item.href}
-                className="text-[10px] sm:text-xs md:text-sm whitespace-nowrap text-secondary hover:text-primary transition-colors duration-200"
+                className="inline-flex items-center min-h-[44px] px-2 text-[10px] sm:text-xs md:text-sm whitespace-nowrap text-secondary hover:text-primary transition-colors duration-200"
               >
                 {item.label}
               </Link>

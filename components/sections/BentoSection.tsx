@@ -145,7 +145,7 @@ function ImageProjectCard({
           <div className="pt-3 border-t border-white/[0.08]">
             <Link
               href={`/projects/${id}`}
-              className="flex items-center gap-1.5 text-secondary text-xs sm:text-sm hover:text-primary transition-colors duration-200"
+              className="flex items-center gap-1.5 py-3 -my-1 text-secondary text-xs sm:text-sm hover:text-primary transition-colors duration-200"
             >
               View project
               <ArrowRight

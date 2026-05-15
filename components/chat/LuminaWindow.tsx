@@ -259,11 +259,11 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
               {statusLabel}
             </span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleNewConversation}
-              className="text-white/40 hover:text-white/85 transition-colors duration-200 p-1 rounded"
+              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-2.5 rounded"
               aria-label="New conversation"
               title="New conversation"
             >
@@ -272,7 +272,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="text-white/40 hover:text-white/85 transition-colors duration-200 p-1 rounded"
+              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-2.5 rounded"
               aria-label="Minimize Lumina"
               title="Minimize"
             >
