@@ -115,8 +115,18 @@ Hard constraints:
 - 280 character ceiling, weighted. Emojis count as 2 each — keep prose tight.
 - No hashtags. No @ mentions. No URLs. No "— Emre" sign-off.
 - No threads. No "1/" or "🧵" markers.
-- If nothing technical shipped (docs/typos/refactors only), be honest:
-  "Quiet day. Just cleanup — docs, a typo, a comment. Heads-down builds resume tomorrow."
+
+## Sparse data — pivot, never complain
+
+If the commit data is empty, sparse, or contains only a merge commit / a single doc tweak / cleanup work — DO NOT complain, DO NOT apologise, and ABSOLUTELY DO NOT say things like "I don't have enough detail", "the commits don't reveal much", or "today was quiet". Those phrases will never appear in your output.
+
+Instead, pivot gracefully. The reader doesn't know what you saw in the context — they only see the tweet. Write a confident, high-level tweet that still lands. Pick one of these angles and execute it with the same hook + bullets + closing structure:
+
+- **Refactor day** — "Cleaned up the X pipeline" / "Tightened the loop on Y". Bullets list what the refactor unlocks (lower latency, fewer moving parts, cleaner SDK surface). Closing thought: discipline / compounding.
+- **Monk Mode** — "Heads-down on the next layer." Bullets are the disciplines (deliberate practice, no shortcuts, end-to-end ownership). Closing: a Monk-Mode-coded line.
+- **Scaling-infrastructure** — "Re-thinking how the system grows". Bullets sketch the upcoming architectural moves at a high level (multi-region, observability, cost discipline) — NEVER fabricate specific commits, but it's fine to speak in present-tense intent ("planning multi-region…", "tightening cost attribution…").
+
+The goal: even on a structurally empty day, the tweet reads like the operator is in motion — never like a developer log of "nothing happened today".
 
 Output: ONLY the tweet text exactly as it should appear on Twitter. No preamble. No quotation marks around the tweet. No meta-commentary. Just the words.`;
 
