@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { MILESTONES, type Milestone } from "./milestones";
+import { ILLUSTRATION_BY_ID } from "./Illustrations";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -170,29 +171,39 @@ function MilestoneSection({
   registerRef,
   reducedMotion,
 }: MilestoneSectionProps) {
+  const Illustration = ILLUSTRATION_BY_ID[milestone.id];
   return (
     <li
       ref={registerRef}
       data-index={index}
       data-milestone-id={milestone.id}
-      className="relative min-h-[100svh] flex items-center justify-center px-6"
+      className="relative min-h-[100svh] flex items-center px-2 sm:px-6"
     >
       <motion.div
         initial={reducedMotion ? false : { opacity: 0, y: 28 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-20%" }}
         transition={{ duration: 0.9, ease: EASE }}
-        className="max-w-3xl space-y-5"
+        className="grid grid-cols-1 md:grid-cols-12 items-center gap-10 md:gap-14 w-full"
       >
-        <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/80">
-          {milestone.accent}
-        </p>
-        <h2 className="text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1] text-white">
-          {milestone.title}
-        </h2>
-        <p className="text-white/65 text-base md:text-lg leading-relaxed max-w-2xl">
-          {milestone.body}
-        </p>
+        <div className="md:col-span-7 space-y-5">
+          <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/80">
+            {milestone.accent}
+          </p>
+          <h2 className="text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1] text-white">
+            {milestone.title}
+          </h2>
+          <p className="text-white/65 text-base md:text-lg leading-relaxed max-w-2xl">
+            {milestone.body}
+          </p>
+        </div>
+        <div className="md:col-span-5">
+          {Illustration ? (
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5">
+              <Illustration className="w-full h-auto max-w-[360px] mx-auto" />
+            </div>
+          ) : null}
+        </div>
       </motion.div>
     </li>
   );
