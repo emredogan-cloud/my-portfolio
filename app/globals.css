@@ -150,6 +150,24 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
+   Architecture scroll-snap (mobile only). Opt-in via a body
+   class that ScrollStory adds on mount and removes on unmount,
+   so every other route stays untouched. Proximity (not
+   mandatory) — visitors can stop mid-milestone to read; snap
+   only kicks in when they're already close to a boundary.
+   Phase 3 / Sub-PR 2 — /architecture page.
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  body.architecture-scroll-snap {
+    scroll-snap-type: y proximity;
+  }
+  body.architecture-scroll-snap [data-milestone-id] {
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
    Global reduced-motion guard. Vestibular-disorder visitors get
    every infinite animation collapsed to a near-instant single
    pass. Lumina, the cinematic intro, and motion/react springs

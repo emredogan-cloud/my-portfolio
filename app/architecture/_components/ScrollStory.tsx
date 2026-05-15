@@ -73,6 +73,17 @@ export default function ScrollStory() {
     return () => obs.disconnect();
   }, []);
 
+  /* Mobile scroll-snap opt-in. Body class is added on mount and
+     removed on unmount so other routes never inherit the behaviour.
+     CSS rule itself lives in app/globals.css and only activates
+     under (max-width: 767px). */
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const klass = "architecture-scroll-snap";
+    document.body.classList.add(klass);
+    return () => document.body.classList.remove(klass);
+  }, []);
+
   const active = MILESTONES[activeIndex] ?? MILESTONES[0];
 
   return (
@@ -116,14 +127,14 @@ interface ProgressHeaderProps {
 function ProgressHeader({ active, activeIndex }: ProgressHeaderProps) {
   return (
     <div
-      className="sticky top-4 z-20 mx-auto w-fit"
+      className="sticky top-4 z-20 mx-auto w-fit max-w-[calc(100vw-1.5rem)] px-3"
       aria-hidden="true"
     >
-      <div className="inline-flex items-center gap-3 rounded-full border border-white/[0.08] bg-black/60 px-4 py-1.5 backdrop-blur-md">
-        <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-[#00d2ff]/85 whitespace-nowrap">
+      <div className="inline-flex items-center gap-2 sm:gap-3 rounded-full border border-white/[0.08] bg-black/70 px-3 sm:px-4 py-1.5 backdrop-blur-md">
+        <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.16em] sm:tracking-[0.18em] text-[#00d2ff]/85 whitespace-nowrap truncate">
           {active.accent}
         </span>
-        <span className="text-[10px] uppercase tracking-[0.16em] text-white/30">
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.14em] sm:tracking-[0.16em] text-white/30 whitespace-nowrap">
           {activeIndex + 1} / {MILESTONES.length}
         </span>
       </div>
@@ -177,30 +188,30 @@ function MilestoneSection({
       ref={registerRef}
       data-index={index}
       data-milestone-id={milestone.id}
-      className="relative min-h-[100svh] flex items-center px-2 sm:px-6"
+      className="relative min-h-[100svh] flex items-center py-16 sm:py-20"
     >
       <motion.div
         initial={reducedMotion ? false : { opacity: 0, y: 28 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-20%" }}
         transition={{ duration: 0.9, ease: EASE }}
-        className="grid grid-cols-1 md:grid-cols-12 items-center gap-10 md:gap-14 w-full"
+        className="grid grid-cols-1 md:grid-cols-12 items-center gap-8 md:gap-14 w-full"
       >
-        <div className="md:col-span-7 space-y-5">
+        <div className="md:col-span-7 space-y-4 sm:space-y-5">
           <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/80">
             {milestone.accent}
           </p>
-          <h2 className="text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1] text-white">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] sm:leading-[1] text-white">
             {milestone.title}
           </h2>
-          <p className="text-white/65 text-base md:text-lg leading-relaxed max-w-2xl">
+          <p className="text-white/65 text-[15px] sm:text-base md:text-lg leading-relaxed max-w-2xl">
             {milestone.body}
           </p>
         </div>
         <div className="md:col-span-5">
           {Illustration ? (
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5">
-              <Illustration className="w-full h-auto max-w-[360px] mx-auto" />
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3 sm:p-5">
+              <Illustration className="w-full h-auto max-w-[320px] sm:max-w-[360px] mx-auto" />
             </div>
           ) : null}
         </div>
