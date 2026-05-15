@@ -89,7 +89,7 @@ const FEATURED = [
   },
   {
     id: "sixpack-ai",
-    title: "SixPack AI",
+    title: "FormAI — Fitness Koçu",
     role: "Lead Engineer",
     blurb:
       "Flutter fitness coach with real-time pose detection and AI voice guidance.",

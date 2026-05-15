@@ -49,7 +49,7 @@ const PROJECTS = [
   {
     id: "sixpack-ai",
     number: "03",
-    title: "SixPack AI.",
+    title: "FormAI.",
     image: "/projects/sixpack-ai/screenshot-1.jpg",
     items: [
       "Real-time pose detection via Google ML Kit",

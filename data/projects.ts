@@ -40,7 +40,7 @@ Monetisation runs through Lemon Squeezy with three tiers — Free (single accoun
       "Lemon Squeezy",
       "AWS Cognito",
     ],
-    liveUrl: "https://waste-hunter.vercel.app",
+    liveUrl: "https://www.cloudwastehunter.io/",
     images: [
       "/projects/aws-waste-hunter/cover.png",
       "/projects/aws-waste-hunter/ui.png",
@@ -72,6 +72,7 @@ The project is in active development. Auth (Clerk), persistence (DynamoDB), and 
       "API Gateway",
       "DynamoDB",
     ],
+    liveUrl: "https://www.vibingcoderai.com/",
     githubUrl: "https://github.com/emredogan-cloud/VibingCodeAI",
     images: [
       "/projects/vibing-coder-ai/logo.svg",
@@ -81,10 +82,10 @@ The project is in active development. Auth (Clerk), persistence (DynamoDB), and 
   },
   {
     id: "sixpack-ai",
-    title: "SixPack AI",
+    title: "FormAI - Fitness Koçu",
     shortDescription:
       "Flutter fitness coaching app with real-time pose detection, AI voice guidance, and a 30-day personalised training system.",
-    detailedDescription: `SixPack AI is a native Flutter application that delivers a full-stack AI fitness coaching experience from the device camera alone.
+    detailedDescription: `FormAI - Fitness Koçu is a native Flutter application that delivers a full-stack AI fitness coaching experience from the device camera alone.
 
 The core feature is real-time exercise form analysis: Google ML Kit's pose detection model tracks 33 body landmarks at 30fps through the device camera, calculates joint angles, and evaluates rep quality against reference biomechanics. Incorrect form triggers corrective audio cues via flutter_tts — effectively putting an AI coach in the room.
 

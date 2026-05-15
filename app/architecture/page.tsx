@@ -5,7 +5,7 @@ import { ArrowRight } from "lucide-react";
 export const metadata: Metadata = {
   title: "Architecture",
   description:
-    "Three production systems, three architectures. Scroll-through walkthroughs of Cloud Waste Hunter (serverless FinOps), VibingCoderAI (LLM agent infrastructure), and SixPack AI (edge ML on mobile).",
+    "Three production systems, three architectures. Scroll-through walkthroughs of Cloud Waste Hunter (serverless FinOps), VibingCoderAI (LLM agent infrastructure), and FormAI — Fitness Koçu (edge ML on mobile).",
 };
 
 interface HubEntry {
@@ -36,7 +36,7 @@ const ENTRIES: readonly HubEntry[] = [
   {
     slug: "sixpack-ai",
     eyebrow: "Edge ML & Mobile",
-    title: "SixPack AI",
+    title: "FormAI — Fitness Koçu",
     tagline:
       "Real-time pose detection at 30 fps on the device's NPU. The best cloud architecture is sometimes knowing when not to use the cloud.",
     stack: ["Flutter 3.22", "Google ML Kit", "Supabase", "RevenueCat"],
