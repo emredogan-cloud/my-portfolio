@@ -8,6 +8,7 @@ import { HoverScaleAnchor } from "./_components/HoverScaleAnchor";
 import { GalleryItem } from "./_components/GalleryItem";
 import ProductionMetrics from "./_components/ProductionMetrics";
 import AWSTopologyClient from "./_components/AWSTopologyClient";
+import CWHSandbox from "./_components/CWHSandbox";
 import { TOPOLOGY_NODES } from "./_components/topology-data";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -215,6 +216,30 @@ export default async function ProjectDetailPage({
             <div aria-hidden="true">
               <AWSTopologyClient />
             </div>
+          </Reveal>
+        )}
+
+        {/* ── Live IAM auditor sandbox (Cloud Waste Hunter only) ──
+            Same model + system prompt the production SaaS uses for
+            policy remediation. Rate-limited at 5 / IP / hour at the
+            edge. */}
+        {slug === "aws-waste-hunter" && (
+          <Reveal
+            mode="mount"
+            duration={0.65}
+            delay={0.55}
+            className="mt-14 pt-10 border-t border-white/[0.08]"
+          >
+            <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+              <p className="text-xs font-medium text-white/30 tracking-widest uppercase">
+                Try the auditor
+              </p>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#00d2ff]/25 bg-[#00d2ff]/[0.06] px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-[#00d2ff]/90">
+                <span className="w-1 h-1 rounded-full bg-[#00d2ff]" aria-hidden="true" />
+                Live · Bedrock
+              </span>
+            </div>
+            <CWHSandbox />
           </Reveal>
         )}
 
