@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { ArrowRight, Download } from "lucide-react";
 import Link from "next/link";
 import WordsPullUp from "@/components/ui/WordsPullUp";
-import TerminalShowcase from "@/components/home/TerminalShowcase";
+import InfrastructureCore from "@/components/home/InfrastructureCore";
 
 const NAV_ITEMS = [
   { label: "About", href: "/about" },
@@ -145,9 +145,9 @@ export default function HeroSection() {
               </motion.div>
             </div>
 
-            {/* ── RIGHT: terminal anchor ── */}
+            {/* ── RIGHT: infrastructure constellation ── */}
             <div className="lg:col-span-6 lg:pl-4">
-              <TerminalShowcase />
+              <InfrastructureCore />
             </div>
 
           </div>
