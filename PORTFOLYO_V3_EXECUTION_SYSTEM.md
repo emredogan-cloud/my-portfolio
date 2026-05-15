@@ -1946,3 +1946,5 @@ operasyonel halidir.
 (audit) tarafından bilgilendirilmiştir. Stratejik karar gerektiğinde
 roadmap'e başvurulur; teknik karar gerektiğinde audit'e başvurulur;
 operasyonel karar gerektiğinde bu doküman authoritative'dir.*
+
+05/15/2026
