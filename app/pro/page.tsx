@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, ArrowRight } from "lucide-react";
+import CheckoutButton from "./_components/CheckoutButton";
 
 export const metadata: Metadata = {
   title: "Cloud Waste Hunter — Pro",
@@ -196,34 +197,31 @@ function TierCard({ tier }: { tier: PricingTier }) {
   );
 }
 
-/* CTA per tier. Free → external link, paid tiers → placeholder button
-   until the client checkout island lands in Step 2. */
+/* CTA per tier. Free → external link to the live CWH app. Plus / Pro
+   → CheckoutButton client island that POSTs /api/checkout and
+   redirects to the returned Lemon Squeezy permalink. */
 function TierCta({ tier }: { tier: PricingTier }) {
-  const baseClasses =
-    "inline-flex items-center justify-center gap-2 rounded-full text-sm font-semibold px-6 min-h-[44px] w-full transition-colors";
   if (tier.id === "free" && tier.cta.href) {
     return (
       <Link
         href={tier.cta.href}
         target="_blank"
         rel="noopener noreferrer"
-        className={`${baseClasses} bg-white text-black hover:bg-white/90`}
+        className="inline-flex items-center justify-center gap-2 rounded-full text-sm font-semibold px-6 min-h-[44px] w-full transition-colors bg-white text-black hover:bg-white/90"
       >
         {tier.cta.label}
         <ArrowRight className="w-4 h-4" aria-hidden="true" />
       </Link>
     );
   }
-  // Plus / Pro buttons are non-functional until Step 2 wires the
-  // checkout. Render them muted so visitors see the tier but don't
-  // trip a broken flow.
-  return (
-    <button
-      type="button"
-      disabled
-      className={`${baseClasses} bg-white/[0.06] text-white/40 cursor-not-allowed`}
-    >
-      {tier.cta.label}
-    </button>
-  );
+  if (tier.id === "plus" || tier.id === "pro") {
+    return (
+      <CheckoutButton
+        tier={tier.id}
+        label={tier.cta.label}
+        highlight={!!tier.cta.highlight}
+      />
+    );
+  }
+  return null;
 }
