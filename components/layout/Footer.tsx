@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
+import BuildBeacon from "./BuildBeacon";
 
 /* ─── Inline brand SVGs (lucide v1.14 has no Github/Linkedin) ─── */
 function GitHubIcon({ className }: { className?: string }) {
@@ -35,9 +36,15 @@ export default function Footer() {
           flex flex-col md:flex-row md:items-center md:justify-between gap-5
         "
       >
-        <p className="text-xs text-gray-500">
-          ED. — Built between 01:30 bakery shifts and high-school exams. © 2026
-        </p>
+        {/* Signature + live build beacon group. Stacks vertically on
+            mobile so the beacon dot tucks under the signature line;
+            inline on desktop with a quiet divider in between. */}
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+          <p className="text-xs text-gray-500">
+            ED. — Built between 01:30 bakery shifts and high-school exams. © 2026
+          </p>
+          <BuildBeacon />
+        </div>
         <nav className="flex items-center gap-6">
           <Link
             href="/notes"
