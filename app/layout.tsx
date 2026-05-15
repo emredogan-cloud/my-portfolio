@@ -6,6 +6,7 @@ import OpeningSequence from "@/components/cinematic/OpeningSequence";
 import Footer from "@/components/layout/Footer";
 import LuminaChat from "@/components/chat/LuminaChat";
 import GlobalGrain from "@/components/layout/GlobalGrain";
+import { getSiteUrl } from "@/lib/site-url";
 
 /* ── Geist — sole typography across the portfolio.
      Clean, neutral, engineering-oriented. No serif accents,
@@ -16,11 +17,29 @@ const geist = Geist({
   display: "swap",
 });
 
+const SITE_URL = getSiteUrl();
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Emre Doğan — Cloud & SaaS Engineer",
   description:
     "19. Self-taught. Architecting AWS infrastructure and AI-native SaaS between 01:30 bakery shifts and high-school exams. Monk Mode.",
 };
+
+/* ── JSON-LD Person schema. One source of truth so the same identity
+     surfaces in <head> on every route. Stringified once at module
+     scope so it isn't recomputed per render. */
+const PERSON_JSON_LD = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Emre Doğan",
+  jobTitle: "Cloud & SaaS Engineer",
+  url: SITE_URL,
+  sameAs: [
+    "https://github.com/emredogan-cloud",
+    "https://www.linkedin.com/in/emre-do%C4%9Fan-657a99388/",
+  ],
+});
 
 export default function RootLayout({
   children,
@@ -33,6 +52,12 @@ export default function RootLayout({
       className={geist.variable}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: PERSON_JSON_LD }}
+        />
+      </head>
       <body
         suppressHydrationWarning
         className={`${geist.className} bg-black text-white antialiased overflow-x-hidden`}
