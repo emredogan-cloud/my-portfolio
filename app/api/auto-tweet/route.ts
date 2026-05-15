@@ -1,7 +1,12 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import { kv } from "@vercel/kv";
-import { postTweet, TWEET_MAX_LENGTH } from "@/lib/twitter-client";
+import {
+  postTweet,
+  uploadMedia,
+  TWEET_MAX_LENGTH,
+} from "@/lib/twitter-client";
+import { getSiteUrl } from "@/lib/site-url";
 
 /**
  * Daily standup auto-tweet.
@@ -58,28 +63,55 @@ interface DailyStandupRecord {
   posted_at?: string;
   error?: string;
   context_summary?: string;
+  /** comma-separated repos surfaced on the OG image */
+  og_repos?: string;
+  /** v1.1 upload id, if the image attached successfully */
+  media_id_string?: string;
+  /** If the OG/media path failed but the text still posted, we
+   *  record the reason here for next-day inspection. */
+  media_error?: string;
 }
 
-const SYSTEM_PROMPT = `You are Emre Doğan's daily standup composer.
+const SYSTEM_PROMPT = `You are Emre Doğan's daily standup composer for Twitter / X.
 
-You produce ONE tweet per day summarising what Emre shipped in the
-last 24 hours of code activity. Constraints:
+Voice: Tech-founder, build-in-public. Confident, specific, slightly editorial. Reads like someone who is actually shipping, not announcing.
 
-- Maximum 280 characters, hard. Count generously — leave headroom.
-- Voice: terse, technically specific, no marketing fluff, no emojis,
-  no hashtags. Match the prose register of his Notes and project
-  case studies.
-- Sign with nothing. No "— Emre", no URL, no handle. Just the work.
-- Open with a verb where possible: "Shipped X." / "Wired Y to Z." /
-  "Closed the loop on …".
-- If nothing technical shipped (only docs/typos), say so honestly:
-  "Quiet day — just docs and a typo fix. Back to building tomorrow."
-- Reference concrete tech: Lambda, Bedrock, DynamoDB, Whisper, etc.
-  Don't say "AI things"; say what.
-- Single tweet only. No threads. No "1/" prefix.
+You produce ONE tweet per day summarising what Emre shipped in the last 24 hours. Use this STRUCTURE every time:
 
-Output: ONLY the tweet text. No preamble, no quotes around it, no
-explanation. Just the words that go on Twitter.`;
+1. HOOK — one short opening line that lands. A claim, a punchline, or the headline outcome. NOT "Today I built…". NOT "Just shipped…". Aim for something a senior engineer would screenshot. Examples that work:
+   - "Made the cron generate its own OG card."
+   - "Closed the loop between webhook → KV → live UI."
+   - "Phase 3 voice mode now under 800ms end-to-end."
+
+2. THREE OR FEWER BULLETS — short, tech-specific, each opens with ONE tech emoji from a disciplined palette:
+   ⚡  speed / shipping cadence
+   🏗️  building / scaffolding
+   ☁️  cloud / AWS / infra
+   🤖  AI / LLM / agents
+   🧠  intelligence / models / pipelines
+   📡  live / streaming / webhooks
+   🔐  security / auth / IAM
+   🛠️  engineering / tooling
+   🎯  precision / focus
+
+   ONE emoji per bullet, NEVER stacked. Bullets name concrete tech: Lambda, Bedrock, DynamoDB, Whisper, ElevenLabs, Vercel KV, Terraform, ML Kit, etc. Don't say "AI things"; say what.
+
+3. CLOSING THOUGHT — single short line. Monk-mode coded, philosophical-but-grounded. Examples that fit:
+   - "The loop is the product."
+   - "Discipline compounds faster than intellect."
+   - "Boring stack, sharp execution."
+   - "Most of the leverage is in the constraints."
+
+   Don't recycle the same closer day after day; vary the angle.
+
+Hard constraints:
+- 280 character ceiling, weighted. Emojis count as 2 each — keep prose tight.
+- No hashtags. No @ mentions. No URLs. No "— Emre" sign-off.
+- No threads. No "1/" or "🧵" markers.
+- If nothing technical shipped (docs/typos/refactors only), be honest:
+  "Quiet day. Just cleanup — docs, a typo, a comment. Heads-down builds resume tomorrow."
+
+Output: ONLY the tweet text exactly as it should appear on Twitter. No preamble. No quotation marks around the tweet. No meta-commentary. Just the words.`;
 
 function unauthorized(): Response {
   return new Response(JSON.stringify({ error: "unauthorized" }), {
@@ -170,6 +202,63 @@ function buildContext(lastCommit: LastCommit | null, events: PushEvent[]): strin
   return lines.join("\n");
 }
 
+/** Unique repo names touched in the context, ordered by recency
+ *  (last-commit KV first, then events feed). Capped at 6 — the OG
+ *  route renders the first 3 + "+N more" pill for overflow. */
+function deriveRepos(
+  lastCommit: LastCommit | null,
+  events: PushEvent[],
+): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const push = (name: string | undefined) => {
+    if (!name) return;
+    const short = name.split("/").pop() ?? name;
+    if (!seen.has(short)) {
+      seen.add(short);
+      out.push(short);
+    }
+  };
+  push(lastCommit?.repo);
+  for (const e of events) push(e.repo.name);
+  return out.slice(0, 6);
+}
+
+/** Fetch the dynamic OG image as raw bytes. Returns null (with a
+ *  console.error) on any failure — caller continues with text-only. */
+async function fetchOgImage(
+  date: string,
+  repos: string[],
+): Promise<ArrayBuffer | null> {
+  const base = getSiteUrl();
+  const params = new URLSearchParams({ date });
+  if (repos.length > 0) params.set("repos", repos.join(","));
+  const url = `${base}/api/og/standup?${params.toString()}`;
+
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) {
+      console.error(
+        "[auto-tweet] og fetch non-2xx:",
+        JSON.stringify({ status: res.status, url }),
+      );
+      return null;
+    }
+    const buf = await res.arrayBuffer();
+    if (buf.byteLength === 0) {
+      console.error("[auto-tweet] og fetch empty body");
+      return null;
+    }
+    return buf;
+  } catch (err) {
+    console.error(
+      "[auto-tweet] og fetch failed:",
+      err instanceof Error ? err.message : "unknown",
+    );
+    return null;
+  }
+}
+
 async function generateDraft(context: string): Promise<string | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   try {
@@ -236,13 +325,45 @@ export async function POST(req: Request) {
     );
   }
 
-  const postResult = await postTweet(draft);
+  // ── Media pipeline ────────────────────────────────────────────
+  // Generate the dynamic OG image (date + up to 3 repos as pills +
+  // 5-node constellation) and upload it to Twitter v1.1 so the
+  // tweet has visual anchor on a busy timeline. Any failure here
+  // is non-fatal — we fall through to a text-only post and record
+  // the reason for next-morning inspection.
+  const repos = deriveRepos(lastCommit, events);
+  let mediaIdString: string | null = null;
+  let mediaError: string | null = null;
+
+  const ogBuffer = await fetchOgImage(date, repos);
+  if (!ogBuffer) {
+    mediaError = "og-fetch-failed";
+  } else {
+    const uploadResult = await uploadMedia(ogBuffer, "image/png");
+    if (uploadResult.ok) {
+      mediaIdString = uploadResult.media_id_string;
+    } else {
+      mediaError = uploadResult.error;
+      console.error(
+        "[auto-tweet] media upload failed:",
+        JSON.stringify({ date, error: uploadResult.error }),
+      );
+    }
+  }
+
+  const postResult = await postTweet(draft, {
+    mediaIds: mediaIdString ? [mediaIdString] : undefined,
+  });
 
   const baseRecord: DailyStandupRecord = {
     date,
     draft,
     context_summary: context.slice(0, 500),
+    og_repos: repos.join(","),
   };
+  if (mediaIdString) baseRecord.media_id_string = mediaIdString;
+  if (mediaError) baseRecord.media_error = mediaError;
+
   const record: DailyStandupRecord =
     postResult.ok
       ? {
@@ -267,20 +388,39 @@ export async function POST(req: Request) {
   if (!postResult.ok) {
     console.error(
       "[auto-tweet] post failed:",
-      JSON.stringify({ date, error: postResult.error }),
+      JSON.stringify({ date, error: postResult.error, mediaError }),
     );
     return Response.json(
-      { ok: false, date, draft, error: postResult.error },
+      {
+        ok: false,
+        date,
+        draft,
+        error: postResult.error,
+        media_error: mediaError,
+      },
       { status: 502, headers: { "Cache-Control": "no-store" } },
     );
   }
 
   console.log(
     "[auto-tweet] posted:",
-    JSON.stringify({ date, tweet_id: postResult.tweet_id, length: draft.length }),
+    JSON.stringify({
+      date,
+      tweet_id: postResult.tweet_id,
+      length: draft.length,
+      with_media: Boolean(mediaIdString),
+      media_error: mediaError,
+    }),
   );
   return Response.json(
-    { ok: true, date, draft, tweet_id: postResult.tweet_id },
+    {
+      ok: true,
+      date,
+      draft,
+      tweet_id: postResult.tweet_id,
+      with_media: Boolean(mediaIdString),
+      media_error: mediaError ?? undefined,
+    },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
