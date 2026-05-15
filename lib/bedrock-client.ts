@@ -34,15 +34,27 @@ export function getBedrockClient(): BedrockRuntimeClient {
   const config: BedrockRuntimeClientConfig = {
     region: process.env.AWS_BEDROCK_REGION ?? DEFAULT_REGION,
     credentials: { accessKeyId, secretAccessKey },
+    // Match the production CWH backend (services/bedrock_advisor.py): no
+    // retries. The v3 SDK defaults to 3 attempts with exponential backoff,
+    // which (a) eats the function maxDuration when Bedrock is throttled
+    // and (b) wraps the original ClientError in a "retry exhausted" shell
+    // that hides what really went wrong.
+    maxAttempts: 1,
   };
 
   return new BedrockRuntimeClient(config);
 }
 
-/** Bedrock-side model id for Claude 3.5 Haiku, matching the model
- *  Cloud Waste Hunter uses in production (see data/projects.ts). */
+/** Bedrock-side model id for Claude 3.5 Haiku.
+ *
+ *  The `us.` prefix selects the cross-region **inference profile**.
+ *  AWS no longer offers on-demand throughput for the plain
+ *  `anthropic.claude-3-5-haiku-20241022-v1:0` id in most accounts —
+ *  calls without the prefix surface as `ValidationException: ... not
+ *  available for on-demand throughput`. The reference CWH backend
+ *  (`services/bedrock_advisor.py` line 25) uses the same prefixed id. */
 export const CLAUDE_HAIKU_BEDROCK_ID =
-  "anthropic.claude-3-5-haiku-20241022-v1:0";
+  "us.anthropic.claude-3-5-haiku-20241022-v1:0";
 
 /** Bedrock anthropic version pin — required in every InvokeModel
  *  payload for anthropic.* models. */

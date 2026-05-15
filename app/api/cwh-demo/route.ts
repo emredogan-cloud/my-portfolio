@@ -21,10 +21,20 @@ import {
  * Cost control: rate-limit, hard policy-length cap, max_tokens=800,
  * temperature 0.3, and a clean 503 if AWS credentials are missing.
  *
- * Runtime: edge — first token target < 1s per Phase 2 perf budget.
+ * Runtime: nodejs. The previous edge runtime crashed pre-flight —
+ * @aws-sdk/client-bedrock-runtime's SigV4 signer + EventStream codec
+ * depend on Node-only internals that don't fully resolve on Vercel's
+ * v8 isolates, so client.send() threw before any outbound request
+ * reached AWS ("External APIs: No outgoing requests" in the Vercel
+ * function logs). The production CWH backend
+ * (services/bedrock_advisor.py) runs boto3 on AWS Lambda — a
+ * Node-equivalent — so this route matches that posture instead of
+ * fighting the SDK on edge. maxDuration is sized to absorb a
+ * worst-case streaming response under the no-retry config.
  */
 
-export const runtime = "edge";
+export const runtime = "nodejs";
+export const maxDuration = 30;
 
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_SECONDS = 3600;
@@ -102,7 +112,15 @@ export async function POST(req: Request) {
   let client;
   try {
     client = getBedrockClient();
-  } catch {
+  } catch (err) {
+    // "bedrock-not-configured" → credentials env var missing. Anything
+    // else is a programming error (bad region literal, etc.) and is
+    // surfaced as 503 too so the client renders "sandbox-offline"
+    // rather than a confusing 502.
+    const msg = err instanceof Error ? err.message : "unknown";
+    if (msg !== "bedrock-not-configured") {
+      console.error("[cwh-demo] client construction failed:", msg);
+    }
     return jsonError("sandbox-offline", 503);
   }
 
@@ -128,8 +146,36 @@ export async function POST(req: Request) {
   try {
     response = await client.send(command);
   } catch (err) {
+    // Surface the AWS error name + code in Vercel logs so the next
+    // failure mode is diagnosable without re-deploying. The client
+    // still receives a sanitized message — we don't want to leak
+    // arn / accountId / region details into the public response.
+    const e = err as { name?: string; $metadata?: { httpStatusCode?: number }; message?: string };
+    console.error(
+      "[cwh-demo] bedrock send failed:",
+      JSON.stringify({
+        name: e?.name,
+        httpStatusCode: e?.$metadata?.httpStatusCode,
+        message: e?.message,
+      }),
+    );
+
+    // AccessDeniedException / ValidationException / ResourceNotFoundException →
+    // IAM or model-access misconfiguration. 503 so the widget shows
+    // "sandbox temporarily offline" instead of "Bedrock returned an
+    // error, try again" (which would be misleading — retrying won't fix
+    // an IAM problem).
+    const accessDenied =
+      e?.name === "AccessDeniedException" ||
+      e?.name === "ValidationException" ||
+      e?.name === "ResourceNotFoundException" ||
+      e?.name === "UnauthorizedException";
+    if (accessDenied) {
+      return jsonError("sandbox-offline", 503);
+    }
+
     return jsonError("bedrock-error", 502, {
-      message: err instanceof Error ? err.message : "unknown",
+      message: e?.message ?? "unknown",
     });
   }
 
@@ -167,6 +213,10 @@ export async function POST(req: Request) {
         }
         controller.close();
       } catch (err) {
+        console.error(
+          "[cwh-demo] stream iteration failed:",
+          err instanceof Error ? err.message : "unknown",
+        );
         controller.error(err);
       }
     },
