@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { GitCommit } from "lucide-react";
 
-const GITHUB_USER = "emredogan-cloud";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 interface PushEvent {
@@ -55,13 +54,13 @@ function truncate(s: string, max: number): string {
  * Hydration strategy:
  *   1. Server + first client paint both render the "loading"
  *      skeleton — identical HTML, no mismatch.
- *   2. After hydration, useEffect fires once: fetch the GitHub
- *      Events API, find the latest PushEvent, populate state
- *      with `Date.now()` for the timeago anchor.
- *   3. A 60s interval re-stamps `now` so the timeago string
- *      stays fresh without re-fetching (GitHub anonymous rate
- *      limit is 60/hr — we get the data once per page load
- *      and tick locally).
+ *   2. After hydration, useEffect fires once: hit the in-house
+ *      /api/github-feed edge endpoint (KV-cached upstream), find
+ *      the latest PushEvent, populate state with `Date.now()` for
+ *      the timeago anchor.
+ *   3. A 60s interval re-stamps `now` so the timeago string stays
+ *      fresh without re-fetching — the KV layer absorbs the upstream
+ *      GitHub rate limit (60/hr anonymous) across all visitors.
  */
 export default function LiveGitHubFeed() {
   const [state, setState] = useState<FeedState>(INITIAL_STATE);
@@ -71,10 +70,7 @@ export default function LiveGitHubFeed() {
 
     async function load() {
       try {
-        const res = await fetch(
-          `https://api.github.com/users/${GITHUB_USER}/events/public`,
-          { cache: "no-store" },
-        );
+        const res = await fetch("/api/github-feed", { cache: "no-store" });
         if (!res.ok) throw new Error(`status ${res.status}`);
         const data: unknown = await res.json();
         if (!Array.isArray(data)) throw new Error("malformed response");
