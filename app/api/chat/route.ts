@@ -23,6 +23,11 @@ import { LUMINA_SYSTEM_PROMPT } from "@/lib/lumina/system-prompt";
  *  - Moderation          → run inputs/outputs through a filter
  */
 
+/* Edge runtime — TTFB on a streaming Anthropic call drops from
+   the Node cold-start floor (~600-1500ms) into low triple digits.
+   @ai-sdk/anthropic v3 is built against the Edge-compatible Web
+   Fetch API, no Node-only imports. maxDuration still applies. */
+export const runtime = "edge";
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
