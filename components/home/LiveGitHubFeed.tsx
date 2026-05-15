@@ -12,6 +12,9 @@ interface PushEvent {
   created_at: string;
   payload: {
     commits?: { message: string; sha: string }[];
+    /** The head SHA of the push; present even when commits[] is
+     *  trimmed by GitHub's events API. */
+    head?: string;
   };
 }
 
@@ -117,8 +120,21 @@ export default function LiveGitHubFeed() {
   }
 
   const event = state.event;
-  const commitMsg =
-    event.payload.commits?.[0]?.message?.split("\n")[0] ?? "(no commit message)";
+  // GitHub's public events API truncates the commits[] array on busy
+  // accounts — payload.commits can be empty even on a real push. Pick
+  // the LAST commit (tip of the push, what visitors care about), and
+  // fall back to a short-sha pointer if that's also missing.
+  const lastCommit =
+    event.payload.commits && event.payload.commits.length > 0
+      ? event.payload.commits[event.payload.commits.length - 1]
+      : undefined;
+  const rawMessage = lastCommit?.message?.split("\n")[0]?.trim();
+  const sha = lastCommit?.sha ?? event.payload.head ?? "";
+  const commitMsg = rawMessage && rawMessage.length > 0
+    ? rawMessage
+    : sha
+      ? `commit ${sha.slice(0, 7)}`
+      : "a new commit";
   const repo = event.repo.name.split("/").pop() ?? event.repo.name;
   const timeago = formatTimeAgo(event.created_at, state.now);
 
