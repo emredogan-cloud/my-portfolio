@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ED.">
+  <defs>
+    <radialGradient id="halo" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#00d2ff" stop-opacity="0.30"/>
+      <stop offset="55%" stop-color="#00d2ff" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#00d2ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="#000000"/>
+  <circle cx="256" cy="256" r="240" fill="url(#halo)"/>
+  <text
+    x="50%"
+    y="50%"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+    font-weight="600"
+    font-size="220"
+    letter-spacing="-12"
+    fill="#ffffff"
+  >ED.</text>
+</svg>
