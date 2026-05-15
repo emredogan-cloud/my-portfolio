@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <main className="relative min-h-screen bg-black">
+    <main id="main" className="relative min-h-screen bg-black">
       {/* Ambient atmosphere */}
       <div
         className="pointer-events-none fixed inset-0 z-0"

@@ -37,6 +37,16 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${geist.className} bg-black text-white antialiased overflow-x-hidden`}
       >
+        {/* Skip-to-content — invisible until Tab focus, then a white pill in
+            the top-left corner. Bypasses the navbar + cinematic intro for
+            keyboard and screen-reader visitors. Targets the per-page <main>
+            element, which carries id="main". */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:bg-white focus:text-black focus:px-4 focus:py-2 focus:rounded-full focus:font-medium focus:text-sm"
+        >
+          Skip to content
+        </a>
         {/* Global cinematic film-grain overlay — deferred 3.5s for intro perf */}
         <GlobalGrain />
         <OpeningSequence />
