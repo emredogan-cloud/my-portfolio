@@ -148,7 +148,15 @@ export type PostTweetResult =
       detail?: string;
     };
 
-export async function postTweet(text: string): Promise<PostTweetResult> {
+interface PostTweetOptions {
+  /** v1.1 media_id_string values (max 4 per tweet per Twitter rules). */
+  mediaIds?: string[];
+}
+
+export async function postTweet(
+  text: string,
+  options?: PostTweetOptions,
+): Promise<PostTweetResult> {
   const trimmed = text.trim();
   if (!trimmed) return { ok: false, error: "tweet-empty" };
   if (trimmed.length > TWEET_MAX_LENGTH) {
@@ -173,6 +181,12 @@ export async function postTweet(text: string): Promise<PostTweetResult> {
     return { ok: false, error: "twitter-unreachable" };
   }
 
+  const mediaIds = options?.mediaIds?.filter(Boolean).slice(0, 4) ?? [];
+  const tweetBody: Record<string, unknown> = { text: trimmed };
+  if (mediaIds.length > 0) {
+    tweetBody.media = { media_ids: mediaIds };
+  }
+
   let res: Response;
   try {
     res = await fetch(url, {
@@ -181,7 +195,7 @@ export async function postTweet(text: string): Promise<PostTweetResult> {
         Authorization: authHeader,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ text: trimmed }),
+      body: JSON.stringify(tweetBody),
     });
   } catch (err) {
     console.error(
@@ -212,4 +226,115 @@ export async function postTweet(text: string): Promise<PostTweetResult> {
     return { ok: false, error: "no-tweet-id" };
   }
   return { ok: true, tweet_id: tweetId };
+}
+
+/* ── Media upload (v1.1) ───────────────────────────────────────── */
+
+export type UploadMediaResult =
+  | { ok: true; media_id_string: string }
+  | {
+      ok: false;
+      error:
+        | "twitter-not-configured"
+        | "media-empty"
+        | "media-too-large"
+        | "twitter-unreachable"
+        | "no-media-id"
+        | `twitter-error-${number}`;
+      detail?: string;
+    };
+
+/** Twitter v1.1 simple upload supports up to 5MB for images. We keep
+ *  the cap at 4.5MB to leave headroom for multipart envelope overhead. */
+const MEDIA_MAX_BYTES = 4_500_000;
+
+/**
+ * Upload a media buffer to Twitter v1.1 and return the media_id_string.
+ *
+ * Endpoint: POST https://upload.twitter.com/1.1/media/upload.json
+ * Auth: OAuth 1.0a (same flow as postTweet — multipart bodies are NOT
+ *       included in the signature base string, so buildAuthorization
+ *       Header works unchanged).
+ * Body: multipart/form-data with a single `media` field carrying the
+ *       binary. FormData + Blob are native on edge runtime.
+ *
+ * Returns media_id_string (NOT media_id) to preserve precision —
+ * Twitter snowflake ids overflow JSON number precision.
+ */
+export async function uploadMedia(
+  buffer: ArrayBuffer | Uint8Array,
+  mimeType: string,
+): Promise<UploadMediaResult> {
+  const view =
+    buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : buffer;
+  if (view.byteLength === 0) return { ok: false, error: "media-empty" };
+  if (view.byteLength > MEDIA_MAX_BYTES) {
+    return { ok: false, error: "media-too-large" };
+  }
+
+  const credentials = getTwitterCredentials();
+  if (!credentials) {
+    return { ok: false, error: "twitter-not-configured" };
+  }
+
+  const url = "https://upload.twitter.com/1.1/media/upload.json";
+
+  let authHeader: string;
+  try {
+    authHeader = await buildAuthorizationHeader("POST", url, credentials);
+  } catch (err) {
+    console.error(
+      "[twitter-media] auth header build failed:",
+      err instanceof Error ? err.message : "unknown",
+    );
+    return { ok: false, error: "twitter-unreachable" };
+  }
+
+  const form = new FormData();
+  form.append(
+    "media",
+    new Blob([new Uint8Array(view)], { type: mimeType }),
+    "standup.png",
+  );
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: {
+        // Note: do NOT set Content-Type here — fetch + FormData will
+        // generate the multipart boundary automatically. Setting it
+        // manually breaks the upload.
+        Authorization: authHeader,
+      },
+      body: form,
+    });
+  } catch (err) {
+    console.error(
+      "[twitter-media] fetch failed:",
+      err instanceof Error ? err.message : "unknown",
+    );
+    return { ok: false, error: "twitter-unreachable" };
+  }
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    console.error(
+      "[twitter-media] non-2xx:",
+      JSON.stringify({ status: res.status, detail: detail.slice(0, 300) }),
+    );
+    return {
+      ok: false,
+      error: `twitter-error-${res.status}` as const,
+      detail: detail.slice(0, 300),
+    };
+  }
+
+  const data = (await res.json().catch(() => ({}))) as {
+    media_id_string?: string;
+  };
+  if (!data.media_id_string) {
+    return { ok: false, error: "no-media-id" };
+  }
+  return { ok: true, media_id_string: data.media_id_string };
 }
