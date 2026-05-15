@@ -2,38 +2,46 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { MILESTONES, type Milestone } from "./milestones";
-import { ILLUSTRATION_BY_ID } from "./Illustrations";
+import type { Milestone, IllustrationsById } from "./types";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
- * ScrollStory — the interactive engine for /architecture.
+ * ScrollStory — the project-agnostic scroll-story engine for the
+ * /architecture section.
  *
- * Responsibilities (Step 2 — engine only):
- *   1. Render all 8 milestones as a vertical list of full-screen
- *      sections. The SSR pass produces the same HTML so crawlers and
- *      JS-disabled visitors still see the story.
- *   2. Track the active milestone via IntersectionObserver — picks
- *      whichever milestone has the highest intersection ratio at any
- *      moment, so the active state is robust to fast scrolling.
- *   3. Drive a single fixed background blob whose position eases
- *      toward the active milestone's `gradient.{x,y,intensity}`.
- *   4. Mount a sticky header at the top showing the current step
- *      eyebrow + progress.
+ * Each project page under /architecture/{project} supplies its own
+ * milestones array + illustration dispatch map and feeds them in
+ * via props. The engine handles:
+ *   1. SSR-render every milestone so crawlers + JS-disabled visitors
+ *      still see the full story.
+ *   2. IntersectionObserver-driven active-milestone tracking.
+ *   3. A single fixed cyan background blob whose position eases
+ *      toward `active.gradient.{x,y,intensity}`.
+ *   4. Sticky pill at the top showing the current step + N/total.
+ *   5. Mobile scroll-snap, opt-in via a body class scoped under
+ *      (max-width: 767px) in globals.css.
  *
- * Step 3 (next commit) widens each milestone's body and adds the
- * per-step illustrations. Step 4 layers mobile-specific polish.
+ * Cinematic identity: stays inside the cyan/black palette by varying
+ * gradient POSITION + INTENSITY, not hue.
  *
- * Identity: stays inside the cyan/black palette by varying gradient
- * POSITION + INTENSITY, not hue — so the cinematic identity rules
- * (no new accents) hold.
- *
- * Reduced motion: useReducedMotion disables the background eased
- * transition and the per-milestone fade-up. The content is fully
- * legible without animation.
+ * Reduced motion: useReducedMotion disables the eased background
+ * transition + the per-milestone fade-up. Content remains legible.
  */
-export default function ScrollStory() {
+
+interface ScrollStoryProps {
+  /** Ordered list of milestones to render. */
+  milestones: readonly Milestone[];
+  /** Map from milestone.id → SVG illustration component. Missing
+   *  entries are tolerated; the engine just renders no illustration
+   *  for that step. */
+  illustrationsById: IllustrationsById;
+}
+
+export default function ScrollStory({
+  milestones,
+  illustrationsById,
+}: ScrollStoryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const milestoneRefs = useRef<(HTMLLIElement | null)[]>([]);
   const ratiosRef = useRef<Map<number, number>>(new Map());
@@ -84,7 +92,8 @@ export default function ScrollStory() {
     return () => document.body.classList.remove(klass);
   }, []);
 
-  const active = MILESTONES[activeIndex] ?? MILESTONES[0];
+  const active = milestones[activeIndex] ?? milestones[0];
+  if (!active) return null;
 
   return (
     <div className="relative">
@@ -95,16 +104,18 @@ export default function ScrollStory() {
         reducedMotion={!!prefersReducedMotion}
       />
 
-      <ProgressHeader active={active} activeIndex={activeIndex} />
+      <ProgressHeader
+        active={active}
+        activeIndex={activeIndex}
+        total={milestones.length}
+      />
 
-      <ol
-        className="relative z-10 mt-20"
-        aria-label="Cloud Waste Hunter architecture, eight steps"
-      >
-        {MILESTONES.map((m, i) => (
+      <ol className="relative z-10 mt-20">
+        {milestones.map((m, i) => (
           <MilestoneSection
             key={m.id}
             milestone={m}
+            illustration={illustrationsById[m.id]}
             index={i}
             registerRef={(el) => {
               milestoneRefs.current[i] = el;
@@ -122,9 +133,10 @@ export default function ScrollStory() {
 interface ProgressHeaderProps {
   active: Milestone;
   activeIndex: number;
+  total: number;
 }
 
-function ProgressHeader({ active, activeIndex }: ProgressHeaderProps) {
+function ProgressHeader({ active, activeIndex, total }: ProgressHeaderProps) {
   return (
     <div
       className="sticky top-4 z-20 mx-auto w-fit max-w-[calc(100vw-1.5rem)] px-3"
@@ -135,7 +147,7 @@ function ProgressHeader({ active, activeIndex }: ProgressHeaderProps) {
           {active.accent}
         </span>
         <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.14em] sm:tracking-[0.16em] text-white/30 whitespace-nowrap">
-          {activeIndex + 1} / {MILESTONES.length}
+          {activeIndex + 1} / {total}
         </span>
       </div>
     </div>
@@ -171,6 +183,7 @@ function BackgroundBlob({ x, y, intensity, reducedMotion }: BackgroundBlobProps)
 
 interface MilestoneSectionProps {
   milestone: Milestone;
+  illustration?: (p: { className?: string }) => React.ReactNode;
   index: number;
   registerRef: (el: HTMLLIElement | null) => void;
   reducedMotion: boolean;
@@ -178,11 +191,11 @@ interface MilestoneSectionProps {
 
 function MilestoneSection({
   milestone,
+  illustration: Illustration,
   index,
   registerRef,
   reducedMotion,
 }: MilestoneSectionProps) {
-  const Illustration = ILLUSTRATION_BY_ID[milestone.id];
   return (
     <li
       ref={registerRef}

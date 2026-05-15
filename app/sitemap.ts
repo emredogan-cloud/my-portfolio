@@ -11,6 +11,9 @@ const STATIC_ROUTES = [
   "/notes",
   "/contact",
   "/architecture",
+  "/architecture/cloud-waste-hunter",
+  "/architecture/vibing-coder-ai",
+  "/architecture/sixpack-ai",
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {

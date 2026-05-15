@@ -9,6 +9,7 @@ import TerminalShowcase from "@/components/home/TerminalShowcase";
 const NAV_ITEMS = [
   { label: "About", href: "/about" },
   { label: "Projects", href: "/projects" },
+  { label: "Architecture", href: "/architecture" },
   { label: "Stack", href: "/stack" },
   { label: "Notes", href: "/notes" },
   { label: "Contact", href: "/contact" },

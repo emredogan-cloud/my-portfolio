@@ -1,28 +1,12 @@
 /**
- * The 8 milestones that make up the /architecture scroll story.
+ * Cloud Waste Hunter — eight milestones for /architecture/cloud-waste-hunter.
  *
- * This commit (Step 2 / ScrollStory engine) carries titles + short
- * single-sentence bodies — enough for the engine to prove out the
- * intersection-driven transitions. Step 3 will widen each milestone
- * with the richer prose + illustrations.
- *
- * Each milestone also carries:
- *   accent — a small chip/eyebrow shown above the title.
- *   gradient — { x, y } percentages controlling where the cyan
- *              radial blob sits in the background for this section.
- *              All milestones stay inside the cyan/#00d2ff palette;
- *              we vary POSITION, not hue, to honour the cinematic
- *              identity rules ("cyan only, never new hues").
+ * The Milestone type lives in app/architecture/_components/types.ts
+ * so every project under /architecture/{project} can share the same
+ * scroll-story engine while owning its own content.
  */
 
-export interface Milestone {
-  id: string;
-  accent: string;
-  title: string;
-  body: string;
-  /** Background blob position as a percentage of the viewport. */
-  gradient: { x: number; y: number; intensity: number };
-}
+import type { Milestone } from "../../_components/types";
 
 export const MILESTONES: readonly Milestone[] = [
   {
