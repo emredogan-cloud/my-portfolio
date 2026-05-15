@@ -20,6 +20,7 @@ import {
 } from "ai";
 import { X, ArrowUp, Copy, Check, RotateCcw, Loader2 } from "lucide-react";
 import { LuminaAvatar } from "./LuminaAvatar";
+import LuminaVoice from "./LuminaVoice";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -127,6 +128,42 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
   const { messages, setMessages, sendMessage, status, error } = useChat({
     transport,
   });
+
+  /* Voice mode glue.
+     - ttsTrigger is fed to <LuminaVoice/>; component dedupes by id and
+       plays only if its voiceLatchRef is set (visitor used mic last).
+     - lastSetTtsIdRef prevents this effect from re-creating the same
+       trigger object whenever any state change re-runs the effect. */
+  const [ttsTrigger, setTtsTrigger] = useState<
+    { id: string; text: string } | null
+  >(null);
+  const lastSetTtsIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    // Only consider a turn complete when useChat reports it as such.
+    if (status !== "ready") return;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role !== "assistant") continue;
+      if (lastSetTtsIdRef.current === m.id) return;
+      const text = m.parts
+        .filter(
+          (p): p is { type: "text"; text: string } => p.type === "text",
+        )
+        .map((p) => p.text)
+        .join("")
+        .trim();
+      if (!text) return;
+      lastSetTtsIdRef.current = m.id;
+      setTtsTrigger({ id: m.id, text });
+      return;
+    }
+  }, [messages, status]);
+
+  const handleVoiceTranscript = (text: string) => {
+    if (!text.trim()) return;
+    sendMessage({ text });
+  };
 
   const isLoading =
     (status === "submitted" || status === "streaming") && !error;
@@ -586,6 +623,11 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             disabled={inputDisabled}
             autoComplete="off"
             className="lumina-input flex-1 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          />
+          <LuminaVoice
+            onTranscript={handleVoiceTranscript}
+            disabled={inputDisabled}
+            ttsTrigger={ttsTrigger}
           />
           <button
             type="submit"
