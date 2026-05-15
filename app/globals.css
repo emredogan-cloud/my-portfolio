@@ -148,3 +148,20 @@
       0 0 0 1px rgba(0, 210, 255, 0.30);
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Global reduced-motion guard. Vestibular-disorder visitors get
+   every infinite animation collapsed to a near-instant single
+   pass. Lumina, the cinematic intro, and motion/react springs
+   all honor this without per-component opt-in. Last rule on
+   purpose so it overrides everything declared above.
+   Phase 1 — Foundation Hardening.
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
