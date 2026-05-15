@@ -59,19 +59,19 @@ Discipline compounds faster than intellect. I don't rely on motivation; I rely o
   },
   {
     slug: "sixpack-ai-pose-detection",
-    title: "Real-Time Pose Detection on Mobile: Building SixPack AI",
+    title: "Real-Time Pose Detection on Mobile: Building FormAI",
     excerpt:
-      "Bringing machine learning to mobile environments usually means dealing with severe performance bottlenecks. For SixPack AI, sending video frames to a cloud server API was out of the question.",
+      "Bringing machine learning to mobile environments usually means dealing with severe performance bottlenecks. For FormAI (a Flutter fitness coach), sending video frames to a cloud server API was out of the question.",
     date: "2026-03-01",
     readTime: "4 min read",
     tags: ["Mobile", "Flutter", "ML Kit", "Edge AI"],
-    body: `Bringing machine learning to mobile environments usually means dealing with severe performance bottlenecks. For SixPack AI, a fitness application designed to track and correct workout form in real-time, sending video frames to a cloud server API was out of the question. The latency would ruin the user experience.
+    body: `Bringing machine learning to mobile environments usually means dealing with severe performance bottlenecks. For FormAI — a Flutter fitness application designed to track and correct workout form in real-time — sending video frames to a cloud server API was out of the question. The latency would ruin the user experience.
 
 The architecture had to be edge-first. I built the application natively using **Flutter** for cross-platform fluidity. For the ML layer, I integrated Google's ML Kit directly on the device. This allows the app to process pose detection algorithms at 30+ FPS without a single network request.
 
 To handle the backend infrastructure—user authentication, workout history, and real-time synchronization—I integrated **Supabase**. It gave me the power of PostgreSQL with instant API generation, perfectly complementing the edge-heavy mobile client. For monetization, RevenueCat handles the subscription states seamlessly.
 
-Building SixPack AI taught me that the best cloud architecture is sometimes knowing when *not* to use the cloud. Offloading the heavy lifting to the user's neural engine (NPU) creates a zero-latency experience that cloud servers simply can't beat.`,
+Building FormAI taught me that the best cloud architecture is sometimes knowing when *not* to use the cloud. Offloading the heavy lifting to the user's neural engine (NPU) creates a zero-latency experience that cloud servers simply can't beat.`,
   },
 ];
 

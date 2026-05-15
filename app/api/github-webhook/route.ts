@@ -117,31 +117,74 @@ export async function POST(req: Request) {
     return jsonError("invalid-json", 400);
   }
 
-  const head = (payload as { head_commit?: unknown }).head_commit;
-  if (!head || typeof head !== "object") {
-    // Branch deletion pushes have no head_commit. Drop quietly.
+  // GitHub PushEvent payload shape:
+  //   head_commit  → object with .id .message .timestamp .author, OR null
+  //                  on certain pushes (branch delete, force-push to nothing).
+  //   commits      → ordered array of CommitObject entries with the same
+  //                  fields. The last entry is the tip of the push.
+  // Empirically head_commit is occasionally missing or carries an empty
+  // message (e.g., merge commits with auto-generated bodies stripped, or
+  // pushes where GitHub's webhook generator hasn't filled the field).
+  // We extract from head_commit first, then fall back to commits[-1].
+  const top = payload as {
+    head_commit?: { id?: unknown; message?: unknown; timestamp?: unknown } | null;
+    commits?: Array<{ id?: unknown; message?: unknown; timestamp?: unknown }>;
+    repository?: { name?: unknown };
+  };
+
+  const headCommit = top.head_commit;
+  const commits = Array.isArray(top.commits) ? top.commits : [];
+  const lastCommit = commits[commits.length - 1];
+
+  // Pick the first source that yields a usable id+timestamp pair.
+  const source = headCommit && typeof headCommit === "object" ? headCommit : lastCommit;
+  if (!source) {
+    // Branch deletion pushes have no head_commit AND no commits array.
+    // Drop quietly.
     return Response.json({ ignored: "no-head-commit" });
   }
 
-  const repo = (payload as { repository?: { name?: unknown } }).repository;
   const repoName =
-    typeof repo?.name === "string" ? repo.name : "unknown-repo";
+    typeof top.repository?.name === "string"
+      ? top.repository.name
+      : "unknown-repo";
 
-  const headObj = head as {
-    id?: unknown;
-    message?: unknown;
-    timestamp?: unknown;
-  };
-  const sha = typeof headObj.id === "string" ? headObj.id : "";
+  const sha = typeof source.id === "string" ? source.id : "";
+  const headMessageRaw =
+    typeof source.message === "string" ? source.message : "";
+  // Defensive cascade: if the head source's message is empty/whitespace,
+  // try the OTHER commit (head → last in commits, or vice versa).
+  const fallbackMessageRaw =
+    headMessageRaw.trim().length === 0 && source !== lastCommit && lastCommit
+      ? typeof lastCommit.message === "string"
+        ? lastCommit.message
+        : ""
+      : headMessageRaw.trim().length === 0 && source !== headCommit && headCommit
+        ? typeof headCommit.message === "string"
+          ? headCommit.message
+          : ""
+        : "";
   const rawMessage =
-    typeof headObj.message === "string" ? headObj.message : "";
+    headMessageRaw.trim().length > 0 ? headMessageRaw : fallbackMessageRaw;
   const timestamp =
-    typeof headObj.timestamp === "string"
-      ? headObj.timestamp
+    typeof source.timestamp === "string"
+      ? source.timestamp
       : new Date().toISOString();
 
-  const firstLine = rawMessage.split("\n", 1)[0] ?? "";
+  const firstLine = rawMessage.split("\n", 1)[0]?.trim() ?? "";
   const message = firstLine.length > 200 ? firstLine.slice(0, 199) + "…" : firstLine;
+
+  // Log once per webhook so future "(no message)" reports are diagnosable
+  // from Vercel function logs without a redeploy.
+  console.log(
+    "[github-webhook] push event:",
+    JSON.stringify({
+      repo: repoName,
+      sha: sha.slice(0, 7),
+      message_length: message.length,
+      source: source === headCommit ? "head_commit" : "commits[last]",
+    }),
+  );
 
   const record: LastCommit = {
     at: timestamp,

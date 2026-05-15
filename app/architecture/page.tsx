@@ -1,20 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import ArchitectureHubGrid, {
+  type HubEntry,
+} from "./_components/ArchitectureHubGrid";
 
 export const metadata: Metadata = {
   title: "Architecture",
   description:
-    "Three production systems, three architectures. Scroll-through walkthroughs of Cloud Waste Hunter (serverless FinOps), VibingCoderAI (LLM agent infrastructure), and SixPack AI (edge ML on mobile).",
+    "Five production systems, five architectures. Scroll-through walkthroughs of Cloud Waste Hunter (serverless FinOps), VibingCoderAI (LLM agent infrastructure), and FormAI — Fitness Koçu (edge ML on mobile). PawDoc and Aevum architectures in development.",
 };
-
-interface HubEntry {
-  slug: string;
-  eyebrow: string;
-  title: string;
-  tagline: string;
-  stack: readonly string[];
-}
 
 const ENTRIES: readonly HubEntry[] = [
   {
@@ -24,6 +17,7 @@ const ENTRIES: readonly HubEntry[] = [
     tagline:
       "Cross-account AWS scanning, CUR 2.0 cost attribution, Bedrock-streamed remediation. The loop is the product.",
     stack: ["AWS Lambda", "DynamoDB", "Bedrock", "Glue + Athena"],
+    state: "ready",
   },
   {
     slug: "vibing-coder-ai",
@@ -32,14 +26,34 @@ const ENTRIES: readonly HubEntry[] = [
     tagline:
       "Casual developer ideas in, senior-grade AI agent briefs out. A decoupled monorepo: Next.js frontend, Lambda brain, Terraform under everything.",
     stack: ["Next.js 16", "Anthropic SDK", "AWS Lambda", "Terraform"],
+    state: "ready",
   },
   {
     slug: "sixpack-ai",
     eyebrow: "Edge ML & Mobile",
-    title: "SixPack AI",
+    title: "FormAI — Fitness Koçu",
     tagline:
       "Real-time pose detection at 30 fps on the device's NPU. The best cloud architecture is sometimes knowing when not to use the cloud.",
     stack: ["Flutter 3.22", "Google ML Kit", "Supabase", "RevenueCat"],
+    state: "ready",
+  },
+  {
+    slug: "pawdoc",
+    eyebrow: "Multimodal Pet Triage",
+    title: "PawDoc",
+    tagline:
+      "Computer vision + multimodal LLM scoring assessing pet symptoms against a structured veterinary triage framework. Built around 'monitor at home' vs 'go to the clinic now'.",
+    stack: ["React Native", "Computer Vision", "Multimodal AI", "Node.js"],
+    state: "in-development",
+  },
+  {
+    slug: "aevum",
+    eyebrow: "Eldercare Coordination",
+    title: "Aevum",
+    tagline:
+      "Unified operating system for adult children managing aging parents. Medications, appointments, insurance, family hand-off — one AI-generated daily briefing.",
+    stack: ["React Native", "AI Briefings", "Healthcare APIs", "Node.js"],
+    state: "concept",
   },
 ] as const;
 
@@ -86,64 +100,23 @@ export default function ArchitectureHubPage() {
             Architecture
           </p>
           <h1 className="text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-white">
-            Three systems.
+            Five systems.
             <br />
-            Three architectures.
+            Five architectures.
           </h1>
           <p className="text-white/55 text-lg leading-relaxed">
             Pick a project to walk through. Each one is a different
             discipline — serverless cloud, an LLM agent stack, edge ML
-            on mobile. Real production layouts, not diagrams.
+            on mobile, multimodal triage, eldercare coordination. The
+            top three carry full scroll-throughs today; PawDoc and
+            Aevum are drafting.
           </p>
         </header>
 
-        <section
-          aria-label="Project architecture stories"
-          className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5"
-        >
-          {ENTRIES.map((entry) => (
-            <HubCard key={entry.slug} entry={entry} />
-          ))}
-        </section>
+        <div className="mt-20">
+          <ArchitectureHubGrid entries={ENTRIES} />
+        </div>
       </div>
     </main>
-  );
-}
-
-/* ── Single card ─────────────────────────────────────────────────── */
-
-function HubCard({ entry }: { entry: HubEntry }) {
-  return (
-    <Link
-      href={`/architecture/${entry.slug}`}
-      className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 sm:p-7 transition-all duration-300 hover:border-[#00d2ff]/30 hover:bg-white/[0.04] focus:outline-none focus:ring-2 focus:ring-[#00d2ff]/30 min-h-[320px]"
-    >
-      <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/85">
-        {entry.eyebrow}
-      </p>
-      <h2 className="mt-3 text-2xl sm:text-3xl font-semibold tracking-[-0.03em] leading-tight text-white">
-        {entry.title}
-      </h2>
-      <p className="mt-4 text-sm leading-relaxed text-white/55 flex-grow">
-        {entry.tagline}
-      </p>
-      <ul className="mt-6 flex flex-wrap gap-1.5">
-        {entry.stack.map((tag) => (
-          <li
-            key={tag}
-            className="text-[10px] font-mono uppercase tracking-[0.14em] text-white/60 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1"
-          >
-            {tag}
-          </li>
-        ))}
-      </ul>
-      <div className="mt-6 inline-flex items-center gap-1.5 text-xs font-medium text-white/50 group-hover:text-[#00d2ff] transition-colors">
-        Walk through
-        <ArrowRight
-          className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
-          aria-hidden="true"
-        />
-      </div>
-    </Link>
   );
 }

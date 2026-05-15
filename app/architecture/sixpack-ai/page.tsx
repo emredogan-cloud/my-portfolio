@@ -6,16 +6,18 @@ import { MILESTONES } from "./_components/milestones";
 import { ILLUSTRATION_BY_ID } from "./_components/Illustrations";
 
 export const metadata: Metadata = {
-  title: "SixPack AI — Architecture",
+  title: "FormAI — Architecture",
   description:
-    "Four-step walkthrough of SixPack AI: a Flutter native edge client, Google ML Kit pose detection at 30fps on-device, Supabase real-time sync, RevenueCat-fronted subscriptions.",
+    "Four-step walkthrough of FormAI - Fitness Koçu: a Flutter native edge client, Google ML Kit pose detection at 30fps on-device, Supabase real-time sync, RevenueCat-fronted subscriptions.",
 };
 
 /**
  * /architecture/sixpack-ai
  *
- * Composes the shared ScrollStory engine with the SixPack-specific
- * milestones array and illustration dispatch map.
+ * Composes the shared ScrollStory engine with the FormAI-specific
+ * milestones array and illustration dispatch map. (Route path keeps
+ * the original "sixpack-ai" slug for stable URLs; only the display
+ * name was rebranded to "FormAI - Fitness Koçu".)
  */
 export default function SixPackArchitecturePage() {
   return (
@@ -33,10 +35,10 @@ export default function SixPackArchitecturePage() {
             Architecture hub
           </Link>
           <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/80">
-            SixPack AI · Edge ML &amp; Mobile
+            FormAI — Fitness Koçu · Edge ML &amp; Mobile
           </p>
           <h1 className="text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-white">
-            How SixPack AI works.
+            How FormAI works.
           </h1>
           <p className="text-white/55 text-lg leading-relaxed max-w-2xl">
             The opposite of the cloud-first instinct. Real-time pose
