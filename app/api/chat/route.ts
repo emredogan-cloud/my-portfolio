@@ -5,7 +5,7 @@ import {
   stepCountIs,
   type UIMessage,
 } from "ai";
-import { LUMINA_SYSTEM_PROMPT } from "@/lib/lumina/system-prompt";
+import { buildLuminaSystemPrompt } from "@/lib/lumina/system-prompt";
 import { LUMINA_TOOLS } from "@/lib/lumina/tools";
 import { saveSession, isValidSessionId } from "@/lib/lumina/memory";
 
@@ -39,48 +39,6 @@ import { saveSession, isValidSessionId } from "@/lib/lumina/memory";
 
 export const runtime = "edge";
 export const maxDuration = 30;
-
-/* Istanbul timezone is UTC+3 year-round (Türkiye dropped DST in 2016).
-   Build a short note describing what Emre is most likely doing right
-   now so Lumina can ground time-sensitive answers ("you can probably
-   reach him in the build window tonight"). */
-function buildTimeOfDayNote(): string {
-  const fmt = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/Istanbul",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  const parts = fmt.formatToParts(new Date());
-  const hour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
-  const minute = parseInt(
-    parts.find((p) => p.type === "minute")?.value ?? "0",
-    10,
-  );
-  const local = `${hour.toString().padStart(2, "0")}:${minute
-    .toString()
-    .padStart(2, "0")}`;
-
-  // Bands per data/notes.ts "monk-mode" — single source of truth for
-  // Emre's daily schedule.
-  //   01:30 – 08:00  bakery shift
-  //   08:00 – 16:00  high school
-  //   16:00 – 22:00  build window
-  //   22:00 – 01:30  sleeping
-  const minutes = hour * 60 + minute;
-  let band: string;
-  if (minutes >= 90 && minutes < 480) {
-    band = "Emre is currently at the bakery — 01:30-08:00 shift.";
-  } else if (minutes >= 480 && minutes < 960) {
-    band = "Emre is at school — 08:00-16:00.";
-  } else if (minutes >= 960 && minutes < 1320) {
-    band = "Emre is in his build window — 16:00-22:00.";
-  } else {
-    band = "Emre is likely asleep — 22:00-01:30.";
-  }
-
-  return `\n\n# Right now\nLocal time at Emre's location (Istanbul, UTC+3): ${local}. ${band}`;
-}
 
 interface ChatRequestBody {
   messages: UIMessage[];
@@ -117,7 +75,7 @@ export async function POST(req: Request) {
          (family precedes version, unlike the 3.x format). Pinned to a
          specific snapshot rather than an alias for production stability. */
       model: anthropic("claude-haiku-4-5-20251001"),
-      system: LUMINA_SYSTEM_PROMPT + buildTimeOfDayNote(),
+      system: buildLuminaSystemPrompt(),
       messages: await convertToModelMessages(messages),
       temperature: 0.6,
       tools: LUMINA_TOOLS,
