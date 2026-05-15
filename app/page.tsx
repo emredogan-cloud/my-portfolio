@@ -6,7 +6,7 @@ import LiveGitHubFeed from "@/components/home/LiveGitHubFeed";
 
 export default function Home() {
   return (
-    <main className="bg-black min-h-screen">
+    <main id="main" className="bg-black min-h-screen">
       <HeroSection />
       <MetricsRow />
       <AboutSection />

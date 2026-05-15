@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function NotesPage() {
   return (
-    <main className="relative min-h-screen bg-black">
+    <main id="main" className="relative min-h-screen bg-black">
       {/* Atmosphere */}
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
         <div

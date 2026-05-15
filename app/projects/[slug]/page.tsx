@@ -72,7 +72,7 @@ export default async function ProjectDetailPage({
     .filter(Boolean);
 
   return (
-    <main className="min-h-screen bg-black">
+    <main id="main" className="min-h-screen bg-black">
       {/* Ambient background */}
       <div
         className="pointer-events-none fixed inset-0 z-0"

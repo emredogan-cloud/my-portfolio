@@ -28,6 +28,12 @@ const T_FAILSAFE = 2500;
    net even if the welcome sequence breaks entirely. */
 const T_ABSOLUTE_UNLOCK = 3000;
 
+/* sessionStorage key for Lumina's conversation history. Scoped per
+   browser tab so a refresh keeps context, but a new tab starts clean.
+   The "v1" suffix lets us invalidate the schema later (Phase 2 may
+   widen UIMessage to include tool-use parts). */
+const CONVERSATION_KEY = "lumina-conversation-v1";
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -91,6 +97,11 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
 
   const handleNewConversation = () => {
     setMessages([]);
+    try {
+      sessionStorage.removeItem(CONVERSATION_KEY);
+    } catch {
+      /* ignore */
+    }
     inputRef.current?.focus();
   };
 
@@ -111,6 +122,36 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
     const t = setTimeout(() => setIsReady(true), T_ABSOLUTE_UNLOCK);
     return () => clearTimeout(t);
   }, []);
+
+  /* Conversation hydration — MUST run before the welcome sequence below
+     so the welcome effect sees sequenceFiredRef.current === true and
+     bails before appending its 3 lines on top of the restored history.
+     Strict-Mode safe: setting the ref + setMessages is idempotent. */
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(CONVERSATION_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed) || parsed.length === 0) return;
+      sequenceFiredRef.current = true;
+      setIsReady(true);
+      setMessages(parsed);
+    } catch {
+      /* corrupt payload or sessionStorage unavailable — ignore */
+    }
+  }, [setMessages]);
+
+  /* Persist conversation on every change. Skipped on the empty initial
+     state so a freshly cleared "New conversation" doesn't immediately
+     re-seed sessionStorage. */
+  useEffect(() => {
+    if (messages.length === 0) return;
+    try {
+      sessionStorage.setItem(CONVERSATION_KEY, JSON.stringify(messages));
+    } catch {
+      /* quota or unavailable — non-fatal */
+    }
+  }, [messages]);
 
   /* Welcome sequence — fires once, NO cleanup that clears timeouts. */
   useEffect(() => {
@@ -259,11 +300,11 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
               {statusLabel}
             </span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleNewConversation}
-              className="text-white/40 hover:text-white/85 transition-colors duration-200 p-1 rounded"
+              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-2.5 rounded"
               aria-label="New conversation"
               title="New conversation"
             >
@@ -272,7 +313,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="text-white/40 hover:text-white/85 transition-colors duration-200 p-1 rounded"
+              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-2.5 rounded"
               aria-label="Minimize Lumina"
               title="Minimize"
             >
