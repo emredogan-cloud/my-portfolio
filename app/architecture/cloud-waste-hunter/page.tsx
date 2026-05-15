@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import ScrollStory from "../_components/ScrollStory";
 import { MILESTONES } from "./_components/milestones";
 import { ILLUSTRATION_BY_ID } from "./_components/Illustrations";
+import CwhProCta from "@/components/cwh/CwhProCta";
 
 export const metadata: Metadata = {
   title: "Cloud Waste Hunter — Architecture",
@@ -51,6 +52,10 @@ export default function CWHArchitecturePage() {
           milestones={MILESTONES}
           illustrationsById={ILLUSTRATION_BY_ID}
         />
+
+        {/* End-of-story conversion surface. Same component used at
+            the bottom of /projects/aws-waste-hunter. */}
+        <CwhProCta />
       </div>
     </main>
   );

@@ -9,6 +9,7 @@ import { GalleryItem } from "./_components/GalleryItem";
 import ProductionMetrics from "./_components/ProductionMetrics";
 import AWSTopologyClient from "./_components/AWSTopologyClient";
 import CWHSandbox from "./_components/CWHSandbox";
+import CwhProCta from "@/components/cwh/CwhProCta";
 import { TOPOLOGY_NODES } from "./_components/topology-data";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -240,6 +241,16 @@ export default async function ProjectDetailPage({
               </span>
             </div>
             <CWHSandbox />
+          </Reveal>
+        )}
+
+        {/* ── CWH Pro CTA (Cloud Waste Hunter only) ──
+            Native, inline conversion surface. /pro is intentionally
+            absent from the global navbar; this card is how project-
+            page visitors discover the commercial tier. */}
+        {slug === "aws-waste-hunter" && (
+          <Reveal mode="mount" duration={0.65} delay={0.6}>
+            <CwhProCta />
           </Reveal>
         )}
 
