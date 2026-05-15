@@ -7,6 +7,8 @@ import { Reveal } from "@/components/ui/Reveal";
 import { HoverScaleAnchor } from "./_components/HoverScaleAnchor";
 import { GalleryItem } from "./_components/GalleryItem";
 import ProductionMetrics from "./_components/ProductionMetrics";
+import AWSTopologyClient from "./_components/AWSTopologyClient";
+import { TOPOLOGY_NODES } from "./_components/topology-data";
 
 const STATUS_LABEL: Record<string, string> = {
   shipped: "Live",
@@ -180,6 +182,41 @@ export default async function ProjectDetailPage({
 
         {/* ── Production Metrics (Cloud Waste Hunter only) ── */}
         {slug === "aws-waste-hunter" && <ProductionMetrics />}
+
+        {/* ── AWS Topology (Cloud Waste Hunter only) ──
+            The visual is canvas/SVG — invisible to crawlers and
+            screen readers. The <ul> below is the accessible
+            equivalent: same node list, server-rendered, sr-only so
+            visitors only see the interactive layer. */}
+        {slug === "aws-waste-hunter" && (
+          <Reveal
+            mode="mount"
+            duration={0.65}
+            delay={0.45}
+            className="mt-14 pt-10 border-t border-white/[0.08]"
+          >
+            <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+              <p className="text-xs font-medium text-white/30 tracking-widest uppercase">
+                AWS Topology
+              </p>
+              <span className="text-[10px] uppercase tracking-[0.18em] text-white/30">
+                Drag to rotate · hover for context
+              </span>
+            </div>
+
+            <ul className="sr-only">
+              {TOPOLOGY_NODES.map((n) => (
+                <li key={n.id}>
+                  <strong>{n.label}.</strong> {n.blurb}
+                </li>
+              ))}
+            </ul>
+
+            <div aria-hidden="true">
+              <AWSTopologyClient />
+            </div>
+          </Reveal>
+        )}
 
         {/* ── Detailed description ── */}
         <Reveal mode="mount" duration={0.65} delay={0.4} className="mt-14 pt-10 border-t border-white/[0.08] space-y-6">
