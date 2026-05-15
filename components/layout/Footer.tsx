@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
 import BuildBeacon from "./BuildBeacon";
+import LiveCustomerCounter from "./LiveCustomerCounter";
 
 /* ─── Inline brand SVGs (lucide v1.14 has no Github/Linkedin) ─── */
 function GitHubIcon({ className }: { className?: string }) {
@@ -36,14 +37,17 @@ export default function Footer() {
           flex flex-col md:flex-row md:items-center md:justify-between gap-5
         "
       >
-        {/* Signature + live build beacon group. Stacks vertically on
-            mobile so the beacon dot tucks under the signature line;
-            inline on desktop with a quiet divider in between. */}
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+        {/* Signature + live indicators group. Stacks vertically on
+            mobile so each pill tucks under the signature line; inline
+            on desktop with a quiet divider rhythm. LiveCustomerCounter
+            renders nothing until paying_customers > 0, so this slot is
+            invisible until CWH Pro has its first paying customer. */}
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4 flex-wrap">
           <p className="text-xs text-gray-500">
             ED. — Built between 01:30 bakery shifts and high-school exams. © 2026
           </p>
           <BuildBeacon />
+          <LiveCustomerCounter />
         </div>
         <nav className="flex items-center gap-6">
           <Link
