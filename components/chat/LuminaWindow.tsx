@@ -1,9 +1,24 @@
 "use client";
 
-import { useState, useRef, useEffect, type FormEvent } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  type FormEvent,
+} from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useChat } from "@ai-sdk/react";
-import { X, ArrowUp, Copy, Check, RotateCcw } from "lucide-react";
+import {
+  DefaultChatTransport,
+  isToolUIPart,
+  getToolName,
+  type UIMessage,
+  type UIMessagePart,
+  type UIDataTypes,
+  type UITools,
+} from "ai";
+import { X, ArrowUp, Copy, Check, RotateCcw, Loader2 } from "lucide-react";
 import { LuminaAvatar } from "./LuminaAvatar";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -33,6 +48,22 @@ const T_ABSOLUTE_UNLOCK = 3000;
    The "v1" suffix lets us invalidate the schema later (Phase 2 may
    widen UIMessage to include tool-use parts). */
 const CONVERSATION_KEY = "lumina-conversation-v1";
+
+/* localStorage key for the anonymous per-visitor session id. Survives
+   tab close + browser restart so /api/chat/load can recover the
+   thread across days. v1 suffix mirrors CONVERSATION_KEY in case the
+   memory schema ever needs a hard break. */
+const SESSION_ID_KEY = "lumina-session-id-v1";
+
+/* Short labels for the tool-status pill rendered inline above tool
+   outputs. Keys must match the tool names registered in
+   lib/lumina/tools.ts. Unknown tool name falls back to its raw id. */
+const TOOL_LABEL: Record<string, string> = {
+  listProjects: "checking projects",
+  getProjectDetails: "reading project case",
+  searchNotes: "searching notes",
+  getRecentCommits: "checking GitHub",
+};
 
 interface Props {
   isOpen: boolean;
@@ -69,7 +100,33 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const sequenceFiredRef = useRef(false);
 
-  const { messages, setMessages, sendMessage, status, error } = useChat();
+  /* Session id state + ref. The ref backs the transport's body
+     function so a session-id rotation (via "New conversation") is
+     visible to the very next sendMessage without recreating the
+     transport. */
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    sessionIdRef.current = sessionId;
+  }, [sessionId]);
+
+  /* Stable transport — created once, reads the live sessionId via the
+     ref every time it builds a request body. */
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: () => {
+          const id = sessionIdRef.current;
+          return id ? { sessionId: id } : {};
+        },
+      }),
+    [],
+  );
+
+  const { messages, setMessages, sendMessage, status, error } = useChat({
+    transport,
+  });
 
   const isLoading =
     (status === "submitted" || status === "streaming") && !error;
@@ -102,8 +159,47 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
     } catch {
       /* ignore */
     }
+    /* Rotate the session id so the server starts a fresh KV bucket;
+       the old thread keeps its 7-day TTL but is no longer reachable
+       from this browser. */
+    const fresh = mintSessionId();
+    if (fresh) {
+      setSessionId(fresh);
+      try {
+        localStorage.setItem(SESSION_ID_KEY, fresh);
+      } catch {
+        /* ignore */
+      }
+    }
     inputRef.current?.focus();
   };
+
+  /* Session-id bootstrap. Reads or mints once per browser. The "was
+     returning" ref distinguishes a returning visitor (server might
+     have a saved thread) from a first-ever visitor (server is empty,
+     skip the load fetch). */
+  const wasReturningRef = useRef(false);
+  useEffect(() => {
+    let existing: string | null = null;
+    try {
+      existing = localStorage.getItem(SESSION_ID_KEY);
+    } catch {
+      /* localStorage blocked — degrade to in-memory id, no cross-tab persistence */
+    }
+    if (existing) {
+      wasReturningRef.current = true;
+      setSessionId(existing);
+      return;
+    }
+    const fresh = mintSessionId();
+    if (!fresh) return;
+    try {
+      localStorage.setItem(SESSION_ID_KEY, fresh);
+    } catch {
+      /* ignore */
+    }
+    setSessionId(fresh);
+  }, []);
 
   /* hasBeenMinimized rehydration — skip onboarding on subsequent opens. */
   useEffect(() => {
@@ -140,6 +236,43 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
       /* corrupt payload or sessionStorage unavailable — ignore */
     }
   }, [setMessages]);
+
+  /* Cross-session hydration — only fires when:
+       1. sessionStorage was empty (Phase 1 path didn't already restore), and
+       2. the visitor is "returning" (had a session id in localStorage on
+          mount — first-ever visitors get the welcome sequence instead).
+     The effect refuses to act if the welcome sequence has already
+     started (sequenceFiredRef latched) so we never paste a server
+     thread on top of welcome messages. */
+  useEffect(() => {
+    if (!sessionId) return;
+    if (!wasReturningRef.current) return;
+    if (sequenceFiredRef.current) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/chat/load?sessionId=${encodeURIComponent(sessionId)}`,
+          { cache: "no-store" },
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as { messages?: UIMessage[] };
+        if (cancelled) return;
+        if (!Array.isArray(data.messages) || data.messages.length === 0) return;
+        // Guard again — Phase 1 hydration may have raced and latched.
+        if (sequenceFiredRef.current) return;
+        sequenceFiredRef.current = true;
+        setIsReady(true);
+        setMessages(data.messages);
+      } catch {
+        /* server offline / KV unavailable — fall back to welcome sequence */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, setMessages]);
 
   /* Persist conversation on every change. Skipped on the empty initial
      state so a freshly cleared "New conversation" doesn't immediately
@@ -340,9 +473,13 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
                 .map((p) => p.text)
                 .join("");
 
-              if (!text) return null;
+              const toolParts = message.parts.filter(isToolUIPart);
 
+              // User messages: only their text matters.
               const isUser = message.role === "user";
+              if (isUser && !text) return null;
+              // Assistant messages: render if there's text OR a tool call.
+              if (!isUser && !text && toolParts.length === 0) return null;
 
               return (
                 <motion.div
@@ -363,32 +500,42 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
                        button below. opacity-40 baseline keeps the
                        affordance discoverable; group-hover brings it
                        to full presence on desktop. */
-                    <div className="group max-w-[88%]">
-                      <div className="text-sm text-white/90 leading-[1.7] whitespace-pre-line">
-                        {text}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(message.id, text)}
-                        className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-white/30 hover:text-white/70 transition-colors opacity-40 group-hover:opacity-100 focus:opacity-100"
-                        aria-label={
-                          copiedId === message.id
-                            ? "Copied"
-                            : "Copy message"
-                        }
-                      >
-                        {copiedId === message.id ? (
-                          <>
-                            <Check className="w-3 h-3" aria-hidden="true" />
-                            <span>Copied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3 h-3" aria-hidden="true" />
-                            <span>Copy</span>
-                          </>
-                        )}
-                      </button>
+                    <div className="group max-w-[88%] space-y-2">
+                      {toolParts.map((part) => (
+                        <ToolStatusPill
+                          key={part.toolCallId}
+                          part={part}
+                        />
+                      ))}
+                      {text && (
+                        <div className="text-sm text-white/90 leading-[1.7] whitespace-pre-line">
+                          {text}
+                        </div>
+                      )}
+                      {text && (
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(message.id, text)}
+                          className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-white/30 hover:text-white/70 transition-colors opacity-40 group-hover:opacity-100 focus:opacity-100"
+                          aria-label={
+                            copiedId === message.id
+                              ? "Copied"
+                              : "Copy message"
+                          }
+                        >
+                          {copiedId === message.id ? (
+                            <>
+                              <Check className="w-3 h-3" aria-hidden="true" />
+                              <span>Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" aria-hidden="true" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   )}
                 </motion.div>
@@ -452,4 +599,80 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
       </div>
     </motion.div>
   );
+}
+
+/* ── Helpers ─────────────────────────────────────────────────────── */
+
+/** Mints a fresh session id using crypto.randomUUID when available,
+ *  with a permissive fallback so a browser without subtle crypto (very
+ *  old WebViews) still gets persistence. Returns null only if both
+ *  paths fail, signalling "this browser refuses to generate ids" and
+ *  letting the caller fall back to ephemeral memory. */
+function mintSessionId(): string | null {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+  } catch {
+    /* fall through to manual path */
+  }
+  try {
+    // RFC4122-ish fallback. Not cryptographically perfect but acceptable
+    // for an anonymous session id — the value is namespaced by KEY_PREFIX
+    // on the server and never echoed back to clients.
+    const hex = "0123456789abcdef";
+    let out = "";
+    for (let i = 0; i < 32; i++) {
+      out += hex[Math.floor(Math.random() * 16)];
+    }
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+/* ── Tool-call status pill ───────────────────────────────────────── */
+
+type ToolPart = Extract<
+  UIMessagePart<UIDataTypes, UITools>,
+  { type: `tool-${string}` } | { type: "dynamic-tool" }
+>;
+
+interface ToolStatusPillProps {
+  part: ToolPart;
+}
+
+function ToolStatusPill({ part }: ToolStatusPillProps) {
+  const name = getToolName(part);
+  const label = TOOL_LABEL[name as string] ?? String(name).replace(/([A-Z])/g, " $1").trim().toLowerCase();
+  const state = part.state;
+
+  const inFlight = state === "input-streaming" || state === "input-available";
+  const done = state === "output-available";
+  const errored = state === "output-error";
+
+  if (inFlight) {
+    return (
+      <div className="inline-flex items-center gap-1.5 rounded-full border border-[#00d2ff]/15 bg-[#00d2ff]/[0.06] px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.16em] text-[#00d2ff]/85">
+        <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
+        <span>{label}…</span>
+      </div>
+    );
+  }
+  if (done) {
+    return (
+      <div className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.16em] text-white/35">
+        <Check className="w-3 h-3" aria-hidden="true" />
+        <span>{label}</span>
+      </div>
+    );
+  }
+  if (errored) {
+    return (
+      <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-amber-400/[0.06] px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.16em] text-amber-200/85">
+        <span>{label} failed</span>
+      </div>
+    );
+  }
+  return null;
 }

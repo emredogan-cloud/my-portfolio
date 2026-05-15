@@ -2,39 +2,65 @@ import { anthropic } from "@ai-sdk/anthropic";
 import {
   streamText,
   convertToModelMessages,
+  stepCountIs,
   type UIMessage,
 } from "ai";
-import { LUMINA_SYSTEM_PROMPT } from "@/lib/lumina/system-prompt";
+import { buildLuminaSystemPrompt } from "@/lib/lumina/system-prompt";
+import { LUMINA_TOOLS } from "@/lib/lumina/tools";
+import { saveSession, isValidSessionId } from "@/lib/lumina/memory";
 
 /**
- * Lumina chat endpoint.
+ * Lumina chat endpoint (V2).
  *
- * Architecture:
- *  - Vercel AI SDK v6 streamText → token-by-token response stream
- *  - Anthropic Claude 3 Haiku via @ai-sdk/anthropic
- *  - Static identity from lib/lumina/system-prompt.ts
+ * Phase 2 / Sub-PR 4 — adds tool-use auto-loop + KV-backed thread
+ * persistence to the streaming chat surface from Phase 1.
  *
- * Extension points (intentionally thin so future phases plug in cleanly):
- *  - Rate limiting       → wrap the POST with a middleware before streamText
- *  - Auth/session        → validate a token before invoking the model
- *  - Retrieval context   → enrich system prompt with project-aware excerpts
- *  - Tool calling        → pass `tools: { … }` into streamText
- *  - Conversation memory → load thread history before convertToModelMessages
- *  - Moderation          → run inputs/outputs through a filter
+ *   tools           → LUMINA_TOOLS (lib/lumina/tools.ts) wired through
+ *                     streamText; the SDK executes each tool whose
+ *                     definition carries an execute() body and feeds
+ *                     the result back to the model in the next step.
+ *   stopWhen        → stepCountIs(5). Allows Claude to chain up to
+ *                     four tool invocations before being forced to
+ *                     answer; in practice it almost always converges
+ *                     in 1-2 steps.
+ *   memory          → onFinish stores the final UIMessage[] under
+ *                     the visitor's sessionId. Reads happen via
+ *                     /api/chat/load on cold mount, not here.
+ *   time-of-day     → small dynamic suffix appended to the static
+ *                     system prompt every request. Cache impact is
+ *                     negligible for an 800-token prompt and reading
+ *                     "Emre is at the bakery right now" is the kind
+ *                     of detail that makes Lumina feel embodied.
+ *
+ * Runtime stays edge — @ai-sdk/anthropic v3 is built on Web Fetch and
+ * the new dependencies (KV, our tool/memory modules) are also
+ * Edge-safe.
  */
 
-/* Edge runtime — TTFB on a streaming Anthropic call drops from
-   the Node cold-start floor (~600-1500ms) into low triple digits.
-   @ai-sdk/anthropic v3 is built against the Edge-compatible Web
-   Fetch API, no Node-only imports. maxDuration still applies. */
 export const runtime = "edge";
 export const maxDuration = 30;
 
+interface ChatRequestBody {
+  messages: UIMessage[];
+  sessionId?: string;
+}
+
+function isMissingApiKey(): boolean {
+  return !process.env.ANTHROPIC_API_KEY;
+}
+
 export async function POST(req: Request) {
   try {
-    const { messages }: { messages: UIMessage[] } = await req.json();
+    const body = (await req.json()) as Partial<ChatRequestBody>;
+    const messages: UIMessage[] = Array.isArray(body.messages)
+      ? body.messages
+      : [];
+    const sessionId =
+      typeof body.sessionId === "string" && isValidSessionId(body.sessionId)
+        ? body.sessionId
+        : undefined;
 
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (isMissingApiKey()) {
       return new Response(
         JSON.stringify({
           error: "Lumina is not configured. ANTHROPIC_API_KEY is missing.",
@@ -49,12 +75,20 @@ export async function POST(req: Request) {
          (family precedes version, unlike the 3.x format). Pinned to a
          specific snapshot rather than an alias for production stability. */
       model: anthropic("claude-haiku-4-5-20251001"),
-      system: LUMINA_SYSTEM_PROMPT,
+      system: buildLuminaSystemPrompt(),
       messages: await convertToModelMessages(messages),
       temperature: 0.6,
+      tools: LUMINA_TOOLS,
+      stopWhen: stepCountIs(5),
     });
 
-    return result.toUIMessageStreamResponse();
+    return result.toUIMessageStreamResponse({
+      originalMessages: messages,
+      onFinish: async ({ messages: finalMessages }) => {
+        if (!sessionId) return;
+        await saveSession(sessionId, finalMessages);
+      },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {

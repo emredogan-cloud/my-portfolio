@@ -65,6 +65,17 @@ When the visitor's intent matches one of these, point them to the right place in
 
 Use natural phrasing: "You'll find the full case study at /projects/aws-waste-hunter." Not link bracket syntax.
 
+## Tools
+
+You have four tools wired through the chat layer. Use them when the visitor's question genuinely benefits from precise or fresh data — not for everything.
+
+- **listProjects** — call when asked broadly about Emre's projects ("what has he built", "what's he working on").
+- **getProjectDetails(projectId)** — call when asked about a specific project. The id matches /projects/{id}: \`aws-waste-hunter\`, \`vibing-coder-ai\`, \`sixpack-ai\`, \`pawdoc\`, \`aevum\`. Use this for tech-stack questions, "tell me about X", etc.
+- **searchNotes(query)** — call when asked about something Emre has written. Pass an empty query to list every note.
+- **getRecentCommits** — call when asked "what's he doing right now", "last commit", "what did he just ship".
+
+Skip tools entirely for identity, philosophy, time-of-day, or routing questions — those are already covered by this prompt. Don't narrate the tool call ("let me check…") — just call it and then answer.
+
 ## Rules
 
 - Never break character. You are Lumina, always.
@@ -75,3 +86,85 @@ Use natural phrasing: "You'll find the full case study at /projects/aws-waste-hu
 - When a question is technical and falls inside Emre's domain expertise, answer with authority. Cite specific tools, patterns, or services. Don't over-qualify with "it depends" unless it genuinely does.
 - Don't summarise visitors' messages back at them. Just answer.
 `.trim();
+
+/* ── Time-of-day persona ─────────────────────────────────────────────
+   Computed per request and appended to the static prompt above. Lives
+   here (not in the route) so the prompt module owns its full dynamic
+   surface and any test can build the exact prompt Claude will see.
+   Istanbul is UTC+3 year-round — Türkiye dropped DST in 2016.
+   Bands mirror data/notes.ts "monk-mode": single source of truth for
+   Emre's daily schedule. */
+
+interface TimeBand {
+  readonly label: string;
+  /** Lower bound in minutes-since-midnight, inclusive. */
+  readonly fromMinute: number;
+  /** Upper bound in minutes-since-midnight, exclusive. */
+  readonly toMinute: number;
+}
+
+const BANDS: readonly TimeBand[] = [
+  // 01:30 – 08:00
+  { fromMinute: 90, toMinute: 480, label: "Emre is currently at the bakery — 01:30-08:00 shift." },
+  // 08:00 – 16:00
+  { fromMinute: 480, toMinute: 960, label: "Emre is at school — 08:00-16:00." },
+  // 16:00 – 22:00
+  { fromMinute: 960, toMinute: 1320, label: "Emre is in his build window — 16:00-22:00." },
+];
+
+/** Default band used when no explicit window matches (covers 22:00-01:30
+ *  including the wraparound across midnight). */
+const SLEEPING_LABEL = "Emre is likely asleep — 22:00-01:30.";
+
+function describeBand(minutesSinceMidnight: number): string {
+  for (const band of BANDS) {
+    if (
+      minutesSinceMidnight >= band.fromMinute &&
+      minutesSinceMidnight < band.toMinute
+    ) {
+      return band.label;
+    }
+  }
+  return SLEEPING_LABEL;
+}
+
+export function getIstanbulMinutes(now: Date = new Date()): {
+  hour: number;
+  minute: number;
+  total: number;
+  formatted: string;
+} {
+  const fmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Istanbul",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(now);
+  const hour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
+  const minute = parseInt(
+    parts.find((p) => p.type === "minute")?.value ?? "0",
+    10,
+  );
+  const total = hour * 60 + minute;
+  const formatted = `${hour.toString().padStart(2, "0")}:${minute
+    .toString()
+    .padStart(2, "0")}`;
+  return { hour, minute, total, formatted };
+}
+
+/** Builds the dynamic time-of-day suffix appended to LUMINA_SYSTEM_PROMPT
+ *  on every request. Exported separately so tests can pin a fake `now`. */
+export function buildTimeOfDayNote(now: Date = new Date()): string {
+  const { formatted, total } = getIstanbulMinutes(now);
+  const band = describeBand(total);
+  return `\n\n# Right now\nLocal time at Emre's location (Istanbul, UTC+3): ${formatted}. ${band}`;
+}
+
+/** Full prompt sent to Claude on every chat turn: the static identity
+ *  block above plus the dynamic time-of-day note. The route handler
+ *  calls this on every request — keep both pieces here so the prompt
+ *  module is the single source of truth for Lumina's voice. */
+export function buildLuminaSystemPrompt(now: Date = new Date()): string {
+  return LUMINA_SYSTEM_PROMPT + buildTimeOfDayNote(now);
+}
