@@ -105,11 +105,18 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         text,
         model_id: ELEVENLABS_MODEL,
-        // Stability ≈ Lumina's voice consistency turn-to-turn.
-        // Similarity_boost preserves the voice's character.
+        // Stability     ≈ voice consistency turn-to-turn.
+        // Similarity    ≈ how strictly to hold the voice's character.
+        // Speed         > 1.0 → faster delivery. ElevenLabs supports
+        //                  0.7..1.2 across current Flash + Multilingual
+        //                  models; 1.15 is a noticeable bump without
+        //                  sounding rushed and preserves pitch (unlike a
+        //                  client-side <audio>.playbackRate hack which
+        //                  shifts pitch upward).
         voice_settings: {
           stability: 0.45,
           similarity_boost: 0.7,
+          speed: 1.15,
         },
       }),
     });
