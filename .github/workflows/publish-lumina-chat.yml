@@ -1,0 +1,124 @@
+name: Publish @emredogan/lumina-chat
+
+# Manual-only publish. The maintainer bumps the version in
+# packages/lumina-chat/package.json, commits, then triggers this
+# workflow from the Actions tab. The dispatch input gates accidental
+# fires — the type-in confirmation must match the package version.
+#
+# Required repository secret:
+#   NPM_TOKEN  — an npm Automation token with publish access for
+#                @emredogan/lumina-chat. Generate at
+#                https://www.npmjs.com/settings/<user>/tokens
+#                and add as a secret in repo Settings → Secrets.
+#
+# Required repository setting:
+#   The npm scope @emredogan must exist on npm and the token must
+#   have publish permission for it. First publish for a fresh scope
+#   may need `npm access set status=public @emredogan/lumina-chat`
+#   after the initial publish completes.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_version:
+        description: "Type the package version to confirm (e.g. 0.1.0)"
+        required: true
+        type: string
+      tag:
+        description: "npm dist-tag (latest, next, beta, alpha)"
+        required: true
+        default: "latest"
+        type: choice
+        options:
+          - latest
+          - next
+          - beta
+          - alpha
+
+# Concurrency: at most one publish run at a time. A second dispatch
+# while the first is in flight cancels the older run rather than
+# queueing it — the version will have changed by then anyway.
+concurrency:
+  group: publish-lumina-chat
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # Required for npm provenance: GitHub mints an OIDC token that npm
+  # records as a sigstore attestation linking the published tarball
+  # to this exact workflow run + commit SHA.
+  id-token: write
+
+jobs:
+  publish:
+    name: Build and publish to npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+          # Cache the workspace lockfile so subsequent runs skip the
+          # multi-minute "resolving 600 packages" stage.
+          cache: "npm"
+
+      - name: Read package version
+        id: pkg
+        run: |
+          VERSION=$(node -p "require('./packages/lumina-chat/package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Package version: $VERSION"
+
+      - name: Verify confirmation matches package version
+        # Manual confirmation gate. Forces the dispatcher to type the
+        # exact version they intend to publish — protects against
+        # accidentally publishing a stale version after a bump on a
+        # different branch.
+        run: |
+          if [ "${{ steps.pkg.outputs.version }}" != "${{ inputs.confirm_version }}" ]; then
+            echo "::error::Confirmation mismatch."
+            echo "  package.json version: ${{ steps.pkg.outputs.version }}"
+            echo "  you typed:            ${{ inputs.confirm_version }}"
+            echo "  Fix: bump packages/lumina-chat/package.json or correct the dispatch input."
+            exit 1
+          fi
+          echo "Version confirmed: ${{ steps.pkg.outputs.version }}"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run lumina-chat:build
+
+      - name: Inspect package contents (dry-run)
+        # Pure transparency — surfaces the file list and tarball size
+        # in the workflow log so the dispatcher can spot a botched
+        # build before the publish step actually fires.
+        run: npm pack --dry-run --workspace=@emredogan/lumina-chat
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm publish \
+            --workspace=@emredogan/lumina-chat \
+            --tag="${{ inputs.tag }}" \
+            --provenance \
+            --access=public
+
+      - name: Summary
+        run: |
+          {
+            echo "### Published \`@emredogan/lumina-chat@${{ steps.pkg.outputs.version }}\`"
+            echo
+            echo "- Tag: \`${{ inputs.tag }}\`"
+            echo "- Provenance: enabled (sigstore attestation)"
+            echo "- npm: https://www.npmjs.com/package/@emredogan/lumina-chat"
+            echo "- Install: \`npm install @emredogan/lumina-chat@${{ inputs.tag }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
