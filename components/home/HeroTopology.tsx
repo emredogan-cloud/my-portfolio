@@ -47,11 +47,6 @@ import {
 } from "react";
 import {
   ReactFlow,
-  Background,
-  BackgroundVariant,
-  MiniMap,
-  Controls,
-  Panel,
   Handle,
   Position,
   useNodesState,
@@ -362,45 +357,77 @@ export default function HeroTopology() {
       ? "STANDBY"
       : "DRAG · PAN · ZOOM";
 
-  const handleReset = useCallback(() => {
-    if (!flow) return;
-    flow.fitView({ padding: 0.18, duration: 450 });
-  }, [flow]);
-
   return (
+    /* Outer perspective volume.
+     *
+     * `perspective` here is what gives the inner canvas an actual 3D
+     * vanishing point instead of the flat orthographic projection
+     * react-flow uses by default. perspectiveOrigin sits slightly
+     * above centre so the system reads as "camera looking down" — the
+     * spatial posture borrowed from the CWH scene's [0, 4, 9] camera
+     * position. The outer wrapper has NO border, NO rounded corners,
+     * NO background — the constellation has to feel atmospheric, not
+     * boxed inside a panel.
+     *
+     * Sized to fill the column rather than the previous capped
+     * max-w-[640px] aspect-square widget shape. min-h grows on lg
+     * so the constellation occupies real vertical territory next to
+     * the hero text. Negative margins on the parent column let it
+     * bleed slightly past the visible column boundary. */
     <div
-      className="relative w-full max-w-[640px] mx-auto aspect-square min-h-[360px] sm:min-h-[440px]"
+      className="relative w-full h-full min-h-[440px] sm:min-h-[520px] lg:min-h-[640px]"
       role="region"
-      aria-label="Interactive portfolio constellation — drag nodes, pan the canvas, zoom with scroll"
+      aria-label="Portfolio constellation — drag nodes, pan, zoom"
+      style={{
+        perspective: "1600px",
+        perspectiveOrigin: "50% 30%",
+      }}
     >
-      {/* Console frame — radial vignette + hairline border. Pure CSS,
-          sits below react-flow so the canvas paints on top. */}
+      {/* Atmospheric volumetric haze — radial cyan glow with NO
+       *  visible edge. Replaces the previous bordered/rounded
+       *  vignette frame so the canvas reads as open space rather
+       *  than a card. Two stacked radials: a tight bright core that
+       *  haloes the centre node, and a wider faint tint that
+       *  suggests volumetric depth into the page. */}
       <div
-        className="absolute inset-0 rounded-2xl pointer-events-none z-0"
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none -z-10"
         style={{
           background:
-            "radial-gradient(circle at 50% 50%, rgba(0,210,255,0.05) 0%, rgba(5,5,5,0.0) 65%)",
-          boxShadow:
-            "inset 0 0 80px rgba(0,210,255,0.07), inset 0 0 0 1px rgba(255,255,255,0.05)",
+            "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,210,255,0.12) 0%, rgba(11,37,81,0.06) 35%, transparent 75%), " +
+            "radial-gradient(ellipse 90% 70% at 50% 70%, rgba(0,210,255,0.04) 0%, transparent 100%)",
         }}
-        aria-hidden="true"
       />
 
-      {/* HUD corner brackets (carried over from the previous frame). */}
-      <CornerBracket position="top-left" />
-      <CornerBracket position="top-right" />
-      <CornerBracket position="bottom-left" />
-      <CornerBracket position="bottom-right" />
-
-      {/* The react-flow canvas. Fills the wrapper. Style overrides at
-          the bottom of this file flip its default palette to cyan/black. */}
-      <div className="absolute inset-0 rounded-2xl overflow-hidden hero-flow-canvas">
+      {/* The react-flow plane lives on its own 3D layer.
+       *
+       *  - rotateX(8deg) tilts it down — the visitor reads "looking
+       *    slightly from above", matching CWH's camera elevation.
+       *  - Two `--hero-tilt-*` CSS variables drive a slow ambient
+       *    oscillation defined in HERO_FLOW_CSS — equivalent to
+       *    CWH's autorotate, in the X/Y rotation domain instead of
+       *    Y axis, since we live in CSS-3D.
+       *  - mask-image: radial fade-to-transparent so the canvas has
+       *    NO hard rectangular edge — nodes near the rim dissolve
+       *    into the page atmosphere. THIS is the "free-floating"
+       *    feeling — no card boundary anywhere.
+       *  - transform-style: preserve-3d so nested transforms keep
+       *    their depth on Safari, which otherwise flattens. */}
+      <div
+        className="absolute inset-0 hero-flow-canvas"
+        style={{
+          transformStyle: "preserve-3d",
+          WebkitMaskImage:
+            "radial-gradient(ellipse 92% 88% at 50% 52%, black 50%, transparent 96%)",
+          maskImage:
+            "radial-gradient(ellipse 92% 88% at 50% 52%, black 50%, transparent 96%)",
+        }}
+      >
         <ReactFlow
           nodes={nodes}
           edges={edges}
           onNodesChange={(changes) => {
             onNodesChange(changes);
-            // Drag start emits "position" change of type "dragging".
             if (changes.some((c) => c.type === "position")) markInteracted();
           }}
           onEdgesChange={onEdgesChange}
@@ -412,95 +439,36 @@ export default function HeroTopology() {
           onNodeMouseLeave={() => setHoveredNode(null)}
           onPaneClick={() => setHoveredNode(null)}
           fitView
-          fitViewOptions={{ padding: 0.18 }}
-          minZoom={0.4}
-          maxZoom={2.2}
-          // Disable React Flow's default UI controls (we render our
-          // own HUD via <Panel> below for cinematic consistency).
+          fitViewOptions={{ padding: 0.28 }}
+          minZoom={0.35}
+          maxZoom={2.4}
           proOptions={{ hideAttribution: true }}
           nodesConnectable={false}
-          nodesFocusable={true}
-          panOnDrag={true}
+          nodesFocusable
+          panOnDrag
           panOnScroll={false}
-          zoomOnScroll={true}
-          zoomOnPinch={true}
-          // Don't let dragging the centre node behave like panning the
-          // canvas — react-flow handles that distinction automatically
-          // when individual nodes have draggable:false but we want to
-          // make sure pan-from-canvas works everywhere else.
+          zoomOnScroll
+          zoomOnPinch
           selectionOnDrag={false}
           deleteKeyCode={null}
           multiSelectionKeyCode={null}
           style={{ background: "transparent" }}
         >
-          {/* Faint cyan dot grid background — gives the canvas the
-              "engineering surface" texture without competing with
-              the constellation. */}
-          <Background
-            variant={BackgroundVariant.Dots}
-            gap={28}
-            size={1.1}
-            color="rgba(0,210,255,0.10)"
-          />
-
-          {/* Minimap — cyan-themed, sits bottom-right. */}
-          <MiniMap
-            pannable
-            zoomable
-            ariaLabel="Constellation minimap"
-            position="bottom-right"
-            style={{
-              background: "rgba(5,5,5,0.85)",
-              border: "1px solid rgba(0,210,255,0.20)",
-              borderRadius: 8,
-              width: 100,
-              height: 70,
-            }}
-            nodeColor={(n) => {
-              const ring = (n.data as HeroNodeData | undefined)?.ring;
-              if (!ring) return "#00d2ff";
-              return RING_STYLE[ring].fill;
-            }}
-            nodeStrokeColor="transparent"
-            maskColor="rgba(0,0,0,0.55)"
-          />
-
-          {/* Built-in zoom controls (custom-styled below). */}
-          <Controls
-            position="bottom-left"
-            showInteractive={false}
-            onZoomIn={markInteracted}
-            onZoomOut={markInteracted}
-            onFitView={markInteracted}
-          />
-
-          {/* HUD panels — render on top of the canvas. */}
-          <Panel position="top-left">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#00d2ff]/20 bg-black/65 px-2.5 py-1 backdrop-blur-sm pointer-events-none">
-              <span
-                className="w-1.5 h-1.5 rounded-full bg-[#00d2ff]"
-                style={{ boxShadow: "0 0 6px rgba(0,210,255,0.8)" }}
-                aria-hidden="true"
-              />
-              <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-white/65">
-                EMRE.CORE :: ADANA
-              </span>
-            </div>
-          </Panel>
-          <Panel position="top-right">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-black/65 px-2.5 py-1 backdrop-blur-sm pointer-events-none">
-              <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-[#00d2ff]/85 truncate max-w-[180px] sm:max-w-[240px]">
-                {statusLabel}
-              </span>
-            </div>
-          </Panel>
+          {/* No <Background>, no <MiniMap>, no <Controls>, no <Panel>
+              chrome. The whole point of this commit is to let the
+              constellation breathe in open space. Wheel-zoom and pan
+              are native to react-flow; drag stays on individual nodes. */}
         </ReactFlow>
       </div>
 
-      {/* Hover tooltip — overlays react-flow when a node is focused. */}
+      {/* Hover tooltip — sole UI affordance that remains, because
+       *  visitors need to read what each node IS. Sits inside the
+       *  tilted plane's bounding box but on its own 2D layer (the
+       *  outer wrapper is the perspective volume, not the inner
+       *  canvas) so it stays legible regardless of camera tilt. */}
       {hoveredNode && hoveredNode.data.blurb && (
         <div
-          className="pointer-events-none absolute bottom-14 left-3 max-w-[70%] rounded-lg border border-[#00d2ff]/20 bg-black/85 px-3 py-2 text-xs leading-relaxed text-white/85 shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-sm z-20"
+          className="pointer-events-none absolute bottom-4 left-4 max-w-[78%] rounded-lg border border-[#00d2ff]/15 bg-black/70 px-3 py-2 text-xs leading-relaxed text-white/85 shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-sm z-20"
           role="status"
           aria-live="polite"
         >
@@ -511,115 +479,75 @@ export default function HeroTopology() {
         </div>
       )}
 
-      {/* Bottom legend + reset — anchored above the controls so they
-          don't overlap. */}
-      <div className="pointer-events-none absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3 z-20">
-        <div className="inline-flex items-center gap-3 rounded-full border border-white/[0.06] bg-black/55 px-2.5 py-1 backdrop-blur-sm ml-auto">
-          <LegendDot color={RING_STYLE.projects.fill} label="PROJECTS" />
-          <span className="text-white/15" aria-hidden="true">·</span>
-          <LegendDot color={RING_STYLE.focus.fill} label="FOCUS" />
-          <span className="text-white/15" aria-hidden="true">·</span>
-          <LegendDot color={RING_STYLE.tech.fill} label="STACK" />
-        </div>
-        {hasInteracted && (
-          <button
-            type="button"
-            onClick={handleReset}
-            aria-label="Reset constellation view"
-            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/[0.10] bg-black/75 px-2.5 py-1 text-[9px] font-mono uppercase tracking-[0.18em] text-white/60 hover:text-white/95 hover:border-[#00d2ff]/40 transition-colors backdrop-blur-sm"
-          >
-            FIT VIEW
-          </button>
-        )}
+      {/* Single ambient signal line — anchored at the top-right edge,
+       *  whisper-quiet. Replaces the previous trio of HUD chips
+       *  (identity badge + status pill + legend) which collectively
+       *  read as "dashboard widget". This is just one line, no
+       *  border, no chip — a hint, not a frame. */}
+      <div
+        className="pointer-events-none absolute top-3 right-3 font-mono uppercase tracking-[0.20em] text-[9px] text-white/30 z-10"
+        aria-hidden="true"
+      >
+        {statusLabel}
       </div>
 
-      {/* Inline stylesheet — overrides the @xyflow/react default
-          palette (light blues + white) with the cinematic cyan + black
-          identity. Scoped via .hero-flow-canvas so any future react-
-          flow usage elsewhere in the codebase stays untouched. Also
-          owns the flowing-dash keyframe used by the custom edge. */}
+      {/* Inline stylesheet — owns the CSS-3D ambient camera
+       *  oscillation, the filament-flow keyframe, and the minimal
+       *  react-flow palette overrides we still need (transparent
+       *  pane, no focus outlines). All scoped via .hero-flow-canvas. */}
       <style>{HERO_FLOW_CSS}</style>
 
-      {/* Reference variables kept reachable from CENTER_NODE so a
-          future visualisation can pin it visually distinct without
-          re-importing the data file. */}
+      {/* Reference kept reachable from CENTER_NODE so a future
+       *  visualisation can pin it without re-importing the data file. */}
       <span hidden>{CENTER_NODE.id}</span>
     </div>
   );
 }
 
-/* ── HUD corner bracket ─────────────────────────────────────────── */
-
-interface CornerBracketProps {
-  position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
-}
-
-function CornerBracket({ position }: CornerBracketProps) {
-  const corner = {
-    "top-left": { top: 0, left: 0, borderTop: 1, borderLeft: 1, borderRadius: "8px 0 0 0" },
-    "top-right": { top: 0, right: 0, borderTop: 1, borderRight: 1, borderRadius: "0 8px 0 0" },
-    "bottom-left": { bottom: 0, left: 0, borderBottom: 1, borderLeft: 1, borderRadius: "0 0 0 8px" },
-    "bottom-right": { bottom: 0, right: 0, borderBottom: 1, borderRight: 1, borderRadius: "0 0 8px 0" },
-  }[position];
-
-  return (
-    <span
-      aria-hidden="true"
-      className="absolute w-5 h-5 pointer-events-none z-20"
-      style={{
-        top: corner.top !== undefined ? "8px" : undefined,
-        bottom: corner.bottom !== undefined ? "8px" : undefined,
-        left: corner.left !== undefined ? "8px" : undefined,
-        right: corner.right !== undefined ? "8px" : undefined,
-        borderTopWidth: corner.borderTop ? "1px" : 0,
-        borderRightWidth: corner.borderRight ? "1px" : 0,
-        borderBottomWidth: corner.borderBottom ? "1px" : 0,
-        borderLeftWidth: corner.borderLeft ? "1px" : 0,
-        borderStyle: "solid",
-        borderColor: "rgba(0,210,255,0.45)",
-        borderRadius: corner.borderRadius,
-        boxShadow: "0 0 8px rgba(0,210,255,0.18)",
-      }}
-    />
-  );
-}
-
-/* ── Legend dot ─────────────────────────────────────────────────── */
-
-interface LegendDotProps {
-  color: string;
-  label: string;
-}
-
-function LegendDot({ color, label }: LegendDotProps) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span
-        className="w-1.5 h-1.5 rounded-full"
-        style={{
-          backgroundColor: color,
-          boxShadow: `0 0 4px ${color}aa`,
-        }}
-        aria-hidden="true"
-      />
-      <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-white/55">
-        {label}
-      </span>
-    </span>
-  );
-}
-
-/* ── Cinematic theme overrides for @xyflow/react ─────────────────
+/* ── Cinematic theme + spatial camera for @xyflow/react ──────────
  *
- * The library's default stylesheet ships with white backgrounds and
- * blue selection borders. Scoped via .hero-flow-canvas so only the
- * hero topology gets re-themed; any future react-flow usage elsewhere
- * keeps the library defaults.
+ * Two responsibilities:
  *
- * Also defines the flowing-dash keyframe used by the custom edge. */
+ * 1. Minimal palette overrides so react-flow's default white panel /
+ *    blue selection chrome doesn't leak through. Scoped via
+ *    .hero-flow-canvas so any future react-flow usage elsewhere in
+ *    the codebase keeps the library defaults.
+ *
+ * 2. The ambient camera oscillation that gives the constellation its
+ *    CWH-style spatial feeling. Two keyframes:
+ *      - hero-filament-flow: the existing edge dash flow (kept).
+ *      - hero-spatial-tilt:  slow rotateX/rotateY oscillation on the
+ *        canvas plane. The visitor reads it as a camera that very
+ *        slowly drifts between "slightly more from above" and
+ *        "slightly more from the side" — equivalent to CWH's
+ *        autorotate in the CSS-3D domain.
+ *
+ *    The tilt amplitudes are deliberately tiny (6°↔11° on X,
+ *    -1.2°↔1.2° on Y) so dragging individual nodes inside react-flow
+ *    still feels accurate. At these angles the cursor-delta vs
+ *    graph-space-delta drift is sub-pixel for typical viewports.
+ *
+ *    On mobile (max-width 767px) the perspective tilt drops to a flat
+ *    state — small touch targets + CSS-3D perspective interactions
+ *    can fight each other on iOS Safari, so we trade away spatial
+ *    feel for predictable tap behaviour where it matters most.
+ *
+ *    prefers-reduced-motion freezes the oscillation at its base
+ *    posture; the static tilt remains because perspective itself
+ *    isn't motion. */
 const HERO_FLOW_CSS = `
 @keyframes hero-filament-flow {
   to { stroke-dashoffset: -200; }
+}
+@keyframes hero-spatial-tilt {
+  0%   { transform: rotateX(6deg)  rotateY(-1.2deg); }
+  50%  { transform: rotateX(11deg) rotateY(1.2deg);  }
+  100% { transform: rotateX(6deg)  rotateY(-1.2deg); }
+}
+.hero-flow-canvas {
+  transform-origin: 50% 75%;
+  animation: hero-spatial-tilt 36s ease-in-out infinite;
+  will-change: transform;
 }
 .hero-flow-canvas .react-flow__renderer,
 .hero-flow-canvas .react-flow__pane,
@@ -637,40 +565,20 @@ const HERO_FLOW_CSS = `
 .hero-flow-canvas .react-flow__edge-path {
   stroke-linecap: round;
 }
-.hero-flow-canvas .react-flow__minimap {
-  background: rgba(5,5,5,0.85) !important;
-}
-.hero-flow-canvas .react-flow__minimap-mask {
-  fill: rgba(0,0,0,0.55);
-}
-.hero-flow-canvas .react-flow__controls {
-  background: transparent;
-  box-shadow: none;
-  display: flex;
-  flex-direction: row;
-  gap: 4px;
-}
-.hero-flow-canvas .react-flow__controls-button {
-  background: rgba(5,5,5,0.85);
-  border: 1px solid rgba(0,210,255,0.20);
-  color: rgba(255,255,255,0.65);
-  border-radius: 6px;
-  width: 26px;
-  height: 26px;
-  padding: 4px;
-  transition: border-color 200ms ease, color 200ms ease;
-}
-.hero-flow-canvas .react-flow__controls-button:hover {
-  border-color: rgba(0,210,255,0.55);
-  color: rgba(255,255,255,0.95);
-  background: rgba(5,5,5,0.95);
-}
-.hero-flow-canvas .react-flow__controls-button svg {
-  fill: currentColor;
-  max-width: 14px;
-  max-height: 14px;
-}
 .hero-flow-canvas .react-flow__attribution {
   display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-flow-canvas {
+    animation: none;
+    transform: rotateX(6deg);
+  }
+}
+@media (max-width: 767px) {
+  .hero-flow-canvas {
+    animation: none;
+    transform: none;
+    transform-style: flat;
+  }
 }
 `;
