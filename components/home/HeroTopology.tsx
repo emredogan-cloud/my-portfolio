@@ -39,7 +39,7 @@ import {
   type WheelEvent as ReactWheelEvent,
 } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { RotateCcw, Move } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import {
   CENTER,
   CENTER_NODE,
@@ -235,21 +235,68 @@ export default function HeroTopology() {
     setViewBox(INITIAL_VB);
   }, []);
 
+  /* Dynamic top-right status — shifts based on interaction state.
+   * STANDBY (idle) → INSPECT (hovering a node) → PAN/ZOOM (mid-drag).
+   * This is the "console" status indicator that makes the canvas
+   * feel like a live system instead of decoration. */
+  const statusLabel = dragRef.current
+    ? "PAN/ZOOM"
+    : hoveredNode
+      ? `INSPECT: ${hoveredNode.label.toUpperCase()}`
+      : hasInteracted
+        ? "STANDBY"
+        : "DRAG · SCROLL TO INTERACT";
+
   return (
-    <div className="relative w-full max-w-[600px] mx-auto aspect-square">
-      {/* Outer subtle frame for the canvas — matches the cinematic
-          dark cards used elsewhere; gives the topology a visible
-          edge so pan/zoom feels bounded. */}
+    <div
+      className="relative w-full max-w-[640px] mx-auto aspect-square min-h-[360px] sm:min-h-[440px]"
+      role="region"
+      aria-label="Interactive portfolio constellation"
+    >
+      {/* Outer console frame — radial vignette + hairline border. The
+          inset shadow gives the topology a visible edge so pan/zoom
+          feels bounded, and the radial glow draws the eye centre-out. */}
       <div
         className="absolute inset-0 rounded-2xl"
         style={{
           background:
-            "radial-gradient(circle at 50% 50%, rgba(0,210,255,0.04) 0%, rgba(5,5,5,0.0) 65%)",
+            "radial-gradient(circle at 50% 50%, rgba(0,210,255,0.05) 0%, rgba(5,5,5,0.0) 65%)",
           boxShadow:
-            "inset 0 0 80px rgba(0,210,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.04)",
+            "inset 0 0 80px rgba(0,210,255,0.07), inset 0 0 0 1px rgba(255,255,255,0.05)",
         }}
         aria-hidden="true"
       />
+
+      {/* HUD corner brackets — four cyan L-shapes anchor the canvas
+          like a heads-up display crosshair. SVG so they hold their
+          1-pixel weight at any container size. */}
+      <CornerBracket position="top-left" />
+      <CornerBracket position="top-right" />
+      <CornerBracket position="bottom-left" />
+      <CornerBracket position="bottom-right" />
+
+      {/* Top status strip — identity badge (left) + dynamic status
+          (right). Sits above the SVG canvas, gives the topology the
+          framing of a live engineering console. */}
+      <div className="pointer-events-none absolute top-3 left-3 right-3 flex items-center justify-between gap-3 z-10">
+        <div className="inline-flex items-center gap-2 rounded-full border border-[#00d2ff]/20 bg-black/60 px-2.5 py-1 backdrop-blur-sm">
+          <span
+            className="w-1.5 h-1.5 rounded-full bg-[#00d2ff]"
+            style={{
+              boxShadow: "0 0 6px rgba(0,210,255,0.8)",
+            }}
+            aria-hidden="true"
+          />
+          <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-white/65">
+            EMRE.CORE :: ADANA
+          </span>
+        </div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-black/60 px-2.5 py-1 backdrop-blur-sm">
+          <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-[#00d2ff]/85 truncate max-w-[180px] sm:max-w-[240px]">
+            {statusLabel}
+          </span>
+        </div>
+      </div>
 
       <svg
         ref={svgRef}
@@ -406,35 +453,95 @@ export default function HeroTopology() {
         </div>
       )}
 
-      {/* Reset view button — only visible after the visitor has
-          interacted (no UI clutter on first paint). */}
-      {hasInteracted && (
-        <button
-          type="button"
-          onClick={handleReset}
-          aria-label="Reset constellation view"
-          className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-white/[0.10] bg-black/75 px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.16em] text-white/60 hover:text-white/95 hover:border-[#00d2ff]/40 transition-colors backdrop-blur-sm"
-        >
-          <RotateCcw className="w-3 h-3" aria-hidden="true" />
-          Reset
-        </button>
-      )}
-
-      {/* First-visit affordance hint — fades out once any interaction
-          starts. Helps visitors discover pan/zoom on a constellation
-          that otherwise looks purely decorative. */}
-      {!hasInteracted && (
-        <motion.div
-          className="pointer-events-none absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/60 px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.16em] text-white/45 backdrop-blur-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.6, duration: 0.6 }}
-        >
-          <Move className="w-3 h-3" aria-hidden="true" />
-          Drag · Zoom
-        </motion.div>
-      )}
+      {/* Bottom strip — orbit legend (left/centre) + reset button
+          (right, only after interaction). The legend is the dashboard's
+          map key: three coloured dots match the three ring fills so
+          readers can ground "what does an outer-ring node mean". */}
+      <div className="pointer-events-none absolute bottom-3 left-3 right-3 flex items-center justify-between gap-3 z-10">
+        <div className="inline-flex items-center gap-3 rounded-full border border-white/[0.06] bg-black/55 px-2.5 py-1 backdrop-blur-sm">
+          <LegendDot color={RING_STYLE.projects.fill} label="PROJECTS" />
+          <span className="text-white/15" aria-hidden="true">·</span>
+          <LegendDot color={RING_STYLE.focus.fill} label="FOCUS" />
+          <span className="text-white/15" aria-hidden="true">·</span>
+          <LegendDot color={RING_STYLE.tech.fill} label="STACK" />
+        </div>
+        {hasInteracted && (
+          <button
+            type="button"
+            onClick={handleReset}
+            aria-label="Reset constellation view"
+            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/[0.10] bg-black/75 px-2.5 py-1 text-[9px] font-mono uppercase tracking-[0.18em] text-white/60 hover:text-white/95 hover:border-[#00d2ff]/40 transition-colors backdrop-blur-sm"
+          >
+            <RotateCcw className="w-3 h-3" aria-hidden="true" />
+            Reset
+          </button>
+        )}
+      </div>
     </div>
+  );
+}
+
+/* ── HUD corner bracket ─────────────────────────────────────────── */
+
+interface CornerBracketProps {
+  position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+}
+
+/* Pure-CSS L-shape via two 1px borders. Cheaper than SVG, and the
+ * 18px arm length sits comfortably inside the 12px container padding
+ * without colliding with the corner-radius arc. */
+function CornerBracket({ position }: CornerBracketProps) {
+  const corner = {
+    "top-left": { top: 0, left: 0, borderTop: 1, borderLeft: 1, borderRadius: "8px 0 0 0" },
+    "top-right": { top: 0, right: 0, borderTop: 1, borderRight: 1, borderRadius: "0 8px 0 0" },
+    "bottom-left": { bottom: 0, left: 0, borderBottom: 1, borderLeft: 1, borderRadius: "0 0 0 8px" },
+    "bottom-right": { bottom: 0, right: 0, borderBottom: 1, borderRight: 1, borderRadius: "0 0 8px 0" },
+  }[position];
+
+  return (
+    <span
+      aria-hidden="true"
+      className="absolute w-5 h-5 pointer-events-none z-0"
+      style={{
+        top: corner.top !== undefined ? "8px" : undefined,
+        bottom: corner.bottom !== undefined ? "8px" : undefined,
+        left: corner.left !== undefined ? "8px" : undefined,
+        right: corner.right !== undefined ? "8px" : undefined,
+        borderTopWidth: corner.borderTop ? "1px" : 0,
+        borderRightWidth: corner.borderRight ? "1px" : 0,
+        borderBottomWidth: corner.borderBottom ? "1px" : 0,
+        borderLeftWidth: corner.borderLeft ? "1px" : 0,
+        borderStyle: "solid",
+        borderColor: "rgba(0,210,255,0.45)",
+        borderRadius: corner.borderRadius,
+        boxShadow: "0 0 8px rgba(0,210,255,0.18)",
+      }}
+    />
+  );
+}
+
+/* ── Legend dot ─────────────────────────────────────────────────── */
+
+interface LegendDotProps {
+  color: string;
+  label: string;
+}
+
+function LegendDot({ color, label }: LegendDotProps) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className="w-1.5 h-1.5 rounded-full"
+        style={{
+          backgroundColor: color,
+          boxShadow: `0 0 4px ${color}aa`,
+        }}
+        aria-hidden="true"
+      />
+      <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-white/55">
+        {label}
+      </span>
+    </span>
   );
 }
 

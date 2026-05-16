@@ -146,9 +146,40 @@ export default function HeroSection() {
             </div>
 
             {/* ── RIGHT: pan/zoom constellation — Emre Doğan at root,
-                projects orbit, focus areas + tech stack expand outward. ── */}
-            <div className="lg:col-span-6 lg:pl-4">
-              <HeroTopology />
+                projects orbit, focus areas + tech stack expand outward.
+                The framing label + topology together compose a
+                "dashboard cell" that pairs visually with the identity
+                stack on the left. Stacks below the identity on mobile
+                via the parent grid's default 1-col fallback. ── */}
+            <div className="lg:col-span-6 lg:pl-4 flex flex-col items-stretch gap-3">
+              {/* Section eyebrow — matches the identity column's eyebrow
+                  rhythm so the two columns read as paired headers. */}
+              <motion.div
+                className="flex items-center gap-3"
+                initial={{ y: 12, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.45, ease: EASE }}
+              >
+                <span
+                  className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                  aria-hidden="true"
+                />
+                <span className="font-mono uppercase tracking-[0.22em] text-[10px] text-white/35 whitespace-nowrap">
+                  [ constellation.live ]
+                </span>
+                <span
+                  className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                  aria-hidden="true"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.9, delay: 0.6, ease: EASE }}
+              >
+                <HeroTopology />
+              </motion.div>
             </div>
 
           </div>
