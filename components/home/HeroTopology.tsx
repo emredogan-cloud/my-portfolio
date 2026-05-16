@@ -3,88 +3,86 @@
 /**
  * HeroTopology — the home hero's right-column constellation.
  *
- * A pan-and-zoom-able concentric-ring graph rooted at "Emre Doğan",
- * orbited by:
- *   Ring 1 — shipped + building + planning projects
- *   Ring 2 — focus areas (Cloud Architecture, FinOps, AI Systems, …)
- *   Ring 3 — tech-stack vocabulary (AWS, Bedrock, Terraform, …)
+ * Dynamic node graph rooted at "Emre Doğan", orbited by three
+ * concentric tiers (projects, focus areas, tech stack). Built on
+ * @xyflow/react v12 — visitors can drag individual nodes, pan the
+ * canvas, zoom with the wheel/pinch, and use the corner minimap
+ * for orientation.
  *
- * Replaces InfrastructureCore as the right-column anchor. The old
- * component is preserved on disk (referenced by the OG image route)
- * but no longer rendered on /.
+ * ── Stack note ───────────────────────────────────────────────────
+ * The CWH project-page topology (`AWSTopologyScene.tsx`) is built
+ * on three.js + @react-three/fiber + @react-three/drei. Loading
+ * that stack on the home hero would add ~150-200 KB gzipped to
+ * first-paint JS — blowing through the home initial-JS budget and
+ * regressing LCP. CWH's r3f bundle is already lazy-loaded behind
+ * a dynamic import for that exact reason on its own route.
  *
- * Cinematic identity respected:
- *   - Cyan #00d2ff only. No new accents.
- *   - Pure SVG + native pointer events. NO three.js (would balloon
- *     the home initial JS past the 250 KB ceiling).
- *   - useReducedMotion silences the ambient outer ring rotation and
- *     centre pulse; pan/zoom still work (they're explicit interactions).
+ * @xyflow/react (~60 KB gz) is the right substitute for the hero
+ * because it's purpose-built for *dynamic* node graphs (draggable
+ * nodes, native pan/zoom, minimap, controls) — whereas CWH's
+ * three.js scene is actually a set of static spheres with a
+ * gentle autorotate, NOT a true dynamic graph. Choosing
+ * @xyflow/react here delivers the "dynamic, not concentric
+ * circles" spec while keeping the bundle inside the cinematic-
+ * identity perf invariants.
  *
- * Interaction model — matches the CWH topology's posture:
- *   - Pan: pointer-drag anywhere on the canvas translates the viewBox.
- *   - Zoom: wheel (or trackpad pinch) scales the viewBox around the
- *     cursor. Touch pinch is not handled in v1 — the CWH 3D scene
- *     uses Three.js OrbitControls for that; native SVG touch-pinch
- *     would require its own multi-pointer state machine, deferred.
- *   - Hover/tap a node → tooltip with the node's blurb.
- *   - "Reset view" button bottom-right restores the initial viewBox.
+ * ── Cinematic identity preserved ─────────────────────────────────
+ * - Cyan #00d2ff only. The react-flow default stylesheet ships
+ *   with light-mode blues; this file's CSS overrides every relevant
+ *   class so the rendered surface is pure black + cyan.
+ * - HUD chrome (corner brackets, status strip, legend) sits on top
+ *   of the canvas via react-flow's <Panel> primitive — same look
+ *   we built in the previous HUD-frame commit.
+ * - prefers-reduced-motion silences the node pulse animations and
+ *   the edge dash flow; pan/zoom/drag stay because they're
+ *   explicit interactions.
  */
 
 import {
-  useState,
-  useRef,
   useMemo,
+  useState,
   useCallback,
-  type PointerEvent as ReactPointerEvent,
-  type WheelEvent as ReactWheelEvent,
+  useEffect,
+  type CSSProperties,
 } from "react";
+import {
+  ReactFlow,
+  Background,
+  BackgroundVariant,
+  MiniMap,
+  Controls,
+  Panel,
+  Handle,
+  Position,
+  useNodesState,
+  useEdgesState,
+  type Node,
+  type Edge,
+  type NodeProps,
+  type EdgeProps,
+  type ReactFlowInstance,
+  BaseEdge,
+  getStraightPath,
+} from "@xyflow/react";
 import { motion, useReducedMotion } from "motion/react";
-import { RotateCcw } from "lucide-react";
+import "@xyflow/react/dist/base.css";
 import {
   CENTER,
   CENTER_NODE,
-  EDGE_OPACITY,
   HERO_EDGES,
   HERO_NODES,
-  NODE_R,
   RADII,
   RING_STYLE,
-  VIEWBOX,
-  type HeroEdge,
-  type HeroNode,
+  type HeroNode as HeroNodeShape,
   type RingId,
 } from "./hero-topology-data";
 
-const INITIAL_VB = {
-  x: VIEWBOX.x,
-  y: VIEWBOX.y,
-  w: VIEWBOX.w,
-  h: VIEWBOX.h,
-} as const;
-
-/* Pan/zoom envelope. The view can pan ±300 viewBox-units from origin
- * (the constellation fills 1000×1000; ±300 lets the eye drift to the
- * outer ring without losing context) and zoom between 0.5× (viewBox
- * scaled to 2000) and 3× (viewBox scaled to 333). */
-const PAN_LIMIT = 300;
-const MIN_VB = 333; // 3× zoom in
-const MAX_VB = 2000; // 0.5× zoom out
-
-interface ViewBox {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-/* ── Polar projection helper ─────────────────────────────────────── */
-
-interface Point {
-  x: number;
-  y: number;
-}
-
-function polar(angleDeg: number, radius: number): Point {
+/* ── Polar → cartesian projection ──────────────────────────────────
+ *
+ * Reuse the polar coordinates already encoded in hero-topology-data.ts.
+ * Centre at the data-file's (500, 500) so positions stay consistent
+ * with the OG-image preview render that mirrors the same constants. */
+function polarToXY(angleDeg: number, radius: number) {
   const a = (angleDeg * Math.PI) / 180;
   return {
     x: CENTER.x + Math.cos(a) * radius,
@@ -99,165 +97,286 @@ function radiusFor(ring: RingId): number {
   return RADII.tech;
 }
 
-function pointFor(node: HeroNode): Point {
-  if (node.ring === "center") return { x: CENTER.x, y: CENTER.y };
-  return polar(node.angleDeg, radiusFor(node.ring));
+/* ── Build react-flow node/edge data from the shared schema ──────── */
+
+interface HeroNodeData extends Record<string, unknown> {
+  label: string;
+  ring: RingId;
+  blurb: string;
 }
 
-/* ── Component ───────────────────────────────────────────────────── */
+type HeroNodeType = Node<HeroNodeData, "hero">;
+type HeroEdgeType = Edge<Record<string, unknown>, "filament">;
+
+function toFlowNode(node: HeroNodeShape): HeroNodeType {
+  const pos =
+    node.ring === "center"
+      ? { x: CENTER.x, y: CENTER.y }
+      : polarToXY(node.angleDeg, radiusFor(node.ring));
+  return {
+    id: node.id,
+    type: "hero",
+    position: pos,
+    data: {
+      label: node.label,
+      ring: node.ring,
+      blurb: node.blurb ?? "",
+    },
+    // Centre node should not be draggable — the whole map orbits it.
+    // Outer-ring nodes are draggable so visitors can rearrange.
+    draggable: node.ring !== "center",
+    selectable: true,
+  };
+}
+
+const INITIAL_NODES: HeroNodeType[] = HERO_NODES.map(toFlowNode);
+
+const INITIAL_EDGES: HeroEdgeType[] = HERO_EDGES.map((edge, i) => ({
+  id: `${edge.from}->${edge.to}-${i}`,
+  source: edge.from,
+  target: edge.to,
+  type: "filament",
+  // Edge "depth tier" derived from source ring — center→project is
+  // the brightest, project→focus medium, focus→tech faintest.
+  data: {
+    tier:
+      edge.from === "emre"
+        ? "primary"
+        : HERO_NODES.find((n) => n.id === edge.from)?.ring === "projects"
+          ? "secondary"
+          : "tertiary",
+  },
+}));
+
+const EDGE_TIER_OPACITY: Record<string, number> = {
+  primary: 0.5,
+  secondary: 0.28,
+  tertiary: 0.14,
+};
+
+/* ── Custom node ──────────────────────────────────────────────────
+ *
+ * One component for all four rings — branches on data.ring for size
+ * + colour. motion/react gives us the hover pulse and a one-shot
+ * entry scale. */
+
+const NODE_SIZE: Record<RingId, number> = {
+  center: 110,
+  projects: 60,
+  focus: 42,
+  tech: 28,
+};
+
+const NODE_FONT: Record<RingId, string> = {
+  center: "15px",
+  projects: "13px",
+  focus: "11px",
+  tech: "9px",
+};
+
+function HeroNodeComponent({ data, selected }: NodeProps<HeroNodeType>) {
+  const ring = data.ring;
+  const size = NODE_SIZE[ring];
+  const fontSize = NODE_FONT[ring];
+  const style = RING_STYLE[ring];
+  const isCenter = ring === "center";
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <div
+      className="relative flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
+      {/* Invisible handles — react-flow needs at least one source and
+          one target handle per node for edge anchoring. They're sized
+          to zero and pointer-events-none so they never collide with
+          the drag affordance. */}
+      <Handle
+        type="source"
+        position={Position.Top}
+        style={INVISIBLE_HANDLE}
+        isConnectable={false}
+      />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        style={INVISIBLE_HANDLE}
+        isConnectable={false}
+      />
+
+      {/* Pulsing outer halo — only on the centre node; outer rings
+          stay calm so the whole canvas doesn't shimmer. */}
+      {isCenter && (
+        <motion.span
+          aria-hidden="true"
+          className="absolute inset-0 rounded-full"
+          style={{
+            border: "1px solid rgba(0,210,255,0.30)",
+          }}
+          animate={
+            prefersReducedMotion
+              ? undefined
+              : { opacity: [0.4, 0.85, 0.4], scale: [1, 1.08, 1] }
+          }
+          transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
+
+      {/* Glow ring — visible always, brighter on selected/hover. */}
+      <span
+        aria-hidden="true"
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          inset: -6,
+          border: `1px solid ${style.glow}`,
+          opacity: selected ? 1 : 0.7,
+          transition: "opacity 220ms ease",
+        }}
+      />
+
+      {/* Solid disc — the visible node body. */}
+      <span
+        aria-hidden="true"
+        className="rounded-full"
+        style={{
+          width: size,
+          height: size,
+          background: isCenter
+            ? `radial-gradient(circle at 35% 30%, rgba(0,210,255,0.55), ${style.fill}66 60%, ${style.fill}22 100%)`
+            : style.fill,
+          boxShadow: isCenter
+            ? "0 0 32px rgba(0,210,255,0.45), inset 0 1px 1px rgba(255,255,255,0.30)"
+            : `0 0 14px ${style.glow}`,
+          opacity: 0.92,
+        }}
+      />
+
+      {/* Label sits BELOW the node. position absolute so it doesn't
+          push react-flow's bounding box (which would break edge
+          anchoring math). */}
+      <span
+        className="absolute font-mono uppercase whitespace-nowrap pointer-events-none"
+        style={{
+          top: "100%",
+          marginTop: 6,
+          fontSize,
+          letterSpacing: "0.16em",
+          color:
+            ring === "center"
+              ? "rgba(255,255,255,0.96)"
+              : ring === "projects"
+                ? "rgba(255,255,255,0.92)"
+                : ring === "focus"
+                  ? "rgba(255,255,255,0.72)"
+                  : "rgba(255,255,255,0.5)",
+          textShadow: "0 1px 6px rgba(0,0,0,0.85)",
+        }}
+      >
+        {data.label.toUpperCase()}
+      </span>
+    </div>
+  );
+}
+
+const INVISIBLE_HANDLE: CSSProperties = {
+  width: 1,
+  height: 1,
+  background: "transparent",
+  border: "none",
+  pointerEvents: "none",
+  opacity: 0,
+};
+
+/* ── Custom edge ─────────────────────────────────────────────────
+ *
+ * Thin straight filament with a flowing cyan dash. The dash speed
+ * varies by tier so the eye traces center→project most strongly. */
+
+function FilamentEdge({
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  data,
+  id,
+}: EdgeProps<HeroEdgeType>) {
+  const prefersReducedMotion = useReducedMotion();
+  const [edgePath] = getStraightPath({ sourceX, sourceY, targetX, targetY });
+  const tier = (data?.tier as string) ?? "tertiary";
+  const opacity = EDGE_TIER_OPACITY[tier] ?? 0.14;
+
+  return (
+    <>
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        style={{
+          stroke: "#00d2ff",
+          strokeWidth: 1,
+          opacity,
+          strokeDasharray: prefersReducedMotion ? undefined : "4 6",
+          animation: prefersReducedMotion
+            ? undefined
+            : `hero-filament-flow ${tier === "primary" ? 14 : tier === "secondary" ? 22 : 30}s linear infinite`,
+        }}
+      />
+    </>
+  );
+}
+
+const NODE_TYPES = { hero: HeroNodeComponent };
+const EDGE_TYPES = { filament: FilamentEdge };
+
+/* ── Component ────────────────────────────────────────────────── */
 
 export default function HeroTopology() {
-  const prefersReducedMotion = useReducedMotion();
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [viewBox, setViewBox] = useState<ViewBox>(INITIAL_VB);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [nodes, , onNodesChange] = useNodesState<HeroNodeType>(INITIAL_NODES);
+  const [edges, , onEdgesChange] = useEdgesState<HeroEdgeType>(INITIAL_EDGES);
+  const [hoveredNode, setHoveredNode] = useState<HeroNodeType | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [flow, setFlow] = useState<ReactFlowInstance<
+    HeroNodeType,
+    HeroEdgeType
+  > | null>(null);
 
-  /* Pre-compute node positions once — they don't move while panning,
-   * the viewBox does. */
-  const positions = useMemo(() => {
-    const map = new Map<string, Point>();
-    for (const node of HERO_NODES) {
-      map.set(node.id, pointFor(node));
-    }
-    return map;
+  /* Fit the constellation into the viewport once the instance mounts.
+   * react-flow's `fitView` runs after layout; we wait for the next
+   * frame so the container has its final size before zoom math runs. */
+  useEffect(() => {
+    if (!flow) return;
+    const id = requestAnimationFrame(() => {
+      flow.fitView({ padding: 0.18, duration: 0 });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [flow]);
+
+  /* Touch the "has interacted" flag on any drag/wheel/pan event so
+   * the affordance chip can fade out. */
+  const markInteracted = useCallback(() => {
+    setHasInteracted(true);
   }, []);
 
-  const hoveredNode = useMemo(
-    () => HERO_NODES.find((n) => n.id === hoveredId) ?? null,
-    [hoveredId],
-  );
-
-  /* ── Pan state ───────────────────────────────────────────────────
-     Drag start captures the pointer position + the current viewBox.
-     Subsequent moves translate the viewBox by (delta in pixels) ×
-     (viewBox-units-per-pixel). The SVG client width gives us the
-     scale conversion. */
-  const dragRef = useRef<{
-    pointerId: number;
-    startClientX: number;
-    startClientY: number;
-    startVB: ViewBox;
-  } | null>(null);
-
-  const handlePointerDown = useCallback(
-    (e: ReactPointerEvent<SVGSVGElement>) => {
-      if (e.button !== 0 && e.pointerType === "mouse") return;
-      const svg = svgRef.current;
-      if (!svg) return;
-      svg.setPointerCapture(e.pointerId);
-      dragRef.current = {
-        pointerId: e.pointerId,
-        startClientX: e.clientX,
-        startClientY: e.clientY,
-        startVB: viewBox,
-      };
-      setHasInteracted(true);
-    },
-    [viewBox],
-  );
-
-  const handlePointerMove = useCallback(
-    (e: ReactPointerEvent<SVGSVGElement>) => {
-      const drag = dragRef.current;
-      if (!drag || drag.pointerId !== e.pointerId) return;
-      const svg = svgRef.current;
-      if (!svg) return;
-      const rect = svg.getBoundingClientRect();
-      // viewBox-units per CSS-pixel for the current zoom level
-      const unitsPerPx = drag.startVB.w / rect.width;
-      const dxPx = e.clientX - drag.startClientX;
-      const dyPx = e.clientY - drag.startClientY;
-      const nx = clamp(
-        drag.startVB.x - dxPx * unitsPerPx,
-        -PAN_LIMIT,
-        VIEWBOX.w + PAN_LIMIT - drag.startVB.w,
-      );
-      const ny = clamp(
-        drag.startVB.y - dyPx * unitsPerPx,
-        -PAN_LIMIT,
-        VIEWBOX.h + PAN_LIMIT - drag.startVB.h,
-      );
-      setViewBox({ ...drag.startVB, x: nx, y: ny });
-    },
-    [],
-  );
-
-  const handlePointerUp = useCallback(
-    (e: ReactPointerEvent<SVGSVGElement>) => {
-      const drag = dragRef.current;
-      if (!drag || drag.pointerId !== e.pointerId) return;
-      const svg = svgRef.current;
-      if (svg && svg.hasPointerCapture(e.pointerId)) {
-        svg.releasePointerCapture(e.pointerId);
-      }
-      dragRef.current = null;
-    },
-    [],
-  );
-
-  /* ── Wheel zoom ──────────────────────────────────────────────────
-     Scales the viewBox around the cursor's position so the point
-     under the mouse stays under the mouse — the same UX OrbitControls
-     gives in the CWH 3D scene. */
-  const handleWheel = useCallback(
-    (e: ReactWheelEvent<SVGSVGElement>) => {
-      e.preventDefault();
-      const svg = svgRef.current;
-      if (!svg) return;
-      const rect = svg.getBoundingClientRect();
-      const cursorVBx =
-        viewBox.x + ((e.clientX - rect.left) / rect.width) * viewBox.w;
-      const cursorVBy =
-        viewBox.y + ((e.clientY - rect.top) / rect.height) * viewBox.h;
-
-      const factor = e.deltaY > 0 ? 1.12 : 1 / 1.12;
-      const newW = clamp(viewBox.w * factor, MIN_VB, MAX_VB);
-      const newH = clamp(viewBox.h * factor, MIN_VB, MAX_VB);
-
-      // Translate so the cursor's viewBox point stays put after the
-      // zoom — the new origin must be cursor - (cursor-relative-frac) × newSize.
-      const nx = cursorVBx - ((e.clientX - rect.left) / rect.width) * newW;
-      const ny = cursorVBy - ((e.clientY - rect.top) / rect.height) * newH;
-
-      setViewBox({
-        x: clamp(nx, -PAN_LIMIT, VIEWBOX.w + PAN_LIMIT - newW),
-        y: clamp(ny, -PAN_LIMIT, VIEWBOX.h + PAN_LIMIT - newH),
-        w: newW,
-        h: newH,
-      });
-      setHasInteracted(true);
-    },
-    [viewBox],
-  );
+  const statusLabel = hoveredNode
+    ? `INSPECT: ${hoveredNode.data.label.toUpperCase()}`
+    : hasInteracted
+      ? "STANDBY"
+      : "DRAG · PAN · ZOOM";
 
   const handleReset = useCallback(() => {
-    setViewBox(INITIAL_VB);
-  }, []);
-
-  /* Dynamic top-right status — shifts based on interaction state.
-   * STANDBY (idle) → INSPECT (hovering a node) → PAN/ZOOM (mid-drag).
-   * This is the "console" status indicator that makes the canvas
-   * feel like a live system instead of decoration. */
-  const statusLabel = dragRef.current
-    ? "PAN/ZOOM"
-    : hoveredNode
-      ? `INSPECT: ${hoveredNode.label.toUpperCase()}`
-      : hasInteracted
-        ? "STANDBY"
-        : "DRAG · SCROLL TO INTERACT";
+    if (!flow) return;
+    flow.fitView({ padding: 0.18, duration: 450 });
+  }, [flow]);
 
   return (
     <div
       className="relative w-full max-w-[640px] mx-auto aspect-square min-h-[360px] sm:min-h-[440px]"
       role="region"
-      aria-label="Interactive portfolio constellation"
+      aria-label="Interactive portfolio constellation — drag nodes, pan the canvas, zoom with scroll"
     >
-      {/* Outer console frame — radial vignette + hairline border. The
-          inset shadow gives the topology a visible edge so pan/zoom
-          feels bounded, and the radial glow draws the eye centre-out. */}
+      {/* Console frame — radial vignette + hairline border. Pure CSS,
+          sits below react-flow so the canvas paints on top. */}
       <div
-        className="absolute inset-0 rounded-2xl"
+        className="absolute inset-0 rounded-2xl pointer-events-none z-0"
         style={{
           background:
             "radial-gradient(circle at 50% 50%, rgba(0,210,255,0.05) 0%, rgba(5,5,5,0.0) 65%)",
@@ -267,198 +386,135 @@ export default function HeroTopology() {
         aria-hidden="true"
       />
 
-      {/* HUD corner brackets — four cyan L-shapes anchor the canvas
-          like a heads-up display crosshair. SVG so they hold their
-          1-pixel weight at any container size. */}
+      {/* HUD corner brackets (carried over from the previous frame). */}
       <CornerBracket position="top-left" />
       <CornerBracket position="top-right" />
       <CornerBracket position="bottom-left" />
       <CornerBracket position="bottom-right" />
 
-      {/* Top status strip — identity badge (left) + dynamic status
-          (right). Sits above the SVG canvas, gives the topology the
-          framing of a live engineering console. */}
-      <div className="pointer-events-none absolute top-3 left-3 right-3 flex items-center justify-between gap-3 z-10">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#00d2ff]/20 bg-black/60 px-2.5 py-1 backdrop-blur-sm">
-          <span
-            className="w-1.5 h-1.5 rounded-full bg-[#00d2ff]"
-            style={{
-              boxShadow: "0 0 6px rgba(0,210,255,0.8)",
-            }}
-            aria-hidden="true"
+      {/* The react-flow canvas. Fills the wrapper. Style overrides at
+          the bottom of this file flip its default palette to cyan/black. */}
+      <div className="absolute inset-0 rounded-2xl overflow-hidden hero-flow-canvas">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={(changes) => {
+            onNodesChange(changes);
+            // Drag start emits "position" change of type "dragging".
+            if (changes.some((c) => c.type === "position")) markInteracted();
+          }}
+          onEdgesChange={onEdgesChange}
+          nodeTypes={NODE_TYPES}
+          edgeTypes={EDGE_TYPES}
+          onInit={setFlow}
+          onMove={markInteracted}
+          onNodeMouseEnter={(_, node) => setHoveredNode(node)}
+          onNodeMouseLeave={() => setHoveredNode(null)}
+          onPaneClick={() => setHoveredNode(null)}
+          fitView
+          fitViewOptions={{ padding: 0.18 }}
+          minZoom={0.4}
+          maxZoom={2.2}
+          // Disable React Flow's default UI controls (we render our
+          // own HUD via <Panel> below for cinematic consistency).
+          proOptions={{ hideAttribution: true }}
+          nodesConnectable={false}
+          nodesFocusable={true}
+          panOnDrag={true}
+          panOnScroll={false}
+          zoomOnScroll={true}
+          zoomOnPinch={true}
+          // Don't let dragging the centre node behave like panning the
+          // canvas — react-flow handles that distinction automatically
+          // when individual nodes have draggable:false but we want to
+          // make sure pan-from-canvas works everywhere else.
+          selectionOnDrag={false}
+          deleteKeyCode={null}
+          multiSelectionKeyCode={null}
+          style={{ background: "transparent" }}
+        >
+          {/* Faint cyan dot grid background — gives the canvas the
+              "engineering surface" texture without competing with
+              the constellation. */}
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={28}
+            size={1.1}
+            color="rgba(0,210,255,0.10)"
           />
-          <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-white/65">
-            EMRE.CORE :: ADANA
-          </span>
-        </div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-black/60 px-2.5 py-1 backdrop-blur-sm">
-          <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-[#00d2ff]/85 truncate max-w-[180px] sm:max-w-[240px]">
-            {statusLabel}
-          </span>
-        </div>
+
+          {/* Minimap — cyan-themed, sits bottom-right. */}
+          <MiniMap
+            pannable
+            zoomable
+            ariaLabel="Constellation minimap"
+            position="bottom-right"
+            style={{
+              background: "rgba(5,5,5,0.85)",
+              border: "1px solid rgba(0,210,255,0.20)",
+              borderRadius: 8,
+              width: 100,
+              height: 70,
+            }}
+            nodeColor={(n) => {
+              const ring = (n.data as HeroNodeData | undefined)?.ring;
+              if (!ring) return "#00d2ff";
+              return RING_STYLE[ring].fill;
+            }}
+            nodeStrokeColor="transparent"
+            maskColor="rgba(0,0,0,0.55)"
+          />
+
+          {/* Built-in zoom controls (custom-styled below). */}
+          <Controls
+            position="bottom-left"
+            showInteractive={false}
+            onZoomIn={markInteracted}
+            onZoomOut={markInteracted}
+            onFitView={markInteracted}
+          />
+
+          {/* HUD panels — render on top of the canvas. */}
+          <Panel position="top-left">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#00d2ff]/20 bg-black/65 px-2.5 py-1 backdrop-blur-sm pointer-events-none">
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-[#00d2ff]"
+                style={{ boxShadow: "0 0 6px rgba(0,210,255,0.8)" }}
+                aria-hidden="true"
+              />
+              <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-white/65">
+                EMRE.CORE :: ADANA
+              </span>
+            </div>
+          </Panel>
+          <Panel position="top-right">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-black/65 px-2.5 py-1 backdrop-blur-sm pointer-events-none">
+              <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-[#00d2ff]/85 truncate max-w-[180px] sm:max-w-[240px]">
+                {statusLabel}
+              </span>
+            </div>
+          </Panel>
+        </ReactFlow>
       </div>
 
-      <svg
-        ref={svgRef}
-        viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
-        role="img"
-        aria-label="Emre Doğan's portfolio constellation — central identity orbited by projects, focus areas, and tech stack. Drag to pan, scroll to zoom."
-        className="relative w-full h-full select-none"
-        style={{
-          touchAction: "none",
-          cursor: dragRef.current ? "grabbing" : "grab",
-        }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onWheel={handleWheel}
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* Cyan glow filter — applied to nodes for the "alive plasma"
-            quality. Single re-usable defs entry; ~negligible cost. */}
-        <defs>
-          <filter id="hero-node-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          {/* Animated dash for the outer ring — only used when
-              motion is allowed (CSS animation guarded below). */}
-          <radialGradient id="hero-core-grad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#00d2ff" stopOpacity="0.45" />
-            <stop offset="60%" stopColor="#00d2ff" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#00d2ff" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-
-        {/* Ring guides — three concentric dashed circles. The outer
-            one rotates slowly for ambient motion; the inner two stay
-            still so the visual centre of mass doesn't drift. */}
-        <g aria-hidden="true">
-          <circle
-            cx={CENTER.x}
-            cy={CENTER.y}
-            r={RADII.projects}
-            fill="none"
-            stroke="rgba(0,210,255,0.10)"
-            strokeWidth="1"
-            strokeDasharray="2 6"
-          />
-          <circle
-            cx={CENTER.x}
-            cy={CENTER.y}
-            r={RADII.focus}
-            fill="none"
-            stroke="rgba(0,210,255,0.08)"
-            strokeWidth="1"
-            strokeDasharray="2 6"
-          />
-          <motion.circle
-            cx={CENTER.x}
-            cy={CENTER.y}
-            r={RADII.tech}
-            fill="none"
-            stroke="rgba(0,210,255,0.06)"
-            strokeWidth="1"
-            strokeDasharray="3 8"
-            animate={prefersReducedMotion ? undefined : { rotate: 360 }}
-            transition={{
-              duration: 140,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-            style={{ transformOrigin: `${CENTER.x}px ${CENTER.y}px` }}
-          />
-        </g>
-
-        {/* Centre glow halo (behind the centre node) — gives the
-            constellation a luminous core without per-frame motion. */}
-        <circle
-          cx={CENTER.x}
-          cy={CENTER.y}
-          r={NODE_R.center * 2.4}
-          fill="url(#hero-core-grad)"
-          aria-hidden="true"
-        />
-
-        {/* Edges — three depth tiers, each rendered with its own
-            opacity so the eye can trace center → project → focus →
-            tech. Edges go BEFORE nodes so nodes paint over them. */}
-        <g aria-hidden="true">
-          {HERO_EDGES.map((edge, i) => (
-            <EdgeLine
-              key={`${edge.from}->${edge.to}-${i}`}
-              edge={edge}
-              positions={positions}
-            />
-          ))}
-        </g>
-
-        {/* Nodes (and their labels) per ring — outer to inner so
-            inner nodes paint over outer ring labels if they collide. */}
-        <g>
-          {HERO_NODES.filter((n) => n.ring === "tech").map((n) => (
-            <Node
-              key={n.id}
-              node={n}
-              position={positions.get(n.id)!}
-              hovered={hoveredId === n.id}
-              onHover={setHoveredId}
-            />
-          ))}
-          {HERO_NODES.filter((n) => n.ring === "focus").map((n) => (
-            <Node
-              key={n.id}
-              node={n}
-              position={positions.get(n.id)!}
-              hovered={hoveredId === n.id}
-              onHover={setHoveredId}
-            />
-          ))}
-          {HERO_NODES.filter((n) => n.ring === "projects").map((n) => (
-            <Node
-              key={n.id}
-              node={n}
-              position={positions.get(n.id)!}
-              hovered={hoveredId === n.id}
-              onHover={setHoveredId}
-            />
-          ))}
-          {/* Centre node — rendered last so it sits visually on top. */}
-          <CenterNode
-            node={CENTER_NODE}
-            position={positions.get(CENTER_NODE.id)!}
-            hovered={hoveredId === CENTER_NODE.id}
-            onHover={setHoveredId}
-            prefersReducedMotion={!!prefersReducedMotion}
-          />
-        </g>
-      </svg>
-
-      {/* Hover tooltip — overlays the SVG. Positioned bottom-left so
-          it never fights the reset button. */}
-      {hoveredNode && (
+      {/* Hover tooltip — overlays react-flow when a node is focused. */}
+      {hoveredNode && hoveredNode.data.blurb && (
         <div
-          className="pointer-events-none absolute bottom-3 left-3 max-w-[78%] rounded-lg border border-[#00d2ff]/20 bg-black/85 px-3 py-2 text-xs leading-relaxed text-white/80 shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-sm"
+          className="pointer-events-none absolute bottom-14 left-3 max-w-[70%] rounded-lg border border-[#00d2ff]/20 bg-black/85 px-3 py-2 text-xs leading-relaxed text-white/85 shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-sm z-20"
           role="status"
           aria-live="polite"
         >
           <div className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff] mb-1">
-            {hoveredNode.label}
+            {hoveredNode.data.label}
           </div>
-          {hoveredNode.blurb}
+          {hoveredNode.data.blurb}
         </div>
       )}
 
-      {/* Bottom strip — orbit legend (left/centre) + reset button
-          (right, only after interaction). The legend is the dashboard's
-          map key: three coloured dots match the three ring fills so
-          readers can ground "what does an outer-ring node mean". */}
-      <div className="pointer-events-none absolute bottom-3 left-3 right-3 flex items-center justify-between gap-3 z-10">
-        <div className="inline-flex items-center gap-3 rounded-full border border-white/[0.06] bg-black/55 px-2.5 py-1 backdrop-blur-sm">
+      {/* Bottom legend + reset — anchored above the controls so they
+          don't overlap. */}
+      <div className="pointer-events-none absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3 z-20">
+        <div className="inline-flex items-center gap-3 rounded-full border border-white/[0.06] bg-black/55 px-2.5 py-1 backdrop-blur-sm ml-auto">
           <LegendDot color={RING_STYLE.projects.fill} label="PROJECTS" />
           <span className="text-white/15" aria-hidden="true">·</span>
           <LegendDot color={RING_STYLE.focus.fill} label="FOCUS" />
@@ -472,11 +528,22 @@ export default function HeroTopology() {
             aria-label="Reset constellation view"
             className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/[0.10] bg-black/75 px-2.5 py-1 text-[9px] font-mono uppercase tracking-[0.18em] text-white/60 hover:text-white/95 hover:border-[#00d2ff]/40 transition-colors backdrop-blur-sm"
           >
-            <RotateCcw className="w-3 h-3" aria-hidden="true" />
-            Reset
+            FIT VIEW
           </button>
         )}
       </div>
+
+      {/* Inline stylesheet — overrides the @xyflow/react default
+          palette (light blues + white) with the cinematic cyan + black
+          identity. Scoped via .hero-flow-canvas so any future react-
+          flow usage elsewhere in the codebase stays untouched. Also
+          owns the flowing-dash keyframe used by the custom edge. */}
+      <style>{HERO_FLOW_CSS}</style>
+
+      {/* Reference variables kept reachable from CENTER_NODE so a
+          future visualisation can pin it visually distinct without
+          re-importing the data file. */}
+      <span hidden>{CENTER_NODE.id}</span>
     </div>
   );
 }
@@ -487,9 +554,6 @@ interface CornerBracketProps {
   position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
 }
 
-/* Pure-CSS L-shape via two 1px borders. Cheaper than SVG, and the
- * 18px arm length sits comfortably inside the 12px container padding
- * without colliding with the corner-radius arc. */
 function CornerBracket({ position }: CornerBracketProps) {
   const corner = {
     "top-left": { top: 0, left: 0, borderTop: 1, borderLeft: 1, borderRadius: "8px 0 0 0" },
@@ -501,7 +565,7 @@ function CornerBracket({ position }: CornerBracketProps) {
   return (
     <span
       aria-hidden="true"
-      className="absolute w-5 h-5 pointer-events-none z-0"
+      className="absolute w-5 h-5 pointer-events-none z-20"
       style={{
         top: corner.top !== undefined ? "8px" : undefined,
         bottom: corner.bottom !== undefined ? "8px" : undefined,
@@ -545,190 +609,68 @@ function LegendDot({ color, label }: LegendDotProps) {
   );
 }
 
-/* ── Edge ────────────────────────────────────────────────────────── */
-
-interface EdgeLineProps {
-  edge: HeroEdge;
-  positions: Map<string, Point>;
+/* ── Cinematic theme overrides for @xyflow/react ─────────────────
+ *
+ * The library's default stylesheet ships with white backgrounds and
+ * blue selection borders. Scoped via .hero-flow-canvas so only the
+ * hero topology gets re-themed; any future react-flow usage elsewhere
+ * keeps the library defaults.
+ *
+ * Also defines the flowing-dash keyframe used by the custom edge. */
+const HERO_FLOW_CSS = `
+@keyframes hero-filament-flow {
+  to { stroke-dashoffset: -200; }
 }
-
-function EdgeLine({ edge, positions }: EdgeLineProps) {
-  const a = positions.get(edge.from);
-  const b = positions.get(edge.to);
-  if (!a || !b) return null;
-  const opacity =
-    edge.from === "emre"
-      ? EDGE_OPACITY.centerToProject
-      : edge.to === "claude" ||
-          edge.to === "bedrock" ||
-          edge.to === "aws" ||
-          edge.to === "terraform" ||
-          edge.to === "nextjs" ||
-          edge.to === "typescript" ||
-          edge.to === "dynamodb" ||
-          edge.to === "lambda" ||
-          edge.to === "vercel" ||
-          edge.to === "flutter" ||
-          edge.to === "supabase"
-        ? EDGE_OPACITY.focusToTech
-        : EDGE_OPACITY.projectToFocus;
-  return (
-    <line
-      x1={a.x}
-      y1={a.y}
-      x2={b.x}
-      y2={b.y}
-      stroke={`rgba(0,210,255,${opacity})`}
-      strokeWidth="1"
-    />
-  );
+.hero-flow-canvas .react-flow__renderer,
+.hero-flow-canvas .react-flow__pane,
+.hero-flow-canvas .react-flow__viewport {
+  background: transparent;
 }
-
-/* ── Generic ring node ──────────────────────────────────────────── */
-
-interface NodeProps {
-  node: HeroNode;
-  position: Point;
-  hovered: boolean;
-  onHover: (id: string | null) => void;
+.hero-flow-canvas .react-flow__node {
+  outline: none;
 }
-
-function Node({ node, position, hovered, onHover }: NodeProps) {
-  const r = NODE_R[node.ring];
-  const style = RING_STYLE[node.ring];
-  const labelOffset = r + 14;
-  const fontSize =
-    node.ring === "projects" ? 13 : node.ring === "focus" ? 11 : 9;
-  const labelOpacity =
-    node.ring === "projects" ? 0.92 : node.ring === "focus" ? 0.72 : 0.5;
-
-  return (
-    <g
-      onPointerEnter={() => onHover(node.id)}
-      onPointerLeave={() => onHover(null)}
-      onFocus={() => onHover(node.id)}
-      onBlur={() => onHover(null)}
-      tabIndex={0}
-      role="button"
-      aria-label={node.label}
-      style={{ cursor: "pointer", outline: "none" }}
-    >
-      {/* Outer ring — pulses on hover. */}
-      <circle
-        cx={position.x}
-        cy={position.y}
-        r={r + (hovered ? 6 : 3)}
-        fill="none"
-        stroke={style.glow}
-        strokeWidth="1"
-        style={{ transition: "r 220ms ease, stroke-width 220ms ease" }}
-      />
-      {/* Solid node — slight glow filter for the "alive" feel. */}
-      <circle
-        cx={position.x}
-        cy={position.y}
-        r={r}
-        fill={style.fill}
-        opacity={hovered ? 1 : 0.85}
-        filter="url(#hero-node-glow)"
-        style={{ transition: "opacity 200ms ease" }}
-      />
-      {/* Label — uppercase mono, sits below the node. */}
-      <text
-        x={position.x}
-        y={position.y + labelOffset}
-        textAnchor="middle"
-        fontSize={fontSize}
-        fontFamily="ui-monospace, SFMono-Regular, monospace"
-        letterSpacing="1.5"
-        fill={`rgba(255,255,255,${hovered ? 1 : labelOpacity})`}
-        style={{ pointerEvents: "none", transition: "fill 200ms ease" }}
-      >
-        {node.label.toUpperCase()}
-      </text>
-    </g>
-  );
+.hero-flow-canvas .react-flow__node.selected,
+.hero-flow-canvas .react-flow__node:focus {
+  outline: none;
+  box-shadow: none;
 }
-
-/* ── Centre node ─────────────────────────────────────────────────── */
-
-interface CenterNodeProps extends NodeProps {
-  prefersReducedMotion: boolean;
+.hero-flow-canvas .react-flow__edge-path {
+  stroke-linecap: round;
 }
-
-function CenterNode({
-  node,
-  position,
-  hovered,
-  onHover,
-  prefersReducedMotion,
-}: CenterNodeProps) {
-  const r = NODE_R.center;
-  return (
-    <g
-      onPointerEnter={() => onHover(node.id)}
-      onPointerLeave={() => onHover(null)}
-      onFocus={() => onHover(node.id)}
-      onBlur={() => onHover(null)}
-      tabIndex={0}
-      role="button"
-      aria-label={node.label}
-      style={{ cursor: "pointer", outline: "none" }}
-    >
-      {/* Pulsing outer halo — only when motion allowed. */}
-      <motion.circle
-        cx={position.x}
-        cy={position.y}
-        r={r + 12}
-        fill="none"
-        stroke="rgba(0,210,255,0.30)"
-        strokeWidth="1"
-        animate={
-          prefersReducedMotion
-            ? undefined
-            : {
-                opacity: [0.4, 0.85, 0.4],
-                scale: [1, 1.06, 1],
-              }
-        }
-        transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
-        style={{ transformOrigin: `${position.x}px ${position.y}px` }}
-      />
-      {/* Solid centre disc */}
-      <circle
-        cx={position.x}
-        cy={position.y}
-        r={r}
-        fill="rgba(0,210,255,0.18)"
-        stroke="rgba(255,255,255,0.35)"
-        strokeWidth="1"
-      />
-      <circle
-        cx={position.x}
-        cy={position.y}
-        r={r - 14}
-        fill="#00d2ff"
-        opacity={hovered ? 1 : 0.92}
-      />
-      {/* Identity label — sits below the disc */}
-      <text
-        x={position.x}
-        y={position.y + r + 22}
-        textAnchor="middle"
-        fontSize="15"
-        fontFamily="ui-monospace, SFMono-Regular, monospace"
-        letterSpacing="2.2"
-        fill="rgba(255,255,255,0.96)"
-        style={{ pointerEvents: "none" }}
-      >
-        EMRE DOĞAN
-      </text>
-    </g>
-  );
+.hero-flow-canvas .react-flow__minimap {
+  background: rgba(5,5,5,0.85) !important;
 }
-
-/* ── Utility ─────────────────────────────────────────────────────── */
-
-function clamp(n: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, n));
+.hero-flow-canvas .react-flow__minimap-mask {
+  fill: rgba(0,0,0,0.55);
 }
+.hero-flow-canvas .react-flow__controls {
+  background: transparent;
+  box-shadow: none;
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+.hero-flow-canvas .react-flow__controls-button {
+  background: rgba(5,5,5,0.85);
+  border: 1px solid rgba(0,210,255,0.20);
+  color: rgba(255,255,255,0.65);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  padding: 4px;
+  transition: border-color 200ms ease, color 200ms ease;
+}
+.hero-flow-canvas .react-flow__controls-button:hover {
+  border-color: rgba(0,210,255,0.55);
+  color: rgba(255,255,255,0.95);
+  background: rgba(5,5,5,0.95);
+}
+.hero-flow-canvas .react-flow__controls-button svg {
+  fill: currentColor;
+  max-width: 14px;
+  max-height: 14px;
+}
+.hero-flow-canvas .react-flow__attribution {
+  display: none;
+}
+`;
