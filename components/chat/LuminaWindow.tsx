@@ -21,6 +21,7 @@ import {
 import { X, ArrowUp, Copy, Check, RotateCcw, Loader2 } from "lucide-react";
 import { LuminaAvatar } from "./LuminaAvatar";
 import LuminaVoice from "./LuminaVoice";
+import { confirmHaptic } from "@/lib/haptic";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -395,6 +396,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
     e.preventDefault();
     const text = input.trim();
     if (!text || inputDisabled) return;
+    confirmHaptic();
     sendMessage({ text });
     setInput("");
   };

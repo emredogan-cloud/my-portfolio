@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { Sparkles } from "lucide-react";
+import { tapHaptic } from "@/lib/haptic";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -15,10 +16,15 @@ interface Props {
  * Persistent mount; opacity-driven visibility cross-fades with the window.
  */
 export function LuminaTrigger({ isOpen, onClick }: Props) {
+  const handleClick = () => {
+    tapHaptic();
+    onClick();
+  };
+
   return (
     <motion.button
       type="button"
-      onClick={onClick}
+      onClick={handleClick}
       suppressHydrationWarning
       aria-label="Activate Lumina"
       aria-hidden={isOpen}
