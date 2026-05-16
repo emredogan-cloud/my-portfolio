@@ -78,7 +78,7 @@ He funds the focus with an early-morning physical shift at a bakery, but the bak
 
 Emre lives in **Adana, Türkiye**. If a visitor asks where he is or where he's based, the answer is Adana — never Istanbul.
 
-The "Right now" block below shows local time in Türkiye standard time (UTC+3, no DST). All of Türkiye runs on this single zone, which the IANA database happens to label \`Europe/Istanbul\` — that's a timezone identifier, not a city. The city is Adana. The Monk Mode time blocks (bakery / school / build window / sleeping) are anchored to Adana local time.
+The "Right now" block below shows local time in Türkiye standard time (UTC+3, no DST). All of Türkiye runs on this single zone, which the IANA database happens to label \`Europe/Istanbul\` — that's a timezone identifier, not a city. The city is Adana. The Monk Mode time blocks (two bakery shifts / two computer build windows / gym on Mon-Wed-Fri or active rest otherwise / sleeping) are anchored to Adana local time. When a visitor asks "what is Emre doing right now", read the "Right now" block — it tells you exactly which block of his day he is currently in, including the gym-versus-rest conditional. Quote the activity, not the literal time range, unless the visitor explicitly asks for hours.
 
 ## Routing & guidance
 
@@ -145,55 +145,87 @@ Skip tools entirely for identity, philosophy, time-of-day, location, or routing 
    we display to the visitor is Adana, which is where Emre actually
    lives. See the "## Location" section in the system prompt body.
 
-   Bands mirror data/notes.ts "monk-mode": single source of truth for
-   Emre's daily schedule. */
+   Schedule: explicit, gap-free 24-hour map of Emre's revised Monk
+   Mode routine (two bakery shifts split by sleep, two computer build
+   windows, conditional gym block on Mon/Wed/Fri). Every minute of
+   every day resolves to exactly one label, so Lumina never has to
+   guess "what is Emre doing right now" — the answer is deterministic. */
 
-interface TimeBand {
-  readonly label: string;
-  /** Lower bound in minutes-since-midnight, inclusive. */
-  readonly fromMinute: number;
-  /** Upper bound in minutes-since-midnight, exclusive. */
-  readonly toMinute: number;
-}
+/** Days on which the 16:00-18:00 block is the gym (Mon, Wed, Fri).
+ *  JS weekday convention: 0 = Sunday … 6 = Saturday. */
+const GYM_DAYS: ReadonlySet<number> = new Set([1, 3, 5]);
 
-const BANDS: readonly TimeBand[] = [
-  // 01:30 – 08:00
-  { fromMinute: 90, toMinute: 480, label: "Emre is currently at the bakery — 01:30-08:00 shift." },
-  // 08:00 – 16:00
-  { fromMinute: 480, toMinute: 960, label: "Emre is at school — 08:00-16:00." },
-  // 16:00 – 22:00
-  { fromMinute: 960, toMinute: 1320, label: "Emre is in his build window — 16:00-22:00." },
-];
+/** Resolves a minutes-since-midnight value AND a weekday-in-Türkiye
+ *  index to a human-readable description of what Emre is doing.
+ *  Coverage is exhaustive: every minute of every day maps to one
+ *  band. The 16:00-18:00 block branches on gym day vs rest day. */
+function describeBand(
+  minutesSinceMidnight: number,
+  weekday: number,
+): string {
+  const m = minutesSinceMidnight;
 
-/** Default band used when no explicit window matches (covers 22:00-01:30
- *  including the wraparound across midnight). */
-const SLEEPING_LABEL = "Emre is likely asleep — 22:00-01:30.";
-
-function describeBand(minutesSinceMidnight: number): string {
-  for (const band of BANDS) {
-    if (
-      minutesSinceMidnight >= band.fromMinute &&
-      minutesSinceMidnight < band.toMinute
-    ) {
-      return band.label;
-    }
+  // 01:00 – 04:00 — first bakery shift
+  if (m >= 60 && m < 240) {
+    return "Emre is working the first shift at the bakery (01:00-04:00 local).";
   }
-  return SLEEPING_LABEL;
+  // 04:00 – 05:00 — heading home after the first shift
+  if (m >= 240 && m < 300) {
+    return "Emre just finished the first bakery shift and is heading home to sleep (04:00-05:00 local).";
+  }
+  // 05:00 – 10:00 — recovery sleep between shifts
+  if (m >= 300 && m < 600) {
+    return "Emre is asleep — recovery rest between the two bakery shifts (05:00-10:00 local).";
+  }
+  // 10:00 – 12:00 — second and final bakery shift of the day
+  if (m >= 600 && m < 720) {
+    return "Emre is working the second and final shift at the bakery (10:00-12:00 local).";
+  }
+  // 12:00 – 13:00 — lunch + transition after the bakery
+  if (m >= 720 && m < 780) {
+    return "Emre just finished the day's bakery work and is on a lunch + transition break (12:00-13:00 local).";
+  }
+  // 13:00 – 16:00 — focused build window at the computer
+  if (m >= 780 && m < 960) {
+    return "Emre is actively at the computer — focused build window, writing code and shipping projects (13:00-16:00 local).";
+  }
+  // 16:00 – 18:00 — gym on Mon/Wed/Fri, active rest otherwise
+  if (m >= 960 && m < 1080) {
+    if (GYM_DAYS.has(weekday)) {
+      return "Emre is at the gym — it is Monday, Wednesday, or Friday (16:00-18:00 local).";
+    }
+    return "Emre is on active rest and recovery — a non-gym day (16:00-18:00 local).";
+  }
+  // 18:00 – 19:00 — dinner + decompression before deep work
+  if (m >= 1080 && m < 1140) {
+    return "Emre is having dinner and decompressing before the deep-work block (18:00-19:00 local).";
+  }
+  // 19:00 – 22:00 — second build window, deep work
+  if (m >= 1140 && m < 1320) {
+    return "Emre is in deep work at the computer — the second build window of the day (19:00-22:00 local).";
+  }
+  // 22:00 – 01:00 (wraps midnight) — winding down before the next bakery shift
+  // Covers 22:00–23:59 (1320-1440) and 00:00–01:00 (0-60)
+  return "Emre is asleep — winding down before the 01:00 bakery shift (22:00-01:00 local).";
 }
 
-/** Returns the current wall-clock time for Emre's location (Adana,
- *  Türkiye). All of Türkiye uses a single timezone — the IANA name
- *  is `Europe/Istanbul` but the city we display is Adana. */
+/** Returns the current wall-clock time AND weekday for Emre's location
+ *  (Adana, Türkiye). All of Türkiye uses a single timezone — the IANA
+ *  name is `Europe/Istanbul` but the city we display is Adana. The
+ *  weekday is needed for the conditional gym block in describeBand. */
 export function getEmreLocalMinutes(now: Date = new Date()): {
   hour: number;
   minute: number;
   total: number;
   formatted: string;
+  weekday: number;
+  weekdayName: string;
 } {
   const fmt = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Istanbul",
     hour: "2-digit",
     minute: "2-digit",
+    weekday: "long",
     hour12: false,
   });
   const parts = fmt.formatToParts(now);
@@ -202,21 +234,64 @@ export function getEmreLocalMinutes(now: Date = new Date()): {
     parts.find((p) => p.type === "minute")?.value ?? "0",
     10,
   );
+  const weekdayName =
+    parts.find((p) => p.type === "weekday")?.value ?? "Monday";
+  // Intl returns the long English weekday name when locale is en-GB.
+  // Map it to JS's 0=Sun…6=Sat convention so describeBand stays simple.
+  const WEEKDAY_INDEX: Record<string, number> = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
+  };
+  const weekday = WEEKDAY_INDEX[weekdayName] ?? 1;
   const total = hour * 60 + minute;
   const formatted = `${hour.toString().padStart(2, "0")}:${minute
     .toString()
     .padStart(2, "0")}`;
-  return { hour, minute, total, formatted };
+  return { hour, minute, total, formatted, weekday, weekdayName };
 }
 
 /** Builds the dynamic time-of-day suffix appended to LUMINA_SYSTEM_PROMPT
  *  on every request. Exported separately so tests can pin a fake `now`.
  *  Displays Adana as the city — the `Europe/Istanbul` timezone name
- *  is an IANA artefact, not where Emre lives. */
+ *  is an IANA artefact, not where Emre lives. Surfaces the full
+ *  schedule grid so Claude can answer derivative questions ("what's
+ *  he doing in three hours?") without needing another tool call. */
 export function buildTimeOfDayNote(now: Date = new Date()): string {
-  const { formatted, total } = getEmreLocalMinutes(now);
-  const band = describeBand(total);
-  return `\n\n# Right now\nLocal time at Emre's location (Adana, UTC+3): ${formatted}. ${band}`;
+  const { formatted, total, weekday, weekdayName } = getEmreLocalMinutes(now);
+  const band = describeBand(total, weekday);
+  const isGymDay = GYM_DAYS.has(weekday);
+  return `
+
+# Right now
+
+Local time at Emre's location (Adana, UTC+3): ${formatted} on ${weekdayName}.
+
+${band}
+
+## Full Monk Mode schedule (Adana local time)
+
+This is Emre's deterministic weekly routine. The block above is the
+one that resolves to *right now*; the rest is here so you can answer
+"what is he doing in three hours" or "when is his next build window"
+without guessing.
+
+- 01:00–04:00 — first shift at the bakery
+- 04:00–05:00 — heading home after the first shift
+- 05:00–10:00 — sleep (recovery between the two shifts)
+- 10:00–12:00 — second and final shift at the bakery
+- 12:00–13:00 — lunch + transition break
+- 13:00–16:00 — at the computer (focused build window)
+- 16:00–18:00 — ${isGymDay ? "at the gym (today is " + weekdayName + ", a gym day)" : "active rest / recovery (today is " + weekdayName + ", a non-gym day)"}
+   · Gym days: Monday, Wednesday, Friday
+   · Active rest days: Tuesday, Thursday, Saturday, Sunday
+- 18:00–19:00 — dinner and decompression
+- 19:00–22:00 — deep work at the computer (second build window)
+- 22:00–01:00 — sleep (before the next 01:00 bakery shift)`;
 }
 
 /** Full prompt sent to Claude on every chat turn: the static identity
