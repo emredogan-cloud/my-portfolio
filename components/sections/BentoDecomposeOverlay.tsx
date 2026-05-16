@@ -62,6 +62,13 @@ export default function BentoDecomposeOverlay({ isActive }: Props) {
     <div
       className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl"
       aria-hidden="true"
+      /* CSS containment — every paint/layout change triggered by the
+         five animating nodes is bounded to this subtree. Without it,
+         hovering the CWH card invalidates the whole bento grid's
+         paint region; with it, the browser's compositor knows the
+         changes can't escape the rounded box, so hover repaints stay
+         well under a frame on mid-tier devices. */
+      style={{ contain: "layout paint" }}
     >
       {/* Subtle dim layer when active — gives the nodes contrast
           against the card's background image without nuking it. */}
