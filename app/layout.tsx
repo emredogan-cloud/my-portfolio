@@ -24,6 +24,38 @@ export const metadata: Metadata = {
   title: "Emre Doğan — Cloud & SaaS Engineer",
   description:
     "19. Self-taught. Architecting AWS infrastructure and AI-native SaaS between 01:30 bakery shifts and high-school exams. Monk Mode.",
+  /* iOS PWA — when the visitor adds the site to their home screen,
+     these metas tell Safari to launch in standalone mode (no Safari
+     chrome) with a black-translucent status bar that blends into
+     the cinematic black hero. The title is what shows under the
+     home-screen icon — short enough to fit one line on iOS. */
+  appleWebApp: {
+    capable: true,
+    title: "ED.",
+    statusBarStyle: "black-translucent",
+  },
+  /* Auto-linkification kills the "19." and "01:30" copy in the
+     description (and similar numerals across the site). Disable
+     all four detectors — none of them are intentional links. */
+  formatDetection: {
+    telephone: false,
+    date: false,
+    address: false,
+    email: false,
+  },
+  /* Apple touch icon — iOS uses this for the home-screen shortcut.
+     The 192x192 PNG already exists for the manifest; reusing it
+     here avoids a separate asset. iOS will render it at the
+     correct size automatically. */
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    shortcut: "/favicon.ico",
+  },
 };
 
 /* Viewport — `viewportFit: 'cover'` is the unlock that lets
