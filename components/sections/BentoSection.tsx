@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useInView, motion } from "motion/react";
 import { ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import WordsPullUpMultiStyle from "@/components/ui/WordsPullUpMultiStyle";
+import BentoDecomposeOverlay from "./BentoDecomposeOverlay";
 
 const HEADER_SEGMENTS = [
   {
@@ -33,6 +34,10 @@ const PROJECTS = [
     /* Flagship — spans 2 cols on md, plus 2 rows on lg for a
        cinematic Apple-style asymmetric bento. */
     spanClass: "md:col-span-2 lg:row-span-2",
+    /* Hover/tap → service nodes (Lambda, API GW, Bedrock, DynamoDB,
+       S3) fly outward from the card centre, hold ~2s, reassemble.
+       Single-card opt-in via BentoDecomposeOverlay. */
+    decompose: true,
   },
   {
     id: "vibing-coder-ai",
@@ -77,7 +82,16 @@ interface ImageProjectCardProps {
   index: number;
   isInView: boolean;
   spanClass?: string;
+  /** When true, hover (desktop) / tap (mobile) triggers the
+   *  BentoDecomposeOverlay service-node fly-out for ~3.5s. */
+  decompose?: boolean;
 }
+
+/* How long the decompose stays visible after a single trigger.
+   3.5s is long enough to read the five labels and snap a screenshot
+   without holding hover; the parent ignores re-triggers during this
+   window so the animation can't stutter. */
+const DECOMPOSE_HOLD_MS = 3500;
 
 function ImageProjectCard({
   id,
@@ -88,7 +102,33 @@ function ImageProjectCard({
   index,
   isInView,
   spanClass = "",
+  decompose = false,
 }: ImageProjectCardProps) {
+  const [isDecomposed, setIsDecomposed] = useState(false);
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerDecompose = () => {
+    if (!decompose) return;
+    if (isDecomposed) return; // ignore re-triggers within the hold window
+    setIsDecomposed(true);
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = setTimeout(() => {
+      setIsDecomposed(false);
+      resetTimerRef.current = null;
+    }, DECOMPOSE_HOLD_MS);
+  };
+
+  // Cleanup on unmount so a navigation away mid-decompose doesn't
+  // leak the timer.
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current) {
+        clearTimeout(resetTimerRef.current);
+        resetTimerRef.current = null;
+      }
+    };
+  }, []);
+
   return (
     <motion.div
       className={`relative rounded-2xl overflow-hidden h-full min-h-[320px] lg:min-h-0 group ${spanClass}`}
@@ -99,6 +139,8 @@ function ImageProjectCard({
         delay: index * 0.12,
         ease: CARD_EASE,
       }}
+      onHoverStart={triggerDecompose}
+      onTap={triggerDecompose}
     >
       {/* Background image — fully covers the card */}
       <Image
@@ -117,6 +159,11 @@ function ImageProjectCard({
         className="absolute inset-0 pointer-events-none"
         style={{ boxShadow: "inset 0 0 120px rgba(0,0,0,0.65)" }}
       />
+
+      {/* Decompose overlay — only mounted on cards with decompose
+          enabled. Internally returns null under prefers-reduced-motion
+          and renders nothing when isActive is false (idle 0% CPU). */}
+      {decompose && <BentoDecomposeOverlay isActive={isDecomposed} />}
 
       {/* Content */}
       <div className="relative h-full p-6 flex flex-col">
