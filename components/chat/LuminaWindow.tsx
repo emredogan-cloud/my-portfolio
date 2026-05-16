@@ -402,9 +402,11 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
   };
 
   /* Position swap. Centered uses `inset-0 m-auto` (no transforms) so
-     motion's animated y/scale don't stomp the centering offset. */
+     motion's animated y/scale don't stomp the centering offset.
+     Minimized mode threads safe-area-inset-* into the inline style
+     below — the className stays generic. */
   const positionClass = hasBeenMinimized
-    ? "fixed bottom-24 right-6"
+    ? "fixed"
     : "fixed inset-0 m-auto";
 
   /* Centered = wide console; bottom-right = compact widget. */
@@ -413,6 +415,17 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
     : "w-[calc(100vw-2.5rem)] sm:w-[640px] h-[min(75vh,560px)] sm:h-[560px]";
 
   const statusLabel = isOnboarding ? "Awakening" : "Online";
+
+  /* Safe-area-aware bottom/right offsets for the minimized window.
+     The bottom must clear BOTH the home indicator AND the trigger
+     (which sits 1.25rem above the indicator at p-4 = ~3.75rem tall).
+     `5rem + safe-area` keeps the original 6rem visual rhythm. */
+  const minimizedPositionStyle = hasBeenMinimized
+    ? {
+        bottom: "calc(5rem + env(safe-area-inset-bottom))",
+        right: "max(1.5rem, env(safe-area-inset-right))",
+      }
+    : {};
 
   return (
     <motion.div
@@ -427,7 +440,10 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
         scale: isOpen ? 1 : 0.98,
       }}
       transition={{ duration: isOpen ? 0.55 : 0.45, ease: EASE }}
-      style={{ pointerEvents: isOpen ? "auto" : "none" }}
+      style={{
+        pointerEvents: isOpen ? "auto" : "none",
+        ...minimizedPositionStyle,
+      }}
     >
       {/* ── Floating Neural Core — HALF-OVERLAPS the window's top edge ──
           Positioning math: half of avatar height equals the negative top
