@@ -1,0 +1,75 @@
+{
+  "name": "@emredogan/lumina-chat",
+  "version": "0.1.0",
+  "description": "Drop-in cinematic AI chat widget for React — neural-core avatar, smooth motion, tool-use rendering, voice-ready. Bring your own /api endpoint.",
+  "keywords": [
+    "react",
+    "chat",
+    "ai",
+    "ai-sdk",
+    "anthropic",
+    "claude",
+    "chatbot",
+    "ui",
+    "widget",
+    "lumina",
+    "neural-core"
+  ],
+  "license": "MIT",
+  "author": "Emre Doğan <emre30283@gmail.com>",
+  "homepage": "https://emredogan.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emredogan-cloud/my-portfolio.git",
+    "directory": "packages/lumina-chat"
+  },
+  "bugs": {
+    "url": "https://github.com/emredogan-cloud/my-portfolio/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node ../../scripts/lumina-chat/copy-assets.mjs",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "dependencies": {
+    "@ai-sdk/react": "^3.0.0",
+    "ai": "^6.0.0",
+    "lucide-react": "^1.14.0",
+    "motion": "^12.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

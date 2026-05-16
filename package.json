@@ -2,11 +2,16 @@
   "name": "my-portfolio",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lumina-chat:build": "npm run build --workspace=@emredogan/lumina-chat",
+    "lumina-chat:clean": "npm run clean --workspace=@emredogan/lumina-chat"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.77",
