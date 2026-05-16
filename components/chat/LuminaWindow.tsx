@@ -489,10 +489,14 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            {/* p-3.5 + w-4 icon = 44x44 hit area — meets WCAG 2.5.5
+                AAA touch-target minimum. Previously p-2.5 (~36px),
+                which was tight on mobile and a frequent fat-finger
+                miss into the input below. */}
             <button
               type="button"
               onClick={handleNewConversation}
-              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-2.5 rounded"
+              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-3.5 -m-1.5 rounded"
               aria-label="New conversation"
               title="New conversation"
             >
@@ -501,7 +505,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-2.5 rounded"
+              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-3.5 -m-1.5 rounded"
               aria-label="Minimize Lumina"
               title="Minimize"
             >

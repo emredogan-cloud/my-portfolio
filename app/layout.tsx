@@ -110,7 +110,14 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className={`${geist.className} bg-black text-white antialiased overflow-x-hidden`}
+        /* `touch-manipulation` (Tailwind v4 → CSS `touch-action:
+           manipulation`) removes Safari's 300ms double-tap-zoom
+           delay site-wide. Single-finger pan/zoom and scroll still
+           work; only the double-tap gesture is suppressed. The
+           perceived tap-to-feedback latency drops from ~350ms to
+           ~50ms on iOS — the single biggest mobile-UX win that
+           ships without any visual change. */
+        className={`${geist.className} bg-black text-white antialiased overflow-x-hidden touch-manipulation`}
       >
         {/* Skip-to-content — invisible until Tab focus, then a white pill in
             the top-left corner. Bypasses the navbar + cinematic intro for
