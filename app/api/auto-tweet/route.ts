@@ -62,14 +62,21 @@ interface DailyStandupRecord {
   tweet_id?: string;
   posted_at?: string;
   error?: string;
+  /** Upstream Twitter response body (truncated). Only present when
+   *  the tweet POST itself failed — distinct from media_error_detail. */
+  error_detail?: string;
   context_summary?: string;
   /** comma-separated repos surfaced on the OG image */
   og_repos?: string;
   /** v1.1 upload id, if the image attached successfully */
   media_id_string?: string;
   /** If the OG/media path failed but the text still posted, we
-   *  record the reason here for next-day inspection. */
+   *  record the reason code here for next-day inspection. */
   media_error?: string;
+  /** Upstream Twitter response body for the media upload failure
+   *  (truncated). Most useful 403/401 — names the exact Twitter
+   *  error string (e.g. "Your client app is not configured…"). */
+  media_error_detail?: string;
 }
 
 const SYSTEM_PROMPT = `You are Emre Doğan's daily standup composer for Twitter / X.
@@ -108,8 +115,18 @@ Hard constraints:
 - 280 character ceiling, weighted. Emojis count as 2 each — keep prose tight.
 - No hashtags. No @ mentions. No URLs. No "— Emre" sign-off.
 - No threads. No "1/" or "🧵" markers.
-- If nothing technical shipped (docs/typos/refactors only), be honest:
-  "Quiet day. Just cleanup — docs, a typo, a comment. Heads-down builds resume tomorrow."
+
+## Sparse data — pivot, never complain
+
+If the commit data is empty, sparse, or contains only a merge commit / a single doc tweak / cleanup work — DO NOT complain, DO NOT apologise, and ABSOLUTELY DO NOT say things like "I don't have enough detail", "the commits don't reveal much", or "today was quiet". Those phrases will never appear in your output.
+
+Instead, pivot gracefully. The reader doesn't know what you saw in the context — they only see the tweet. Write a confident, high-level tweet that still lands. Pick one of these angles and execute it with the same hook + bullets + closing structure:
+
+- **Refactor day** — "Cleaned up the X pipeline" / "Tightened the loop on Y". Bullets list what the refactor unlocks (lower latency, fewer moving parts, cleaner SDK surface). Closing thought: discipline / compounding.
+- **Monk Mode** — "Heads-down on the next layer." Bullets are the disciplines (deliberate practice, no shortcuts, end-to-end ownership). Closing: a Monk-Mode-coded line.
+- **Scaling-infrastructure** — "Re-thinking how the system grows". Bullets sketch the upcoming architectural moves at a high level (multi-region, observability, cost discipline) — NEVER fabricate specific commits, but it's fine to speak in present-tense intent ("planning multi-region…", "tightening cost attribution…").
+
+The goal: even on a structurally empty day, the tweet reads like the operator is in motion — never like a developer log of "nothing happened today".
 
 Output: ONLY the tweet text exactly as it should appear on Twitter. No preamble. No quotation marks around the tweet. No meta-commentary. Just the words.`;
 
@@ -326,31 +343,43 @@ export async function POST(req: Request) {
   }
 
   // ── Media pipeline ────────────────────────────────────────────
-  // Generate the dynamic OG image (date + up to 3 repos as pills +
-  // 5-node constellation) and upload it to Twitter v1.1 so the
-  // tweet has visual anchor on a busy timeline. Any failure here
-  // is non-fatal — we fall through to a text-only post and record
-  // the reason for next-morning inspection.
+  // Try to attach a dynamic OG image. If ANYTHING in this pipeline
+  // fails — OG render, network blip, Twitter media-upload 403 (the
+  // common Free Tier failure mode) — we capture the cause and fall
+  // through to a text-only postTweet. The tweet must go out no
+  // matter what; the media attachment is purely an enhancement.
   const repos = deriveRepos(lastCommit, events);
   let mediaIdString: string | null = null;
   let mediaError: string | null = null;
+  let mediaErrorDetail: string | null = null;
 
   const ogBuffer = await fetchOgImage(date, repos);
   if (!ogBuffer) {
     mediaError = "og-fetch-failed";
+    console.warn(
+      "[auto-tweet] media path: OG fetch returned no buffer — falling back to text-only tweet.",
+    );
   } else {
     const uploadResult = await uploadMedia(ogBuffer, "image/png");
     if (uploadResult.ok) {
       mediaIdString = uploadResult.media_id_string;
     } else {
       mediaError = uploadResult.error;
-      console.error(
-        "[auto-tweet] media upload failed:",
-        JSON.stringify({ date, error: uploadResult.error }),
+      mediaErrorDetail = uploadResult.detail ?? null;
+      // The full upstream body was already pretty-printed in the
+      // twitter-client log. Here we just announce the fallback so a
+      // grep for "[auto-tweet] media path" tells the whole story.
+      console.warn(
+        [
+          `[auto-tweet] media path: upload failed (${uploadResult.error})`,
+          "  → falling back to text-only tweet (this is expected on Twitter Free Tier).",
+        ].join("\n"),
       );
     }
   }
 
+  // postTweet runs unconditionally with whatever media we managed
+  // to upload (empty array → text-only).
   const postResult = await postTweet(draft, {
     mediaIds: mediaIdString ? [mediaIdString] : undefined,
   });
@@ -363,18 +392,19 @@ export async function POST(req: Request) {
   };
   if (mediaIdString) baseRecord.media_id_string = mediaIdString;
   if (mediaError) baseRecord.media_error = mediaError;
+  if (mediaErrorDetail) baseRecord.media_error_detail = mediaErrorDetail;
 
-  const record: DailyStandupRecord =
-    postResult.ok
-      ? {
-          ...baseRecord,
-          tweet_id: postResult.tweet_id,
-          posted_at: new Date().toISOString(),
-        }
-      : {
-          ...baseRecord,
-          error: postResult.error,
-        };
+  const record: DailyStandupRecord = postResult.ok
+    ? {
+        ...baseRecord,
+        tweet_id: postResult.tweet_id,
+        posted_at: new Date().toISOString(),
+      }
+    : {
+        ...baseRecord,
+        error: postResult.error,
+        ...(postResult.detail ? { error_detail: postResult.detail } : {}),
+      };
 
   if (hasKv) {
     try {
@@ -387,8 +417,13 @@ export async function POST(req: Request) {
 
   if (!postResult.ok) {
     console.error(
-      "[auto-tweet] post failed:",
-      JSON.stringify({ date, error: postResult.error, mediaError }),
+      [
+        "[auto-tweet] tweet POST failed — no tweet went out today.",
+        `  date:           ${date}`,
+        `  error code:     ${postResult.error}`,
+        `  upstream body:  ${postResult.detail ?? "(none)"}`,
+        `  media path:     ${mediaError ?? "ok"}`,
+      ].join("\n"),
     );
     return Response.json(
       {
@@ -396,21 +431,25 @@ export async function POST(req: Request) {
         date,
         draft,
         error: postResult.error,
+        error_detail: postResult.detail ?? null,
         media_error: mediaError,
+        media_error_detail: mediaErrorDetail,
       },
       { status: 502, headers: { "Cache-Control": "no-store" } },
     );
   }
 
   console.log(
-    "[auto-tweet] posted:",
-    JSON.stringify({
-      date,
-      tweet_id: postResult.tweet_id,
-      length: draft.length,
-      with_media: Boolean(mediaIdString),
-      media_error: mediaError,
-    }),
+    [
+      `[auto-tweet] posted ${
+        mediaIdString ? "with media" : "TEXT-ONLY (media fallback)"
+      }`,
+      `  date:        ${date}`,
+      `  tweet_id:    ${postResult.tweet_id}`,
+      `  length:      ${draft.length}`,
+      `  with_media:  ${Boolean(mediaIdString)}`,
+      `  media_error: ${mediaError ?? "ok"}`,
+    ].join("\n"),
   );
   return Response.json(
     {
@@ -420,6 +459,7 @@ export async function POST(req: Request) {
       tweet_id: postResult.tweet_id,
       with_media: Boolean(mediaIdString),
       media_error: mediaError ?? undefined,
+      media_error_detail: mediaErrorDetail ?? undefined,
     },
     { headers: { "Cache-Control": "no-store" } },
   );

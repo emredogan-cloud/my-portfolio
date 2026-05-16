@@ -207,14 +207,27 @@ export async function postTweet(
 
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
+    // Multi-line log — Vercel's log viewer collapses single-line
+    // JSON. Splitting status + body across lines makes the upstream
+    // error scannable at a glance. Common 403 causes worth calling
+    // out so future-you doesn't waste 20 minutes:
+    //   - App permissions still "Read only" — flip to "Read and Write"
+    //     in the developer portal AND regenerate access tokens after.
+    //   - Free Tier hit the 50-tweets-per-24h post quota.
+    //   - Duplicate content — Twitter blocks identical tweets within
+    //     ~24h. Our cron is once/day so unlikely except on manual
+    //     re-triggers.
     console.error(
-      "[twitter] non-2xx:",
-      JSON.stringify({ status: res.status, detail: detail.slice(0, 300) }),
+      [
+        "[twitter] POST /2/tweets non-2xx",
+        `  status: ${res.status}`,
+        `  body:   ${detail.slice(0, 800) || "(empty)"}`,
+      ].join("\n"),
     );
     return {
       ok: false,
       error: `twitter-error-${res.status}` as const,
-      detail: detail.slice(0, 300),
+      detail: detail.slice(0, 800),
     };
   }
 
@@ -319,14 +332,25 @@ export async function uploadMedia(
 
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
+    // v1.1 media/upload returns 403 by default on Twitter's Free
+    // tier — this endpoint requires Basic ($100/mo) or higher.
+    // The auto-tweet route catches this and falls back to a
+    // text-only tweet, so a 403 here is expected behaviour, not
+    // a deploy emergency. Logging stays loud so the cause is
+    // visible if/when the tier upgrades.
     console.error(
-      "[twitter-media] non-2xx:",
-      JSON.stringify({ status: res.status, detail: detail.slice(0, 300) }),
+      [
+        "[twitter-media] POST /1.1/media/upload.json non-2xx",
+        `  status: ${res.status}`,
+        `  body:   ${detail.slice(0, 800) || "(empty)"}`,
+        `  hint:   403 on Free Tier is expected — media upload`,
+        "          requires Basic ($100/mo) or higher.",
+      ].join("\n"),
     );
     return {
       ok: false,
       error: `twitter-error-${res.status}` as const,
-      detail: detail.slice(0, 300),
+      detail: detail.slice(0, 800),
     };
   }
 
