@@ -146,16 +146,16 @@ export default function HeroSection() {
             </div>
 
             {/* ── RIGHT: constellation in open spatial atmosphere.
-                No eyebrow, no caption, no wrapper card — the topology
-                breathes directly against the hero's atmospheric
-                background. On lg+ a negative right margin lets the
-                canvas bleed slightly past the column edge so the
-                outer ring fades into the page rather than clipping
-                at a panel boundary. The constellation owns its own
-                radial mask + perspective tilt internally. ── */}
-            <div className="lg:col-span-6 lg:pl-4 lg:-mr-6 xl:-mr-12 relative h-full">
+                Same architecture family as the Cloud Waste Hunter
+                topology — three.js scene with an alpha:true Canvas,
+                so the page background bleeds through and the
+                constellation reads as floating in open space rather
+                than embedded in a card. The lazy import keeps the
+                WebGL stack out of the home page's initial JS budget.
+                Negative right margin on lg+ lets the canvas spill
+                past the column edge into the page atmosphere. ── */}
+            <div className="lg:col-span-6 lg:pl-4 lg:-mr-6 xl:-mr-12 relative">
               <motion.div
-                className="h-full"
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 1.1, delay: 0.55, ease: EASE }}

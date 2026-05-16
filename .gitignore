@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local reference media (topology demos, design refs) — not part of
+# the shipped codebase; keep out of git history to avoid bloat.
+*.webm
+*.mp4
+*.mov
