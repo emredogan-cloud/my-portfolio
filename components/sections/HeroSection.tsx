@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { ArrowRight, Download } from "lucide-react";
 import Link from "next/link";
 import WordsPullUp from "@/components/ui/WordsPullUp";
-import InfrastructureCore from "@/components/home/InfrastructureCore";
+import HeroTopology from "@/components/home/HeroTopology";
 
 const NAV_ITEMS = [
   { label: "About", href: "/about" },
@@ -145,9 +145,10 @@ export default function HeroSection() {
               </motion.div>
             </div>
 
-            {/* ── RIGHT: infrastructure constellation ── */}
+            {/* ── RIGHT: pan/zoom constellation — Emre Doğan at root,
+                projects orbit, focus areas + tech stack expand outward. ── */}
             <div className="lg:col-span-6 lg:pl-4">
-              <InfrastructureCore />
+              <HeroTopology />
             </div>
 
           </div>
