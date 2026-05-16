@@ -1,0 +1,56 @@
+/**
+ * @emredogan/lumina-chat — bundled stylesheet.
+ *
+ * Consumers must import this once at app startup:
+ *   import "@emredogan/lumina-chat/styles.css";
+ *
+ * It defines the bespoke pieces that aren't expressible as plain
+ * Tailwind utilities: the input's neon-glow focus ring and the
+ * blinking-cursor keyframe used by the streaming indicator.
+ *
+ * Tailwind v4 (or v3) is still required in the consumer for the
+ * components' utility classNames (`flex`, `rounded-2xl`, `text-white`,
+ * etc.) to produce visual output. See the README for setup.
+ */
+
+/* ── Streaming cursor: a single dot fades 0 → 1 → 0 over ~1s. The
+      window staggers three of them for the "thinking" indicator. ── */
+@keyframes lumina-terminal-cursor-blink {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.lumina-terminal-cursor-blink {
+  animation: lumina-terminal-cursor-blink 1.05s ease-in-out infinite;
+}
+
+/* ── Input: cyan-tinted glass with a constant inner cyan glow.
+      The brand color is applied via the --lumina-brand custom
+      property so consumers can re-skin without forking the CSS. ── */
+.lumina-input {
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 210, 255, 0.06),
+    inset 0 0 14px rgba(0, 210, 255, 0.04);
+  transition: border-color 200ms ease, box-shadow 200ms ease,
+    background-color 200ms ease;
+}
+
+.lumina-input:focus {
+  outline: none;
+  border-color: rgba(0, 210, 255, 0.45);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 210, 255, 0.18),
+    inset 0 0 18px rgba(0, 210, 255, 0.10),
+    0 0 0 3px rgba(0, 210, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.lumina-input::placeholder {
+  color: rgba(255, 255, 255, 0.30);
+}
