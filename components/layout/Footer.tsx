@@ -30,7 +30,19 @@ function LinkedInIcon({ className }: { className?: string }) {
  */
 export default function Footer() {
   return (
-    <footer className="border-t border-white/[0.05] py-12">
+    /* Safe-area-aware insets — extra padding ensures the home
+       indicator strip on iOS doesn't sit on top of the footer's
+       baseline content. The `pt-12` keeps the visual rhythm; the
+       inline-style bottom adds the safe-area inset on top of that
+       12-padding so non-iOS devices look unchanged. */
+    <footer
+      className="border-t border-white/[0.05] pt-12 pb-12"
+      style={{
+        paddingBottom: "calc(3rem + env(safe-area-inset-bottom))",
+        paddingLeft: "env(safe-area-inset-left)",
+        paddingRight: "env(safe-area-inset-right)",
+      }}
+    >
       <div
         className="
           max-w-6xl mx-auto px-6 md:px-12

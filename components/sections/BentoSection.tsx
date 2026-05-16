@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import WordsPullUpMultiStyle from "@/components/ui/WordsPullUpMultiStyle";
 import BentoDecomposeOverlay from "./BentoDecomposeOverlay";
+import { confirmHaptic } from "@/lib/haptic";
 
 const HEADER_SEGMENTS = [
   {
@@ -110,6 +111,7 @@ function ImageProjectCard({
   const triggerDecompose = () => {
     if (!decompose) return;
     if (isDecomposed) return; // ignore re-triggers within the hold window
+    confirmHaptic();
     setIsDecomposed(true);
     if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
     resetTimerRef.current = setTimeout(() => {

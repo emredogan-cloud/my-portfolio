@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
@@ -24,6 +24,56 @@ export const metadata: Metadata = {
   title: "Emre Doğan — Cloud & SaaS Engineer",
   description:
     "19. Self-taught. Architecting AWS infrastructure and AI-native SaaS between 01:30 bakery shifts and high-school exams. Monk Mode.",
+  /* iOS PWA — when the visitor adds the site to their home screen,
+     these metas tell Safari to launch in standalone mode (no Safari
+     chrome) with a black-translucent status bar that blends into
+     the cinematic black hero. The title is what shows under the
+     home-screen icon — short enough to fit one line on iOS. */
+  appleWebApp: {
+    capable: true,
+    title: "ED.",
+    statusBarStyle: "black-translucent",
+  },
+  /* Auto-linkification kills the "19." and "01:30" copy in the
+     description (and similar numerals across the site). Disable
+     all four detectors — none of them are intentional links. */
+  formatDetection: {
+    telephone: false,
+    date: false,
+    address: false,
+    email: false,
+  },
+  /* Apple touch icon — iOS uses this for the home-screen shortcut.
+     The 192x192 PNG already exists for the manifest; reusing it
+     here avoids a separate asset. iOS will render it at the
+     correct size automatically. */
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    shortcut: "/favicon.ico",
+  },
+};
+
+/* Viewport — `viewportFit: 'cover'` is the unlock that lets
+   `env(safe-area-inset-*)` resolve to non-zero values on iOS. Without
+   it, the page underlays the notch/home-indicator areas safely but
+   CSS can't measure them, so fixed-positioned elements would still
+   sit on top of the home indicator.
+
+   width/initialScale are Next's defaults, redeclared here for
+   completeness alongside the cover-fit unlock. themeColor lives
+   here (not in metadata.themeColor — that's deprecated in Next 16
+   in favour of the viewport export). */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#000000",
+  colorScheme: "dark",
 };
 
 /* ── JSON-LD Person schema. One source of truth so the same identity
@@ -60,15 +110,28 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className={`${geist.className} bg-black text-white antialiased overflow-x-hidden`}
+        /* `touch-manipulation` (Tailwind v4 → CSS `touch-action:
+           manipulation`) removes Safari's 300ms double-tap-zoom
+           delay site-wide. Single-finger pan/zoom and scroll still
+           work; only the double-tap gesture is suppressed. The
+           perceived tap-to-feedback latency drops from ~350ms to
+           ~50ms on iOS — the single biggest mobile-UX win that
+           ships without any visual change. */
+        className={`${geist.className} bg-black text-white antialiased overflow-x-hidden touch-manipulation`}
       >
         {/* Skip-to-content — invisible until Tab focus, then a white pill in
             the top-left corner. Bypasses the navbar + cinematic intro for
             keyboard and screen-reader visitors. Targets the per-page <main>
-            element, which carries id="main". */}
+            element, which carries id="main". The focus position uses
+            safe-area-inset-* so the pill never lands under the iOS notch
+            on landscape iPhones. */}
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:bg-white focus:text-black focus:px-4 focus:py-2 focus:rounded-full focus:font-medium focus:text-sm"
+          className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:bg-white focus:text-black focus:px-4 focus:py-2 focus:rounded-full focus:font-medium focus:text-sm"
+          style={{
+            top: "max(1rem, env(safe-area-inset-top))",
+            left: "max(1rem, env(safe-area-inset-left))",
+          }}
         >
           Skip to content
         </a>

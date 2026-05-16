@@ -21,6 +21,7 @@ import {
 import { X, ArrowUp, Copy, Check, RotateCcw, Loader2 } from "lucide-react";
 import { LuminaAvatar } from "./LuminaAvatar";
 import LuminaVoice from "./LuminaVoice";
+import { confirmHaptic } from "@/lib/haptic";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -395,14 +396,17 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
     e.preventDefault();
     const text = input.trim();
     if (!text || inputDisabled) return;
+    confirmHaptic();
     sendMessage({ text });
     setInput("");
   };
 
   /* Position swap. Centered uses `inset-0 m-auto` (no transforms) so
-     motion's animated y/scale don't stomp the centering offset. */
+     motion's animated y/scale don't stomp the centering offset.
+     Minimized mode threads safe-area-inset-* into the inline style
+     below — the className stays generic. */
   const positionClass = hasBeenMinimized
-    ? "fixed bottom-24 right-6"
+    ? "fixed"
     : "fixed inset-0 m-auto";
 
   /* Centered = wide console; bottom-right = compact widget. */
@@ -411,6 +415,17 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
     : "w-[calc(100vw-2.5rem)] sm:w-[640px] h-[min(75vh,560px)] sm:h-[560px]";
 
   const statusLabel = isOnboarding ? "Awakening" : "Online";
+
+  /* Safe-area-aware bottom/right offsets for the minimized window.
+     The bottom must clear BOTH the home indicator AND the trigger
+     (which sits 1.25rem above the indicator at p-4 = ~3.75rem tall).
+     `5rem + safe-area` keeps the original 6rem visual rhythm. */
+  const minimizedPositionStyle = hasBeenMinimized
+    ? {
+        bottom: "calc(5rem + env(safe-area-inset-bottom))",
+        right: "max(1.5rem, env(safe-area-inset-right))",
+      }
+    : {};
 
   return (
     <motion.div
@@ -425,7 +440,10 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
         scale: isOpen ? 1 : 0.98,
       }}
       transition={{ duration: isOpen ? 0.55 : 0.45, ease: EASE }}
-      style={{ pointerEvents: isOpen ? "auto" : "none" }}
+      style={{
+        pointerEvents: isOpen ? "auto" : "none",
+        ...minimizedPositionStyle,
+      }}
     >
       {/* ── Floating Neural Core — HALF-OVERLAPS the window's top edge ──
           Positioning math: half of avatar height equals the negative top
@@ -471,10 +489,14 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            {/* p-3.5 + w-4 icon = 44x44 hit area — meets WCAG 2.5.5
+                AAA touch-target minimum. Previously p-2.5 (~36px),
+                which was tight on mobile and a frequent fat-finger
+                miss into the input below. */}
             <button
               type="button"
               onClick={handleNewConversation}
-              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-2.5 rounded"
+              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-3.5 -m-1.5 rounded"
               aria-label="New conversation"
               title="New conversation"
             >
@@ -483,7 +505,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-2.5 rounded"
+              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-3.5 -m-1.5 rounded"
               aria-label="Minimize Lumina"
               title="Minimize"
             >
