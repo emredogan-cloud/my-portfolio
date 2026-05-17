@@ -18,6 +18,7 @@ const STATIC_ROUTES = [
   "/architecture/sixpack-ai",
   "/pro",
   "/telemetry",
+  "/changelog",
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
