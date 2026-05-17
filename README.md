@@ -77,6 +77,27 @@ Notable design decisions:
 - **Pinned model snapshots.** `claude-haiku-4-5-20251001` rather than a floating alias — production-stable behaviour, predictable cost surface.
 - **No console-clicked state.** Configuration lives in env files; everything else is in code and version control.
 
+## Open source
+
+This repository ships one extracted open-source package alongside the portfolio app:
+
+### [`@emredogan/lumina-chat`](packages/lumina-chat/) — drop-in cinematic AI chat widget
+
+[![npm](https://img.shields.io/npm/v/@emredogan/lumina-chat.svg?style=flat-square&color=00d2ff&label=npm)](https://www.npmjs.com/package/@emredogan/lumina-chat)
+[![downloads](https://img.shields.io/npm/dw/@emredogan/lumina-chat.svg?style=flat-square&color=00d2ff)](https://www.npmjs.com/package/@emredogan/lumina-chat)
+[![types](https://img.shields.io/npm/types/@emredogan/lumina-chat.svg?style=flat-square&color=00d2ff)](https://www.npmjs.com/package/@emredogan/lumina-chat)
+[![bundle](https://img.shields.io/bundlephobia/minzip/@emredogan/lumina-chat.svg?style=flat-square&color=00d2ff&label=bundle)](https://bundlephobia.com/package/@emredogan/lumina-chat)
+
+The same Lumina widget that ships on the live site, extracted as a reusable React package. Neural-core avatar, smooth motion, tool-use rendering, voice-ready. Bring your own `/api/chat` endpoint.
+
+```bash
+npm install @emredogan/lumina-chat
+```
+
+Published with [sigstore provenance](https://docs.npmjs.com/generating-provenance-statements) — every released tarball is linked via OIDC attestation to the exact GitHub workflow run that built it.
+
+See [`packages/lumina-chat/README.md`](packages/lumina-chat/README.md) for the full prop surface, server contract, and customization examples.
+
 ## Tech Stack
 
 **Application** — Next.js 16 (App Router) · React 19 · TypeScript strict · Tailwind v4 (PostCSS) · `motion/react` (formerly Framer Motion) · `lucide-react`
