@@ -17,6 +17,7 @@ const STATIC_ROUTES = [
   "/architecture/vibing-coder-ai",
   "/architecture/sixpack-ai",
   "/pro",
+  "/telemetry",
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {

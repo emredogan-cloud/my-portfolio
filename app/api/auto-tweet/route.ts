@@ -7,6 +7,10 @@ import {
   TWEET_MAX_LENGTH,
 } from "@/lib/twitter-client";
 import { getSiteUrl } from "@/lib/site-url";
+import {
+  incrementMetric,
+  METRIC_KEYS,
+} from "@/lib/telemetry/metrics";
 
 /**
  * Daily standup auto-tweet.
@@ -413,6 +417,14 @@ export async function POST(req: Request) {
       /* swallow — the draft was generated and posted (or not); the
          persistence failure shouldn't change the outward result. */
     }
+  }
+
+  /* Sub-PR 1.2 telemetry: increment the success counter when the
+   * tweet actually went out. Fire-and-forget, swallows its own
+   * failure, no-op when KV is missing — never blocks the cron
+   * response or distorts postResult downstream. */
+  if (postResult.ok) {
+    void incrementMetric(METRIC_KEYS.AUTOTWEET_SUCCESS_30D);
   }
 
   if (!postResult.ok) {
