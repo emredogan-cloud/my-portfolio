@@ -1,0 +1,55 @@
+{
+  "name": "@emredogan/cli",
+  "version": "0.1.0",
+  "description": "Tiny terminal companion for emredogan.com — browse the portfolio, ask Lumina questions from the shell, list projects, open a /lab experiment.",
+  "keywords": [
+    "cli",
+    "lumina",
+    "emredogan",
+    "ai",
+    "claude",
+    "terminal",
+    "engineering",
+    "monk-mode"
+  ],
+  "license": "MIT",
+  "author": "Emre Doğan <emre30283@gmail.com>",
+  "homepage": "https://emredogan.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emredogan-cloud/my-portfolio.git",
+    "directory": "packages/emredogan-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/emredogan-cloud/my-portfolio/issues"
+  },
+  "type": "module",
+  "bin": {
+    "emredogan": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node ../../scripts/emredogan-cli/build.mjs",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

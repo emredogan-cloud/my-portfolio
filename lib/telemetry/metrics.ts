@@ -106,6 +106,21 @@ export const METRIC_KEYS = {
    *  budgets — per-experiment cost-cap isolation. */
   LAB_COMMIT_NARRATOR_COST_USD_DAILY:
     "v4:cost:lab:commit-narrator:usd_daily",
+  /** Cumulative count of POSTs to /api/cli/ask that passed the
+   *  rate-limit + cost-cap guards. Per V4 § 2.4 telemetry slot
+   *  for the @emredogan/cli `ask` command. */
+  CLI_ASK_VISITS_DAILY: "v4:adoption:cli:ask:visits_daily",
+  /** Cumulative count of /api/cli/ask streams that completed
+   *  without throwing. */
+  CLI_ASK_COMPLETIONS_DAILY: "v4:adoption:cli:ask:completions_daily",
+  /** Cumulative estimated USD cost for the CLI ask endpoint
+   *  today (rolling 36-h TTL). Independent of the /lab budgets. */
+  CLI_ASK_COST_USD_DAILY: "v4:cost:cli:ask:usd_daily",
+  /** Weekly npm downloads of @emredogan/cli. Populated by an
+   *  external poll of the npm API (same pattern as
+   *  LUMINA_CHAT_NPM_WEEKLY). Null until first poll lands in a
+   *  later sub-PR. */
+  EMREDOGAN_CLI_NPM_WEEKLY: "v4:adoption:emredogan-cli:downloads_weekly",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];

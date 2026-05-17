@@ -193,6 +193,34 @@ const TILES: readonly TileSpec[] = [
     placeholder: "no spend yet",
     kvKey: METRIC_KEYS.LAB_COMMIT_NARRATOR_COST_USD_DAILY,
   },
+  {
+    slug: "cli-ask-completions",
+    label: "CLI ask runs",
+    description:
+      "Streams completed by /api/cli/ask since launch. Driven by `npx emredogan ask` invocations from terminal users.",
+    format: (n) => Math.round(n).toLocaleString("en-US"),
+    placeholder: "no completions yet",
+    kvKey: METRIC_KEYS.CLI_ASK_COMPLETIONS_DAILY,
+  },
+  {
+    slug: "cli-ask-cost",
+    label: "CLI ask cost",
+    description:
+      "Estimated spend on /api/cli/ask over the rolling 36-hour window. Daily cap $5 — independent of all /lab budgets.",
+    unit: "USD",
+    format: (n) => `$${n.toFixed(2)}`,
+    placeholder: "no spend yet",
+    kvKey: METRIC_KEYS.CLI_ASK_COST_USD_DAILY,
+  },
+  {
+    slug: "cli-downloads-weekly",
+    label: "@emredogan/cli / week",
+    description:
+      "Weekly npm installs of @emredogan/cli. Hydrated by an external poll of the npm API in a later sub-PR.",
+    format: (n) => Math.round(n).toLocaleString("en-US"),
+    placeholder: "0.1.0 not yet on npm",
+    kvKey: METRIC_KEYS.EMREDOGAN_CLI_NPM_WEEKLY,
+  },
 ] as const;
 
 interface TileData {

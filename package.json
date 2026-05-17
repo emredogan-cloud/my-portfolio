@@ -11,7 +11,9 @@
     "start": "next start",
     "lint": "eslint",
     "lumina-chat:build": "npm run build --workspace=@emredogan/lumina-chat",
-    "lumina-chat:clean": "npm run clean --workspace=@emredogan/lumina-chat"
+    "lumina-chat:clean": "npm run clean --workspace=@emredogan/lumina-chat",
+    "emredogan-cli:build": "npm run build --workspace=@emredogan/cli",
+    "emredogan-cli:clean": "npm run clean --workspace=@emredogan/cli"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.77",
