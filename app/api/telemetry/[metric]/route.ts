@@ -45,6 +45,10 @@ const SLUG_TO_KEY: Record<string, MetricKey> = {
     METRIC_KEYS.LAB_COMMIT_NARRATOR_COMPLETIONS_DAILY,
   "lab-commit-narrator-cost":
     METRIC_KEYS.LAB_COMMIT_NARRATOR_COST_USD_DAILY,
+  "cli-ask-visits": METRIC_KEYS.CLI_ASK_VISITS_DAILY,
+  "cli-ask-completions": METRIC_KEYS.CLI_ASK_COMPLETIONS_DAILY,
+  "cli-ask-cost": METRIC_KEYS.CLI_ASK_COST_USD_DAILY,
+  "cli-downloads-weekly": METRIC_KEYS.EMREDOGAN_CLI_NPM_WEEKLY,
 };
 
 const CACHE_HEADERS = {

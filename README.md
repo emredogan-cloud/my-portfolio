@@ -94,7 +94,7 @@ Notable design decisions:
 
 ## Open source
 
-This repository ships one extracted open-source package alongside the portfolio app:
+This repository ships two extracted open-source packages alongside the portfolio app:
 
 ### [`@emredogan/lumina-chat`](packages/lumina-chat/) — drop-in cinematic AI chat widget
 
@@ -112,6 +112,21 @@ npm install @emredogan/lumina-chat
 Published with [sigstore provenance](https://docs.npmjs.com/generating-provenance-statements) — every released tarball is linked via OIDC attestation to the exact GitHub workflow run that built it.
 
 See [`packages/lumina-chat/README.md`](packages/lumina-chat/README.md) for the full prop surface, server contract, and customization examples.
+
+### [`@emredogan/cli`](packages/emredogan-cli/) — terminal companion for emredogan.com
+
+[![npm](https://img.shields.io/npm/v/@emredogan/cli.svg?style=flat-square&color=00d2ff&label=npm)](https://www.npmjs.com/package/@emredogan/cli)
+[![downloads](https://img.shields.io/npm/dw/@emredogan/cli.svg?style=flat-square&color=00d2ff)](https://www.npmjs.com/package/@emredogan/cli)
+[![license](https://img.shields.io/npm/l/@emredogan/cli.svg?style=flat-square&color=00d2ff)](packages/emredogan-cli/LICENSE)
+[![size](https://img.shields.io/bundlephobia/min/@emredogan/cli.svg?style=flat-square&color=00d2ff&label=size)](https://bundlephobia.com/package/@emredogan/cli)
+
+A tiny terminal companion. Four commands, zero dependencies, POSIX-only (macOS + Linux). Ask Lumina questions from the shell, list projects, open a `/lab` experiment in the browser.
+
+```bash
+npx emredogan ask "How is /telemetry cached?"
+```
+
+See [`packages/emredogan-cli/README.md`](packages/emredogan-cli/README.md) for command reference, env vars, and the engineering posture.
 
 ## Tech Stack
 
