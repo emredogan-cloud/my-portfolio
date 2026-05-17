@@ -31,8 +31,8 @@ const PHILOSOPHY = [
     body: "Most decisions here are made on a five-year horizon. The right system rarely ships this quarter. The wrong one always does.",
   },
   {
-    eyebrow: "Quiet hours",
-    body: "Mornings start before the city does. The first work block lands before any notification — the rule that survived two years of running on borrowed sleep.",
+    eyebrow: "The quiet hours",
+    body: "The first work block lands before any notification does. Architecture decisions belong to the quietest part of the morning; the rest of the day owes them less.",
   },
   {
     eyebrow: "Hand-built",
@@ -40,7 +40,7 @@ const PHILOSOPHY = [
   },
   {
     eyebrow: "Body and code",
-    body: "The same operating system runs both. Strength training in the early evening, code in the build window after. One discipline pays the other's invoice.",
+    body: "The same operating system runs both. Strength training in the early evening, code in the build window after. One discipline keeps the other honest.",
   },
 ] as const;
 
@@ -60,13 +60,13 @@ const LIFESTYLE: readonly LifestyleEntry[] = [
     body: "Naked sport on the Adana coast roads. The first hour after rain is the cleanest signal a screen will not give back. Helmets clear what monitors do not.",
   },
   {
+    eyebrow: "Reading",
+    body: "Long-arc texts — Kleppmann, Hennessy & Patterson, distributed-systems papers a generation old. The books that change which problem you ship, not which framework you reach for.",
+  },
+  {
     eyebrow: "The codex",
     body: "Three handcrafted digital editions — Mendîran, Mythologica, Solgun — each shipped as a zero-dependency reader. Worldbuilding as engineering on a different substrate.",
     href: "/codex",
-  },
-  {
-    eyebrow: "Solitude",
-    body: "Long walks before the keyboard sees a problem. Most architecture decisions are settled outside on foot, in silence; the implementation is only the transcription.",
   },
 ];
 
@@ -212,7 +212,7 @@ export default function AboutPage() {
             Two-line statement, lifted from "credentials" to "stance".
             The closing line of the lead paragraph carries the bakery
             in past tense — present once, never again on the page. */}
-        <Reveal mode="mount" duration={0.8} className="mb-28">
+        <Reveal mode="mount" duration={0.8} className="mb-32 md:mb-36">
           <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
             About
           </span>
@@ -221,25 +221,34 @@ export default function AboutPage() {
             <span className="block text-white/55">On purpose.</span>
           </h1>
           <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
-            I&apos;m Emre Doğan — a cloud and SaaS operator working out of
-            Adana. I build production-grade AWS infrastructure, AI-native
-            tooling, and full-stack mobile systems on long time horizons
-            and from a small, quiet desk. Two years of compounding,
-            mostly-daily practice; the early mornings used to be a bakery
-            shift, the late evenings a school day. Today they&apos;re
-            architecture decisions and a barbell.
+            I&apos;m Emre Doğan. I design and operate production AWS
+            infrastructure, AI-native tooling, and full-stack systems —
+            from a small, quiet desk in Adana, on time horizons measured
+            in years. The work began behind early bakery shifts and
+            finished after school days; two years on, what remains is the
+            discipline. A slower kind of build, made daily.
           </p>
         </Reveal>
 
         {/* ─────────  CINEMATIC PAUSE — single line, larger, italic,
                        carries the operating thesis without ornament.
                        Reads as a quiet break before the section grid
-                       begins.  ───────── */}
-        <Reveal duration={0.8} margin="-50px" className="mb-24">
-          <p className="text-2xl md:text-3xl font-medium tracking-[-0.02em] leading-[1.35] text-tertiary italic max-w-3xl">
+                       begins.
+
+                       Phase 1: bumped to text-3xl/4xl so it rhymes
+                       with the "What keeps the noise low" breath
+                       moment mid-page; added a hairline cyan rule
+                       beneath so both breath beats share the same
+                       cinematic vocabulary.  ───────── */}
+        <Reveal duration={0.8} margin="-50px" className="mb-28 md:mb-32">
+          <p className="text-2xl md:text-3xl lg:text-[2.1rem] font-medium tracking-[-0.02em] leading-[1.4] text-tertiary italic max-w-3xl">
             The system that builds the system matters more than the
             system that ships this quarter.
           </p>
+          <span
+            aria-hidden="true"
+            className="block mt-10 h-px w-24 bg-gradient-to-r from-[#00d2ff]/40 via-white/10 to-transparent"
+          />
         </Reveal>
 
         {/* ───────── OPERATING PHILOSOPHY ─────────
@@ -248,14 +257,19 @@ export default function AboutPage() {
             rather than a schedule. The 'Quiet hours' tile is the only
             place the early-morning history surfaces, in one poetic line.
         */}
-        <section className="mb-28">
+        <section className="mb-32">
           <Reveal duration={0.7}>
             <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
               Monk Mode
             </span>
-            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-12">
+            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-4">
               The discipline is the design.
             </h2>
+            <p className="text-tertiary text-sm md:text-base max-w-xl leading-[1.85] mb-12">
+              Less a regimen than a rhythm. Calm repetition; same desk,
+              same chair, same first hour. What gets shipped is the
+              residue of what gets done quietly, day after day.
+            </p>
           </Reveal>
 
           {/* Asymmetric layout — two-column on md+, but the first tile
@@ -356,13 +370,59 @@ export default function AboutPage() {
           </div>
         </section>
 
+        {/* ───────── ATMOSPHERIC BREATH ─────────
+            A deliberate quiet between the lifestyle grid and the
+            principles grid — the brief asked for "large quiet moments"
+            and "asymmetrical spacing". One paragraph, larger type, no
+            tiles, no card. The hairline rule beneath is the only
+            ornament; it carries the cinematic-pause vocabulary from
+            higher up the page so the two breath moments rhyme.
+
+            The text picks up the "solitude / decisions made outside"
+            beat that previously lived as a tile in the lifestyle grid,
+            so this is a recompose, not new content. */}
+        <section className="mb-32 md:mb-36">
+          <Reveal duration={0.8} margin="-80px">
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              What keeps the noise low
+            </span>
+            <p className="mt-7 text-2xl md:text-3xl lg:text-[2.1rem] font-medium tracking-[-0.02em] leading-[1.4] text-primary/85 max-w-3xl">
+              A walk before the keyboard sees a problem. Long stretches
+              with no input. The day&apos;s most useful sentence is
+              usually the one written down at the end of one of those
+              walks — solitude isn&apos;t the goal, it&apos;s the
+              operating condition.
+            </p>
+            <span
+              aria-hidden="true"
+              className="block mt-12 h-px w-24 bg-gradient-to-r from-[#00d2ff]/40 via-white/10 to-transparent"
+            />
+          </Reveal>
+        </section>
+
         {/* ───────── PRINCIPLES ─────────
-            Same four content beats; visually upgraded with an ambient
-            hover lift, a subtle inner cyan glow, and a hairline cyan
-            top-rule that brightens on hover. No motion lib added —
-            CSS transitions only, GPU-cheap, prefers-reduced-motion
-            collapsed by the global guard. */}
-        <section className="mb-28">
+            Atmospheric depth pass: hairline cyan top-rule and inner
+            cyan glow retained; added a darker custom card surface (no
+            glassmorphism blur) plus a layered radial highlight in the
+            top-left, a left-edge cyan accent that emerges on hover,
+            and a softly enlarging label number. The whole grid sits
+            on a wide ambient cyan blur so the section reads as one
+            atmospheric stage rather than four free-floating cards.
+            All transitions are CSS-only, GPU-cheap, and collapse to
+            ~0ms under the global reduced-motion guard. */}
+        <section className="relative mb-28">
+          {/* Ambient cyan stage glow behind the whole grid. Wide,
+              very low opacity; sits below the cards so the grid
+              reads as one atmospheric surface, not four detached
+              tiles. Static — no animation, no RAF cost. */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-32 w-[120%] h-[420px] rounded-full blur-[140px]"
+            style={{
+              background:
+                "radial-gradient(ellipse, rgba(0,210,255,0.06) 0%, transparent 70%)",
+            }}
+          />
           <Reveal duration={0.7}>
             <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
               Principles
@@ -370,7 +430,7 @@ export default function AboutPage() {
             <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-12">
               Four rules I build by.
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4">
               {PRINCIPLES.map((p, i) => (
                 <Reveal
                   key={p.label}
@@ -379,25 +439,43 @@ export default function AboutPage() {
                   y={16}
                   margin="-60px"
                 >
-                  <div className="group relative rounded-2xl liquid-glass p-7 flex flex-col gap-3 h-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5">
-                    {/* Hairline cyan rule at top — barely visible at rest,
-                        steps up to ~40% on hover. Pure CSS via opacity
-                        transition; no extra elements in the DOM beyond
-                        this single ::before-style span. */}
+                  <div className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.018] p-7 flex flex-col gap-3 h-full transition-[transform,border-color,background-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:border-white/[0.12] hover:bg-white/[0.028]">
+                    {/* Layered top-left radial highlight — barely
+                        visible at rest, brightens on hover. Reads as
+                        the card catching ambient light from the
+                        section's stage glow above. */}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 rounded-2xl opacity-60 transition-opacity duration-500 group-hover:opacity-100"
+                      style={{
+                        background:
+                          "radial-gradient(circle at 0% 0%, rgba(255,255,255,0.05), transparent 55%)",
+                      }}
+                    />
+                    {/* Hairline cyan rule at top — barely visible at
+                        rest, steps up to ~90% on hover. */}
                     <span
                       aria-hidden="true"
                       className="absolute inset-x-7 top-0 h-px bg-[#00d2ff]/20 opacity-30 transition-opacity duration-500 group-hover:opacity-90"
                     />
-                    {/* Inner cyan glow on hover — opacity gated so idle
-                        cards stay matte and only one card glows at a time. */}
+                    {/* Left-edge cyan accent — emerges on hover only.
+                        Anchors the eye on the active card and reads
+                        as a soft spatial cue, not a button affordance. */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute left-0 top-7 bottom-7 w-px bg-[#00d2ff]/0 transition-colors duration-500 group-hover:bg-[#00d2ff]/40"
+                    />
+                    {/* Inner cyan glow on hover — opacity gated so
+                        idle cards stay matte and only the active
+                        card glows. */}
                     <span
                       aria-hidden="true"
                       className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                       style={{
-                        boxShadow: "inset 0 0 32px rgba(0,210,255,0.06)",
+                        boxShadow: "inset 0 0 36px rgba(0,210,255,0.07)",
                       }}
                     />
-                    <span className="relative text-[#00d2ff]/60 text-xs font-mono tracking-wider">
+                    <span className="relative text-[#00d2ff]/60 text-xs font-mono tracking-wider transition-[color,letter-spacing] duration-500 group-hover:text-[#00d2ff]/85 group-hover:tracking-[0.18em]">
                       {p.label}
                     </span>
                     <h3 className="relative text-primary font-medium text-lg leading-tight">
@@ -497,11 +575,27 @@ export default function AboutPage() {
         </section>
 
         {/* ───────── RECEIPTS ─────────
-            GitHub heatmap retained; copy reframed. The new paragraph
-            speaks to long-arc consistency rather than to suffering.
-            "Some days are full ship-days, some are a single PR. Not
-            every square is a win. Most are just showing up." */}
-        <section className="mb-28">
+            Phase 1 evolution: from "GitHub heatmap card" to "emotional
+            consistency frame". The calendar stays — that's the
+            authenticity. What changes is the surround: an outer
+            atmospheric halo so the panel sits on its own ambient
+            stage, and a quiet mono caption row beneath that lays the
+            year out as seasons + place + GMT. Same data, slower
+            reading rhythm. No fake metrics, no streak counters, no
+            gamified language. */}
+        <section className="relative mb-28">
+          {/* Outer atmospheric halo — wide, low-opacity cyan blur
+              under the receipts panel. Reads as the calendar
+              breathing into the page rather than as a bordered
+              widget. Static, no RAF. */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-32 w-[110%] h-[380px] rounded-full blur-[150px]"
+            style={{
+              background:
+                "radial-gradient(ellipse, rgba(0,210,255,0.05) 0%, transparent 70%)",
+            }}
+          />
           <Reveal duration={0.7}>
             <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
               Receipts
@@ -515,7 +609,7 @@ export default function AboutPage() {
               a win — most are just showing up to the same desk and
               writing the next file.
             </p>
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 md:p-8 overflow-x-auto relative">
+            <div className="relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 md:p-8 overflow-x-auto">
               {/* Subtle ambient inner glow so the panel reads as a
                   cinematic frame rather than as an inset card. No
                   animation — static atmosphere. */}
@@ -529,6 +623,25 @@ export default function AboutPage() {
               <div className="relative">
                 <GithubActivity />
               </div>
+            </div>
+
+            {/* Seasonal rhythm caption — a single quiet mono row that
+                reframes the calendar from a "GitHub embed" into a
+                year-laid-flat. Aligned to the panel above; flows over
+                a hairline divider on the left to echo the breath
+                section's underline higher up the page. */}
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 font-mono uppercase tracking-[0.20em] text-[10px] text-quiet">
+              <span className="inline-flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="w-1 h-1 rounded-full bg-[#00d2ff]/60"
+                />
+                <span>Adana</span>
+              </span>
+              <span className="hidden sm:inline text-faint">·</span>
+              <span>Two winters &nbsp;&middot;&nbsp; two summers</span>
+              <span className="hidden sm:inline text-faint">·</span>
+              <span>GMT+3</span>
             </div>
           </Reveal>
         </section>
@@ -583,12 +696,19 @@ export default function AboutPage() {
         </section>
 
         {/* ───────── CLOSING TRANSMISSION ─────────
-            Replaces the "Where this is going" section. Slightly more
-            atmospheric framing, a quiet system pulse anchored to a
-            real place and time zone, and the same two CTAs. The
-            paragraph is half as long as the original and shifts from
-            roadmap-prediction to a stance.  */}
-        <section>
+            Phase 1 evolution: from "roadmap stance + pulse pill" to
+            "final transmission". The stance copy and CTAs stay; we
+            slot a quiet mono read-out between the paragraph and the
+            CTAs (four hand-curated fields, transmission-record
+            vocabulary), and close the page with an "end transmission"
+            signature line at the bottom rule.
+
+            Deliberately does NOT duplicate live state:
+              · BuildBeacon (global footer) — live commit pulse
+              · "Currently" section above — what's open this week
+            These four fields are sign-off coordinates: where the
+            transmission was written from, not a status dashboard. */}
+        <section className="relative">
           <Reveal duration={0.8}>
             <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
               Closing transmission
@@ -620,6 +740,32 @@ export default function AboutPage() {
               <span>GMT+3</span>
             </p>
 
+            {/* Transmission read-out — four hand-curated fields, a
+                thin vertical cyan rule on the left. Reads as the
+                sign-off coordinates of the page, not a dashboard:
+                no live metric is bound here. Updated by hand when
+                the underlying state changes. */}
+            <dl className="mt-10 max-w-md border-l border-white/[0.06] pl-5 space-y-2.5">
+              {[
+                { k: "Field", v: "Adana · GMT+3" },
+                { k: "Build", v: "Cloud Waste Hunter v2" },
+                { k: "Reading", v: "Kleppmann · DDIA" },
+                { k: "Stance", v: "Long arcs · daily practice" },
+              ].map((row) => (
+                <div
+                  key={row.k}
+                  className="grid grid-cols-[80px_1fr] gap-4 items-baseline"
+                >
+                  <dt className="font-mono uppercase tracking-[0.18em] text-[10px] text-quiet">
+                    {row.k}
+                  </dt>
+                  <dd className="text-tertiary text-[13.5px] leading-relaxed">
+                    {row.v}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+
             <div className="mt-12 flex flex-wrap gap-4">
               <Link
                 href="/contact"
@@ -638,6 +784,21 @@ export default function AboutPage() {
               >
                 See the work
               </Link>
+            </div>
+
+            {/* End-transmission signature — a single quiet mono line
+                under a hairline rule. The page's last vertical beat
+                before the global footer takes over. Static. */}
+            <div className="mt-20 pt-6 border-t border-white/[0.05] flex items-center gap-3 font-mono uppercase tracking-[0.22em] text-[10px] text-faint">
+              <span
+                aria-hidden="true"
+                className="w-1 h-1 rounded-full bg-[#00d2ff]/50"
+              />
+              <span>End transmission</span>
+              <span className="text-white/10">·</span>
+              <span>ED.</span>
+              <span className="text-white/10">·</span>
+              <span>2026</span>
             </div>
           </Reveal>
         </section>
