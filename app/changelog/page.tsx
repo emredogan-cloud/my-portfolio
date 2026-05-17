@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/ui/Reveal";
+import VisitPing from "@/components/telemetry/VisitPing";
 import {
   getRecentCommits,
   uniqueRepos,
@@ -141,6 +142,10 @@ export default async function ChangelogPage({
 
   return (
     <main id="main" className="relative min-h-screen bg-black">
+      {/* Visit ping — render-once client island, posts a single
+          /api/telemetry/visit POST on mount per tab session. */}
+      <VisitPing surface="changelog" />
+
       {/* Ambient cyan atmosphere — same vocabulary as /telemetry,
           /about, /codex so the page reads as part of the site. */}
       <div

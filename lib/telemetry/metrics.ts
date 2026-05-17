@@ -59,6 +59,11 @@ export const METRIC_KEYS = {
   /** Current monthly recurring revenue in USD. Placeholder $0 until
    *  the Lemon Squeezy webhook → KV is wired in Phase 3. */
   MRR_CURRENT: "v4:monetization:mrr:current",
+  /** Cumulative visit count for /telemetry. Incremented by the
+   *  client-side VisitPing island. Self-referential per V4 § 5.1.2. */
+  TELEMETRY_VISITS: "v4:telemetry:dashboard:visits",
+  /** Cumulative visit count for /changelog. Per V4 § 5.1.4. */
+  CHANGELOG_VISITS: "v4:telemetry:changelog:visits",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];

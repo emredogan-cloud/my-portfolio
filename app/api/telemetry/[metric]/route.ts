@@ -29,6 +29,8 @@ const SLUG_TO_KEY: Record<string, MetricKey> = {
   "autotweet-success": METRIC_KEYS.AUTOTWEET_SUCCESS_30D,
   "npm-downloads": METRIC_KEYS.LUMINA_CHAT_NPM_WEEKLY,
   mrr: METRIC_KEYS.MRR_CURRENT,
+  "telemetry-visits": METRIC_KEYS.TELEMETRY_VISITS,
+  "changelog-visits": METRIC_KEYS.CHANGELOG_VISITS,
 };
 
 const CACHE_HEADERS = {

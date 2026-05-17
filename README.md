@@ -1,5 +1,14 @@
 <div align="center">
 
+<pre>
+   ███████╗██████╗ 
+   ██╔════╝██╔══██╗
+   █████╗  ██║  ██║   ·   emredogan.com
+   ██╔══╝  ██║  ██║       cloud & SaaS engineer
+   ███████╗██████╔╝       AWS · AI-native · monk mode
+   ╚══════╝╚═════╝
+</pre>
+
 # Emre Doğan — Portfolio
 
 **Cinematic, AI-native portfolio for a cloud & SaaS engineer.**
@@ -14,6 +23,8 @@ Next.js 16 App Router · React 19 · Tailwind v4 · Anthropic Claude · Resend.
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tailwind](https://img.shields.io/badge/Tailwind-v4-38BDF8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Anthropic](https://img.shields.io/badge/Claude-Haiku%204.5-D97757)](https://www.anthropic.com)
+[![Sentry](https://img.shields.io/badge/Sentry-instrumented-362D59?logo=sentry&logoColor=white)](https://sentry.io)
+[![Sponsor](https://img.shields.io/github/sponsors/emredogan-cloud?label=sponsor&logo=githubsponsors&color=ea4aaa)](https://github.com/sponsors/emredogan-cloud)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](#license)
 
 </div>
@@ -44,6 +55,10 @@ The whole experience is rendered through the Next.js App Router with React Serve
 | **Stack page** | Categorised inventory of cloud, application, backend, and AI tooling — the same vocabulary used in client proposals. | `app/stack/` |
 | **Contact pipeline** | Server-action form → validated → Resend transactional email → optimistic state with `useActionState`. | `app/contact/actions.ts`, `app/contact/ContactForm.tsx` |
 | **Global grain + glass** | Deferred film-grain overlay (`3500ms` cold delay) and reusable glassmorphism utility classes. | `components/layout/GlobalGrain.tsx`, `app/globals.css` |
+| **[`/telemetry`](https://emredogan.com/telemetry)** | Public observability — Lumina p95 latency, auto-tweet successes, lumina-chat downloads, MRR — read from KV at request time, ISR-cached for 5 min. | `app/telemetry/page.tsx`, `app/api/telemetry/[metric]/route.ts`, `lib/telemetry/metrics.ts` |
+| **[`/changelog`](https://emredogan.com/changelog)** | Every push to `emredogan-cloud` rendered as a WHY-annotated card. Day-bucketed, repo-filterable, 30-min KV cache over GitHub's public events API. | `app/changelog/page.tsx`, `lib/github-events.ts` |
+| **Auto-tweet 2.0** | Four-format Twitter engine: daily standup (cron), weekly architecture (Tuesday cron), incident response (Sentry-driven drafts), Lumina best-answer clips. 14-day dedupe ledger in KV. | `app/api/auto-tweet/route.ts` (dispatcher), `lib/auto-tweet/{handlers,prompts,modes,dedupe}` |
+| **Sentry instrumentation** | Server + edge runtime error capture; lazy load, no client bundle impact. Drives the auto-tweet `incident_response` mode when wired via webhook. | `instrumentation.ts`, `sentry.{server,edge}.config.ts`, `lib/sentry.ts` |
 
 ## Architecture
 
@@ -224,9 +239,12 @@ Both integrations are isolated behind environment variables and degrade graceful
 
 ## CI/CD
 
-No GitHub Actions workflows are currently configured — Vercel handles preview + production deploys on push. ESLint is the primary local gate.
+| Workflow | Trigger | What it does |
+|---|---|---|
+| **`.github/workflows/publish-lumina-chat.yml`** | Manual dispatch (`workflow_dispatch`) | Types-version-confirmed publish of `@emredogan/lumina-chat` to npm. Runs `npm ci`, builds the workspace, dry-run inspects the tarball, then `npm publish --provenance --access=public` so each release carries a sigstore attestation linking it to the GitHub workflow run + commit SHA. |
+| **Vercel deploys** | Every `git push` | Preview deployments for every PR, production deploy on `main`. ESLint + TypeScript run locally before merge. |
 
-Recommended next step: a minimal workflow running `npm run lint && npm run build` on pull requests against `main`.
+Recommended next step: a PR-gated GitHub Actions workflow running `npm run lint && npm run build` so CI catches regressions before they reach a Vercel preview.
 
 ## Roadmap
 
@@ -248,6 +266,14 @@ git commit -m "feat: short imperative summary"
 ```
 
 Please open an issue first for substantive changes so we can align on scope.
+
+## Sponsor
+
+If `@emredogan/lumina-chat`, the systems behind this portfolio, or the open engineering log at [`/changelog`](https://emredogan.com/changelog) save you time — sponsorship keeps the loop running.
+
+[![Sponsor on GitHub](https://img.shields.io/github/sponsors/emredogan-cloud?style=for-the-badge&label=sponsor&logo=githubsponsors&color=ea4aaa)](https://github.com/sponsors/emredogan-cloud)
+
+Sponsors get early access to packages-in-flight (`@emredogan/cinematic-ui`, `@emredogan/monk-mode-cli`) and direct line to the changelog upstream of public push events.
 
 ## License
 

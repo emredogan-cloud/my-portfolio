@@ -7,6 +7,7 @@ import {
   incrementMetric,
   METRIC_KEYS,
 } from "@/lib/telemetry/metrics";
+import { captureRouteError } from "@/lib/sentry";
 
 /**
  * Auto-tweet 2.0 — multi-format dispatcher.
@@ -144,6 +145,24 @@ export async function POST(req: Request) {
   const mode = parseMode(raw);
   if (!mode) return unknownMode(raw);
 
-  const res = await dispatch(mode, req);
-  return maybeRecordSuccessAndPassThrough(res);
+  /* Top-level dispatch guard. Each handler has its own try/catch for
+   * expected failures (Claude timeout, Twitter 502, etc.) and
+   * returns a structured 5xx in those cases — those don't throw out
+   * to us. This catches the *unexpected* shapes (e.g. an upstream
+   * SDK panic) so the cron sees a JSON 500 rather than HTML
+   * boilerplate, and Sentry gets the stack. */
+  try {
+    const res = await dispatch(mode, req);
+    return maybeRecordSuccessAndPassThrough(res);
+  } catch (err) {
+    captureRouteError(err, {
+      route: "/api/auto-tweet",
+      tags: { mode },
+    });
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return Response.json(
+      { ok: false, error: "dispatch-failed", mode, message },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
+    );
+  }
 }

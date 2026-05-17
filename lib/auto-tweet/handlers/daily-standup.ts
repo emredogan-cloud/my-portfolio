@@ -10,6 +10,7 @@ import { getSiteUrl } from "@/lib/site-url";
 import { DAILY_STANDUP_SYSTEM_PROMPT } from "@/lib/auto-tweet/prompts/daily-standup";
 import { isDuplicate, recordPost } from "@/lib/auto-tweet/dedupe";
 import { AUTOTWEET_MODES } from "@/lib/auto-tweet/modes";
+import { captureRouteError, captureRouteMessage } from "@/lib/sentry";
 
 /**
  * Daily standup handler — extracted from the V3-era inline
@@ -221,6 +222,12 @@ async function generateDraft(context: string): Promise<string | null> {
       "[auto-tweet] claude generation failed:",
       err instanceof Error ? err.message : "unknown",
     );
+    /* Sub-PR 1.5: Sentry capture. console.error keeps the cron log
+     * intact for grep workflows; Sentry adds dashboard visibility. */
+    captureRouteError(err, {
+      route: "/api/auto-tweet",
+      tags: { mode: AUTOTWEET_MODES.DAILY_STANDUP, phase: "draft" },
+    });
     return null;
   }
 }
@@ -365,6 +372,27 @@ export async function runDailyStandup(): Promise<Response> {
         `  upstream body:  ${postResult.detail ?? "(none)"}`,
         `  media path:     ${mediaError ?? "ok"}`,
       ].join("\n"),
+    );
+    /* Sub-PR 1.5: Sentry surface. The upstream Twitter 403 is the
+     * common Free-Tier failure mode; the message helps Sentry's
+     * group-by-fingerprint cluster repeats. */
+    captureRouteMessage(
+      `auto-tweet daily_standup POST failed: ${postResult.error}`,
+      "error",
+      {
+        route: "/api/auto-tweet",
+        tags: {
+          mode: AUTOTWEET_MODES.DAILY_STANDUP,
+          phase: "twitter-post",
+          error_code: postResult.error,
+        },
+        extra: {
+          date,
+          draft,
+          upstream_body: postResult.detail ?? null,
+          media_path: mediaError ?? "ok",
+        },
+      },
     );
     return Response.json(
       {

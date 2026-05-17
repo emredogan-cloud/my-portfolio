@@ -12,6 +12,7 @@ import {
   recordLatencySample,
   METRIC_KEYS,
 } from "@/lib/telemetry/metrics";
+import { captureRouteError } from "@/lib/sentry";
 
 /**
  * Lumina chat endpoint (V2).
@@ -107,6 +108,11 @@ export async function POST(req: Request) {
       },
     });
   } catch (err) {
+    /* Surface to Sentry — onRequestError in instrumentation.ts only
+     * fires for errors that bubble past the route handler, but this
+     * outer catch swallows them into a 500 JSON. Capture here so the
+     * dashboard sees the failure rate, not just the user-facing 500. */
+    captureRouteError(err, { route: "/api/chat" });
     const message = err instanceof Error ? err.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
