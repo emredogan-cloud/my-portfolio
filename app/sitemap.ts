@@ -19,6 +19,8 @@ const STATIC_ROUTES = [
   "/pro",
   "/telemetry",
   "/changelog",
+  "/lab",
+  "/lab/iam-translator",
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {

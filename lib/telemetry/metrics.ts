@@ -64,6 +64,18 @@ export const METRIC_KEYS = {
   TELEMETRY_VISITS: "v4:telemetry:dashboard:visits",
   /** Cumulative visit count for /changelog. Per V4 § 5.1.4. */
   CHANGELOG_VISITS: "v4:telemetry:changelog:visits",
+  /** Cumulative count of POSTs to /api/lab/iam-translate that
+   *  passed the rate-limit + cost-cap guards. One per visitor
+   *  attempt. V4 § 5.1.2 SUB-PR 2.1 schema entry. */
+  LAB_IAM_VISITS_DAILY: "v4:adoption:lab:iam:visits_daily",
+  /** Cumulative count of /api/lab/iam-translate streams that
+   *  completed without throwing. Drives the conversion-rate read
+   *  on the /telemetry dashboard tile. */
+  LAB_IAM_COMPLETIONS_DAILY: "v4:adoption:lab:iam:completions_daily",
+  /** Cumulative estimated USD cost for the IAM translator today
+   *  (rolling 36-h TTL). Incremented from
+   *  `lib/lab/rate-limit:recordEstimatedCost`. */
+  LAB_IAM_COST_USD_DAILY: "v4:cost:lab:iam:usd_daily",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];

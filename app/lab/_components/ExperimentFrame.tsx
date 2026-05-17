@@ -1,0 +1,153 @@
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { Reveal } from "@/components/ui/Reveal";
+import type { ExperimentEntry } from "@/lib/lab/registry";
+
+/**
+ * Shared chrome for any `/lab/<slug>` route.
+ *
+ * V4 Phase 2 — Sub-PR 2.1.
+ *
+ * Provides:
+ *   - Breadcrumb eyebrow (`LAB / <NAME>`) with a quiet link back to
+ *     the lab index
+ *   - Two-line statement title in the /about voice, derived from
+ *     the experiment's `name` + a caller-supplied tagline
+ *   - One framing paragraph the page owns the copy for
+ *   - A status pill that reflects the registry's lifecycle state
+ *   - A `children` slot for the experiment-specific UI (the
+ *     sandbox client island on iam-translator, etc.)
+ *   - A quiet sandbox-notice footer so visitors know what they're
+ *     interacting with
+ *
+ * Visual posture: same vocabulary as /telemetry, /changelog,
+ * /about. Reveal motion island + the existing ambient-blur stack.
+ * No new motion primitives; reduced-motion already handled by the
+ * global CSS guard.
+ */
+
+interface ExperimentFrameProps {
+  experiment: ExperimentEntry;
+  /** Second line of the headline. Pairs with `experiment.name` to
+   *  form the two-line statement title. */
+  tagline: string;
+  /** Single framing paragraph — set by each experiment page so it
+   *  can read in its own voice. */
+  framing: string;
+  children: ReactNode;
+}
+
+const STATUS_LABEL: Record<ExperimentEntry["status"], string> = {
+  active: "active",
+  "coming-soon": "coming soon",
+  archived: "archived",
+};
+
+const STATUS_PILL: Record<ExperimentEntry["status"], string> = {
+  active:
+    "border-[#00d2ff]/40 bg-[#00d2ff]/[0.05] text-[#00d2ff]/90",
+  "coming-soon":
+    "border-white/[0.08] bg-white/[0.02] text-tertiary",
+  archived: "border-white/[0.08] bg-white/[0.02] text-quiet",
+};
+
+export default function ExperimentFrame({
+  experiment,
+  tagline,
+  framing,
+  children,
+}: ExperimentFrameProps) {
+  return (
+    <main id="main" className="relative min-h-screen bg-black">
+      {/* Ambient cyan atmosphere — same gradient stack as
+          /telemetry and /changelog so the lab page reads as part
+          of the same site, not a tooling pop-out. */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        aria-hidden="true"
+      >
+        <div
+          className="absolute top-[-200px] right-[-200px] w-[700px] h-[700px] rounded-full blur-[180px]"
+          style={{
+            background:
+              "radial-gradient(ellipse, rgba(0,210,255,0.07) 0%, transparent 70%)",
+          }}
+        />
+        <div
+          className="absolute bottom-[-200px] left-[-100px] w-[600px] h-[600px] rounded-full blur-[160px]"
+          style={{
+            background:
+              "radial-gradient(ellipse, rgba(0,210,255,0.04) 0%, transparent 70%)",
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 max-w-3xl mx-auto px-6 pt-36 pb-32">
+        {/* BREADCRUMB EYEBROW */}
+        <Reveal mode="mount" duration={0.7} className="mb-7">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/lab"
+              className="font-mono uppercase tracking-[0.20em] text-[10px] text-tertiary hover:text-secondary transition-colors"
+            >
+              Lab
+            </Link>
+            <span
+              aria-hidden="true"
+              className="font-mono text-[10px] text-faint"
+            >
+              /
+            </span>
+            <span className="font-mono uppercase tracking-[0.20em] text-[10px] text-[#00d2ff]/80">
+              {experiment.name}
+            </span>
+            <span
+              className={`ml-auto px-2.5 py-1 rounded-full border font-mono uppercase tracking-[0.18em] text-[9px] ${
+                STATUS_PILL[experiment.status]
+              }`}
+            >
+              {STATUS_LABEL[experiment.status]}
+            </span>
+          </div>
+        </Reveal>
+
+        {/* HERO — two-line statement in /about's voice */}
+        <Reveal mode="mount" duration={0.8} className="mb-10">
+          <h1 className="text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary">
+            <span className="block">{experiment.name}.</span>
+            <span className="block text-white/55">{tagline}</span>
+          </h1>
+          <p className="text-secondary max-w-2xl mt-7 text-base md:text-lg leading-relaxed">
+            {framing}
+          </p>
+        </Reveal>
+
+        {/* EXPERIMENT BODY */}
+        <Reveal duration={0.7} className="mb-12">
+          {children}
+        </Reveal>
+
+        {/* SANDBOX NOTICE — same posture as the page footers on
+            /telemetry and /changelog: a quiet mono row with a
+            single cyan dot. */}
+        <Reveal duration={0.7}>
+          <div className="border-t border-white/[0.05] pt-6 mt-12">
+            <p className="font-mono uppercase tracking-[0.20em] text-[10px] text-quiet flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span
+                aria-hidden="true"
+                className="inline-block w-1 h-1 rounded-full bg-[#00d2ff]/60 align-middle"
+              />
+              <span>Sandbox</span>
+              <span className="text-faint">·</span>
+              <span>Per-IP 5/hr</span>
+              <span className="text-faint">·</span>
+              <span>Daily budget $5</span>
+              <span className="text-faint">·</span>
+              <span>Streaming via Bedrock</span>
+            </p>
+          </div>
+        </Reveal>
+      </div>
+    </main>
+  );
+}
