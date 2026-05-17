@@ -92,6 +92,20 @@ export const METRIC_KEYS = {
    *  experiment cost-cap reads stay independent. */
   LAB_PROMPT_RESCUER_COST_USD_DAILY:
     "v4:cost:lab:prompt-rescuer:usd_daily",
+  /** Cumulative count of POSTs to /api/lab/narrate-commits that
+   *  passed the rate-limit + cost-cap guards. V4 § 5.1.2 SUB-PR
+   *  2.3 schema entry. */
+  LAB_COMMIT_NARRATOR_VISITS_DAILY:
+    "v4:adoption:lab:commit-narrator:visits_daily",
+  /** Cumulative count of /api/lab/narrate-commits streams that
+   *  completed without throwing. */
+  LAB_COMMIT_NARRATOR_COMPLETIONS_DAILY:
+    "v4:adoption:lab:commit-narrator:completions_daily",
+  /** Cumulative estimated USD cost for commit-narrator today
+   *  (rolling 36-h TTL). Independent of the IAM + prompt-rescuer
+   *  budgets — per-experiment cost-cap isolation. */
+  LAB_COMMIT_NARRATOR_COST_USD_DAILY:
+    "v4:cost:lab:commit-narrator:usd_daily",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];

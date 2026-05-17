@@ -17,6 +17,7 @@
     "@ai-sdk/anthropic": "^3.0.77",
     "@ai-sdk/react": "^3.0.184",
     "@aws-sdk/client-bedrock-runtime": "^3.1047.0",
+    "@octokit/rest": "^22.0.1",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@sentry/nextjs": "^10.53.1",

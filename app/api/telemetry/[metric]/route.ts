@@ -39,6 +39,12 @@ const SLUG_TO_KEY: Record<string, MetricKey> = {
     METRIC_KEYS.LAB_PROMPT_RESCUER_COMPLETIONS_DAILY,
   "lab-prompt-rescuer-cost":
     METRIC_KEYS.LAB_PROMPT_RESCUER_COST_USD_DAILY,
+  "lab-commit-narrator-visits":
+    METRIC_KEYS.LAB_COMMIT_NARRATOR_VISITS_DAILY,
+  "lab-commit-narrator-completions":
+    METRIC_KEYS.LAB_COMMIT_NARRATOR_COMPLETIONS_DAILY,
+  "lab-commit-narrator-cost":
+    METRIC_KEYS.LAB_COMMIT_NARRATOR_COST_USD_DAILY,
 };
 
 const CACHE_HEADERS = {
