@@ -34,6 +34,11 @@ const SLUG_TO_KEY: Record<string, MetricKey> = {
   "lab-iam-visits": METRIC_KEYS.LAB_IAM_VISITS_DAILY,
   "lab-iam-completions": METRIC_KEYS.LAB_IAM_COMPLETIONS_DAILY,
   "lab-iam-cost": METRIC_KEYS.LAB_IAM_COST_USD_DAILY,
+  "lab-prompt-rescuer-visits": METRIC_KEYS.LAB_PROMPT_RESCUER_VISITS_DAILY,
+  "lab-prompt-rescuer-completions":
+    METRIC_KEYS.LAB_PROMPT_RESCUER_COMPLETIONS_DAILY,
+  "lab-prompt-rescuer-cost":
+    METRIC_KEYS.LAB_PROMPT_RESCUER_COST_USD_DAILY,
 };
 
 const CACHE_HEADERS = {

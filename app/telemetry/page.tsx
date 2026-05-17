@@ -155,6 +155,25 @@ const TILES: readonly TileSpec[] = [
     placeholder: "no spend yet",
     kvKey: METRIC_KEYS.LAB_IAM_COST_USD_DAILY,
   },
+  {
+    slug: "lab-prompt-rescuer-completions",
+    label: "Prompt rescuer runs",
+    description:
+      "Streams completed by /lab/prompt-rescuer since launch. Reads next to the IAM completions tile to compare lab adoption across experiments.",
+    format: (n) => Math.round(n).toLocaleString("en-US"),
+    placeholder: "no completions yet",
+    kvKey: METRIC_KEYS.LAB_PROMPT_RESCUER_COMPLETIONS_DAILY,
+  },
+  {
+    slug: "lab-prompt-rescuer-cost",
+    label: "Prompt rescuer cost",
+    description:
+      "Estimated Bedrock spend on /lab/prompt-rescuer over the rolling 36-hour window. Daily cap $5 — independent of the IAM translator's budget.",
+    unit: "USD",
+    format: (n) => `$${n.toFixed(2)}`,
+    placeholder: "no spend yet",
+    kvKey: METRIC_KEYS.LAB_PROMPT_RESCUER_COST_USD_DAILY,
+  },
 ] as const;
 
 interface TileData {

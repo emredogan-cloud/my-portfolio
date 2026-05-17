@@ -76,6 +76,22 @@ export const METRIC_KEYS = {
    *  (rolling 36-h TTL). Incremented from
    *  `lib/lab/rate-limit:recordEstimatedCost`. */
   LAB_IAM_COST_USD_DAILY: "v4:cost:lab:iam:usd_daily",
+  /** Cumulative count of POSTs to /api/lab/prompt-rescue that
+   *  passed the rate-limit + cost-cap guards. V4 § 5.1.2 SUB-PR
+   *  2.2 schema entry — uses the full `prompt-rescuer` slug
+   *  verbatim, matching the URL (unlike IAM's short `iam`
+   *  schema slug). */
+  LAB_PROMPT_RESCUER_VISITS_DAILY:
+    "v4:adoption:lab:prompt-rescuer:visits_daily",
+  /** Cumulative count of /api/lab/prompt-rescue streams that
+   *  completed without throwing. */
+  LAB_PROMPT_RESCUER_COMPLETIONS_DAILY:
+    "v4:adoption:lab:prompt-rescuer:completions_daily",
+  /** Cumulative estimated USD cost for prompt-rescuer today
+   *  (rolling 36-h TTL). Separate from the IAM key so per-
+   *  experiment cost-cap reads stay independent. */
+  LAB_PROMPT_RESCUER_COST_USD_DAILY:
+    "v4:cost:lab:prompt-rescuer:usd_daily",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];
