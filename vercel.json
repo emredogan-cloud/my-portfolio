@@ -4,6 +4,10 @@
     {
       "path": "/api/auto-tweet",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/auto-tweet?mode=weekly_architecture",
+      "schedule": "0 5 * * 2"
     }
   ]
 }
