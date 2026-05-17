@@ -8,6 +8,10 @@ import {
 import { buildLuminaSystemPrompt } from "@/lib/lumina/system-prompt";
 import { LUMINA_TOOLS } from "@/lib/lumina/tools";
 import { saveSession, isValidSessionId } from "@/lib/lumina/memory";
+import {
+  recordLatencySample,
+  METRIC_KEYS,
+} from "@/lib/telemetry/metrics";
 
 /**
  * Lumina chat endpoint (V2).
@@ -50,6 +54,11 @@ function isMissingApiKey(): boolean {
 }
 
 export async function POST(req: Request) {
+  /* Latency stopwatch — captured at request entry so the sample
+   * reflects full request-to-stream-complete duration, not just
+   * model inference time. Sub-PR 1.2 telemetry contract. */
+  const start = Date.now();
+
   try {
     const body = (await req.json()) as Partial<ChatRequestBody>;
     const messages: UIMessage[] = Array.isArray(body.messages)
@@ -85,6 +94,14 @@ export async function POST(req: Request) {
     return result.toUIMessageStreamResponse({
       originalMessages: messages,
       onFinish: async ({ messages: finalMessages }) => {
+        /* Telemetry first — fire-and-forget so a KV blip can never
+         * delay the session-persistence path or the response close.
+         * recordLatencySample is itself a graceful no-op when KV is
+         * unavailable, so this is safe in dev too. */
+        void recordLatencySample(
+          METRIC_KEYS.LUMINA_P95_LATENCY,
+          Date.now() - start,
+        );
         if (!sessionId) return;
         await saveSession(sessionId, finalMessages);
       },
