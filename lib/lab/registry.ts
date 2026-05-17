@@ -55,7 +55,7 @@ export const LAB_EXPERIMENTS: readonly ExperimentEntry[] = [
     name: "Prompt Rescuer",
     purpose:
       "A vague prompt arrives. A senior-grade engineering brief comes back, structured for the next agent to act on.",
-    status: "coming-soon",
+    status: "active",
   },
   {
     slug: "commit-narrator",
