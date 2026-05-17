@@ -174,6 +174,25 @@ const TILES: readonly TileSpec[] = [
     placeholder: "no spend yet",
     kvKey: METRIC_KEYS.LAB_PROMPT_RESCUER_COST_USD_DAILY,
   },
+  {
+    slug: "lab-commit-narrator-completions",
+    label: "Commit narrator runs",
+    description:
+      "Streams completed by /lab/commit-narrator since launch. Lower throughput than the other experiments — 3 calls/IP/hour cap because each call hits GitHub + Bedrock with a larger context.",
+    format: (n) => Math.round(n).toLocaleString("en-US"),
+    placeholder: "no completions yet",
+    kvKey: METRIC_KEYS.LAB_COMMIT_NARRATOR_COMPLETIONS_DAILY,
+  },
+  {
+    slug: "lab-commit-narrator-cost",
+    label: "Commit narrator cost",
+    description:
+      "Estimated Bedrock spend on /lab/commit-narrator over the rolling 36-hour window. Higher per-call cost than the other lab experiments; daily cap $5 — independent budget.",
+    unit: "USD",
+    format: (n) => `$${n.toFixed(2)}`,
+    placeholder: "no spend yet",
+    kvKey: METRIC_KEYS.LAB_COMMIT_NARRATOR_COST_USD_DAILY,
+  },
 ] as const;
 
 interface TileData {

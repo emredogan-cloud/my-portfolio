@@ -63,7 +63,7 @@ export const LAB_EXPERIMENTS: readonly ExperimentEntry[] = [
     name: "Commit Narrator",
     purpose:
       "Point it at a public GitHub repo. The last twenty commits get drafted WHY annotations, ready for the changelog.",
-    status: "coming-soon",
+    status: "active",
   },
 ] as const;
 

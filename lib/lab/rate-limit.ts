@@ -81,16 +81,23 @@ export function getClientIp(req: Request): string {
  * Consume one slot from the per-IP, per-experiment rate-limit
  * bucket. Returns `ok` when under the limit, `blocked` when at or
  * above it.
+ *
+ * `maxPerWindow` is optional and defaults to 5 — the IAM
+ * translator + prompt rescuer use the default. Sub-PR 2.3
+ * (Commit Narrator) passes 3 because each call hits both the
+ * GitHub API and Bedrock with a larger context, so the per-IP
+ * ceiling is more conservative.
  */
 export async function consumeRateLimit(
   experimentSlug: string,
   ip: string,
+  maxPerWindow: number = RL_MAX_PER_WINDOW,
 ): Promise<RateLimitResult> {
   if (!hasKv) {
     return {
       status: "ok",
       count: 0,
-      limit: RL_MAX_PER_WINDOW,
+      limit: maxPerWindow,
       window_seconds: RL_WINDOW_SECONDS,
     };
   }
@@ -101,16 +108,16 @@ export async function consumeRateLimit(
       await kv.expire(key, RL_WINDOW_SECONDS);
     }
     return {
-      status: count > RL_MAX_PER_WINDOW ? "blocked" : "ok",
+      status: count > maxPerWindow ? "blocked" : "ok",
       count,
-      limit: RL_MAX_PER_WINDOW,
+      limit: maxPerWindow,
       window_seconds: RL_WINDOW_SECONDS,
     };
   } catch {
     return {
       status: "ok",
       count: 0,
-      limit: RL_MAX_PER_WINDOW,
+      limit: maxPerWindow,
       window_seconds: RL_WINDOW_SECONDS,
     };
   }
