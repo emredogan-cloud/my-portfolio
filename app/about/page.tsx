@@ -7,36 +7,96 @@ import GithubActivity from "./_components/GithubActivity";
 export const metadata: Metadata = {
   title: "About — Emre Doğan",
   description:
-    "19. Self-taught. Building production AWS infrastructure between 01:30 bakery shifts and high-school exams. Two years of Monk Mode.",
+    "Cloud and SaaS operator from Adana. Long-arc builder of production AWS infrastructure and AI-native systems. Disciplined practice, hand-built tooling, quiet hours.",
 };
+
+/* ──────────────────────────────────────────────────────────────
+ *  About — operator framing.
+ *
+ *  V3 roadmap, ledger entry 745, mapped this page's evolution
+ *  away from a present-tense "01:30 bakery shifts" credentialing
+ *  story toward an operator manifesto. The bakery and the absence
+ *  of a CS degree stay part of the record, but in past tense and
+ *  in one quiet line — not as the headline.
+ *
+ *  Section weight is deliberately uneven. Some blocks are dense
+ *  (specializations, principles), some are a single paragraph
+ *  (the cinematic break, closing transmission). The asymmetry is
+ *  the spatial breathing the brief asked for.
+ * ────────────────────────────────────────────────────────────── */
+
+const PHILOSOPHY = [
+  {
+    eyebrow: "Long arcs",
+    body: "Most decisions here are made on a five-year horizon. The right system rarely ships this quarter. The wrong one always does.",
+  },
+  {
+    eyebrow: "Quiet hours",
+    body: "Mornings start before the city does. The first work block lands before any notification — the rule that survived two years of running on borrowed sleep.",
+  },
+  {
+    eyebrow: "Hand-built",
+    body: "Every production resource provisioned in Terraform. No console-clicked surprises. If it can't be re-created from a repo, it doesn't exist yet.",
+  },
+  {
+    eyebrow: "Body and code",
+    body: "The same operating system runs both. Strength training in the early evening, code in the build window after. One discipline pays the other's invoice.",
+  },
+] as const;
+
+interface LifestyleEntry {
+  eyebrow: string;
+  body: string;
+  href?: string;
+}
+
+const LIFESTYLE: readonly LifestyleEntry[] = [
+  {
+    eyebrow: "Training",
+    body: "Five sessions a week, an iron-only programme built around the squat, deadlift, and press. Strength as a tax on time, not a sport. The discipline transfers.",
+  },
+  {
+    eyebrow: "The motorcycle",
+    body: "Naked sport on the Adana coast roads. The first hour after rain is the cleanest signal a screen will not give back. Helmets clear what monitors do not.",
+  },
+  {
+    eyebrow: "The codex",
+    body: "Three handcrafted digital editions — Mendîran, Mythologica, Solgun — each shipped as a zero-dependency reader. Worldbuilding as engineering on a different substrate.",
+    href: "/codex",
+  },
+  {
+    eyebrow: "Solitude",
+    body: "Long walks before the keyboard sees a problem. Most architecture decisions are settled outside on foot, in silence; the implementation is only the transcription.",
+  },
+];
 
 const PRINCIPLES = [
   {
     label: "01",
     title: "Production-first.",
-    body: "Every system designed for real users from day one. No prototypes posing as products.",
+    body: "Every system designed for real users from day one. No prototypes wearing the costume of products.",
   },
   {
     label: "02",
     title: "Infrastructure as code.",
-    body: "Reproducible. Version-controlled. No console-clicked surprises in production.",
+    body: "Reproducible. Version-controlled. Re-creatable from a git clone — or it does not count as deployed.",
   },
   {
     label: "03",
     title: "Cost-aware engineering.",
-    body: "Every architectural choice considers $/request. At scale, decisions compound.",
+    body: "Every architectural decision considers $/request. At scale, those choices compound faster than feature velocity.",
   },
   {
     label: "04",
     title: "AI as leverage.",
-    body: "Augment with AI; never replace engineering rigor. Models hallucinate. Types don't.",
+    body: "Augment with AI; never replace engineering rigor. Models hallucinate. Types and tests don't.",
   },
 ] as const;
 
 const SPECIALIZATIONS = [
   {
     title: "Cloud Architecture",
-    body: "Production AWS infrastructure provisioned through Terraform. Multi-region patterns, IAM hardening, CUR-driven cost analytics, and cross-account scanning via STS AssumeRole. From single-VPC SaaS to platforms that operate inside customer accounts.",
+    body: "Production AWS infrastructure provisioned through Terraform. Multi-region patterns, IAM hardening, CUR-driven cost analytics, cross-account scanning via STS AssumeRole. From single-VPC SaaS to platforms that operate inside customer accounts.",
     keywords: [
       "AWS",
       "Terraform",
@@ -49,7 +109,7 @@ const SPECIALIZATIONS = [
   },
   {
     title: "AI Systems",
-    body: "LLM orchestration with Claude on AWS Bedrock. Streaming chat over Lambda Function URLs to bypass API Gateway timeouts, master-prompt engineering for autonomous agents, and structured remediation pipelines that ground model output in real data.",
+    body: "LLM orchestration with Claude on AWS Bedrock. Streaming chat over Lambda Function URLs to bypass API Gateway timeouts. Master-prompt engineering for autonomous agents and structured remediation pipelines that ground model output in real data.",
     keywords: [
       "Claude",
       "Anthropic SDK",
@@ -60,7 +120,7 @@ const SPECIALIZATIONS = [
   },
   {
     title: "Production SaaS",
-    body: "End-to-end products. Auth, billing, scanning engines, observability. Lemon Squeezy + Cognito + Sentry + PostHog stack. Customers don't see infrastructure — they see outcomes, dashboards, and a Stripe-grade checkout flow.",
+    body: "End-to-end products. Auth, billing, scanning engines, observability. Lemon Squeezy + Cognito + Sentry + PostHog. Customers see outcomes and dashboards; the infrastructure stays out of the way.",
     keywords: [
       "Lemon Squeezy",
       "AWS Cognito",
@@ -69,6 +129,29 @@ const SPECIALIZATIONS = [
       "FastAPI",
       "Next.js",
     ],
+  },
+] as const;
+
+/* "Currently" fragments. Static on purpose — these are operator
+ * state, not telemetry. Updated by hand when they change. The
+ * real-time build status already lives in the global footer's
+ * BuildBeacon; this section adds quiet adjacent context. */
+const CURRENTLY = [
+  {
+    label: "Building",
+    body: "Cloud Waste Hunter v2 — cross-account scanner with Bedrock-grounded remediation pipelines.",
+  },
+  {
+    label: "Reading",
+    body: "Designing Data-Intensive Applications — Kleppmann. Slowly, and with notes.",
+  },
+  {
+    label: "Operating from",
+    body: "Adana, Türkiye · GMT+3. Coast roads and quiet rooms.",
+  },
+  {
+    label: "Training",
+    body: "Strength block, week four of an eight-week cycle. The deadlift is the gauge.",
   },
 ] as const;
 
@@ -96,37 +179,13 @@ const FEATURED = [
   },
 ] as const;
 
-const DAY_TIMELINE = [
-  {
-    time: "01:30",
-    title: "Bakery shift begins.",
-    detail:
-      "Five mornings a week. Physical labor before the city wakes. The hardest hour of the day — done first.",
-  },
-  {
-    time: "08:00",
-    title: "High school.",
-    detail:
-      "Final year. Academics stay non-negotiable. Showing up rested means showing up sharp.",
-  },
-  {
-    time: "16:00",
-    title: "The build window opens.",
-    detail:
-      "AWS infrastructure. Terraform IaC. Claude orchestration. Production systems get shipped here.",
-  },
-  {
-    time: "22:00",
-    title: "Sleep. Repeat.",
-    detail:
-      "Two years of compound discipline. No bootcamp. No CS degree. Only relentless iteration.",
-  },
-] as const;
-
 export default function AboutPage() {
   return (
     <main id="main" className="relative min-h-screen bg-black">
-      {/* Ambient atmosphere */}
+      {/* Ambient atmosphere — restrained, cyan-leaning, no purple
+          since we want the page to read as the same atmospheric
+          family as /codex and /notes rather than as a separate
+          colour district. */}
       <div
         className="pointer-events-none fixed inset-0 z-0"
         aria-hidden="true"
@@ -135,82 +194,181 @@ export default function AboutPage() {
           className="absolute top-[-200px] right-[-200px] w-[700px] h-[700px] rounded-full blur-[180px]"
           style={{
             background:
-              "radial-gradient(ellipse, rgba(147,51,234,0.10) 0%, transparent 70%)",
+              "radial-gradient(ellipse, rgba(0,210,255,0.07) 0%, transparent 70%)",
           }}
         />
         <div
           className="absolute bottom-[-200px] left-[-100px] w-[600px] h-[600px] rounded-full blur-[160px]"
           style={{
             background:
-              "radial-gradient(ellipse, rgba(14,165,233,0.08) 0%, transparent 70%)",
+              "radial-gradient(ellipse, rgba(168,132,44,0.05) 0%, transparent 70%)",
           }}
         />
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 pt-36 pb-32">
 
-        {/* ───────── HERO ───────── */}
-        <Reveal mode="mount" duration={0.8} className="mb-24">
+        {/* ───────── HERO ─────────
+            Two-line statement, lifted from "credentials" to "stance".
+            The closing line of the lead paragraph carries the bakery
+            in past tense — present once, never again on the page. */}
+        <Reveal mode="mount" duration={0.8} className="mb-28">
           <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
             About
           </span>
           <h1 className="text-5xl md:text-7xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5">
-            <span className="block">19. Self-taught.</span>
-            <span className="block text-white/60">Monk Mode.</span>
+            <span className="block">Built slowly.</span>
+            <span className="block text-white/55">On purpose.</span>
           </h1>
-          <p className="text-gray-400 max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
-            I&apos;m Emre Doğan — at 19, between 01:30 bakery shifts and
-            high-school exams, I architect production-grade AWS infrastructure
-            and ship AI-native SaaS products. No bootcamp. No CS degree.
-            Just two years of compound discipline.
+          <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
+            I&apos;m Emre Doğan — a cloud and SaaS operator working out of
+            Adana. I build production-grade AWS infrastructure, AI-native
+            tooling, and full-stack mobile systems on long time horizons
+            and from a small, quiet desk. Two years of compounding,
+            mostly-daily practice; the early mornings used to be a bakery
+            shift, the late evenings a school day. Today they&apos;re
+            architecture decisions and a barbell.
           </p>
         </Reveal>
 
-        {/* ───────── MONK MODE TIMELINE ───────── */}
-        <section className="mb-24">
+        {/* ─────────  CINEMATIC PAUSE — single line, larger, italic,
+                       carries the operating thesis without ornament.
+                       Reads as a quiet break before the section grid
+                       begins.  ───────── */}
+        <Reveal duration={0.8} margin="-50px" className="mb-24">
+          <p className="text-2xl md:text-3xl font-medium tracking-[-0.02em] leading-[1.35] text-tertiary italic max-w-3xl">
+            The system that builds the system matters more than the
+            system that ships this quarter.
+          </p>
+        </Reveal>
+
+        {/* ───────── OPERATING PHILOSOPHY ─────────
+            Replaces the bakery-anchored hour-by-hour timeline. Same
+            spirit — discipline as design — recast as observed clauses
+            rather than a schedule. The 'Quiet hours' tile is the only
+            place the early-morning history surfaces, in one poetic line.
+        */}
+        <section className="mb-28">
           <Reveal duration={0.7}>
             <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
               Monk Mode
             </span>
             <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-12">
-              A day in the discipline.
+              The discipline is the design.
             </h2>
-            <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
-              {DAY_TIMELINE.map((entry, i) => (
-                <Reveal
-                  key={entry.time}
-                  duration={0.5}
-                  delay={i * 0.08}
-                  y={12}
-                  margin="-40px"
-                >
-                  <div className="grid grid-cols-[72px_1fr] md:grid-cols-[140px_1fr] gap-5 md:gap-10 items-baseline py-6">
-                    <span className="text-primary/40 text-sm md:text-base font-mono tracking-wider">
-                      {entry.time}
-                    </span>
-                    <div>
-                      <p className="text-primary font-medium text-base md:text-lg leading-snug">
-                        {entry.title}
-                      </p>
-                      <p className="text-gray-500 text-xs md:text-sm leading-relaxed mt-1.5">
-                        {entry.detail}
-                      </p>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
           </Reveal>
+
+          {/* Asymmetric layout — two-column on md+, but the first tile
+              spans both rows on lg so the rhythm is not a uniform 2×2.
+              Spatial composition per the brief: same content, less
+              boxed-grid energy. */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+            {PHILOSOPHY.map((p, i) => (
+              <Reveal
+                key={p.eyebrow}
+                duration={0.6}
+                delay={i * 0.07}
+                y={14}
+                margin="-60px"
+                className={
+                  // First tile takes the full left column on lg, the
+                  // other three stack in the right pair.
+                  i === 0
+                    ? "lg:row-span-2 lg:col-span-1"
+                    : "lg:col-span-2 lg:max-w-full"
+                }
+              >
+                <div
+                  className={`relative rounded-2xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-7 h-full transition-colors duration-500 hover:border-white/[0.10] hover:bg-white/[0.025] ${
+                    i === 0 ? "flex flex-col justify-between min-h-[240px]" : ""
+                  }`}
+                >
+                  <span className="font-mono uppercase tracking-[0.20em] text-[10px] text-[#00d2ff]/80 block mb-3">
+                    {p.eyebrow}
+                  </span>
+                  <p className="text-secondary text-[15px] leading-[1.75]">
+                    {p.body}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </section>
 
-        {/* ───────── PHILOSOPHY ───────── */}
-        <section className="mb-24">
+        {/* ───────── OUTSIDE THE TERMINAL ─────────
+            New section: lifestyle as part of the operating identity.
+            Restrained, specific, observed. Cross-link out to the Codex
+            from inside one of the tiles so the work pattern feeds into
+            the work surface.  */}
+        <section className="mb-28">
           <Reveal duration={0.7}>
             <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
-              Engineering Philosophy
+              Outside the terminal
             </span>
             <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-12">
-              Four principles I build by.
+              Systems beyond software.
+            </h2>
+          </Reveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {LIFESTYLE.map((l, i) => {
+              const card = (
+                <div className="relative h-full rounded-2xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-7 transition-colors duration-500 hover:border-white/[0.10] hover:bg-white/[0.025]">
+                  <div className="flex items-baseline justify-between gap-3 mb-3">
+                    <span className="font-mono uppercase tracking-[0.20em] text-[10px] text-[#00d2ff]/80">
+                      {l.eyebrow}
+                    </span>
+                    {l.href && (
+                      <ArrowRight
+                        className="w-3.5 h-3.5 text-quiet flex-shrink-0"
+                        style={{ transform: "rotate(-45deg)" }}
+                      />
+                    )}
+                  </div>
+                  <p className="text-secondary text-[15px] leading-[1.75]">
+                    {l.body}
+                  </p>
+                </div>
+              );
+
+              return (
+                <Reveal
+                  key={l.eyebrow}
+                  duration={0.6}
+                  delay={i * 0.08}
+                  y={14}
+                  margin="-60px"
+                >
+                  {l.href ? (
+                    <Link
+                      href={l.href}
+                      className="group block h-full"
+                      aria-label={`${l.eyebrow} — open codex`}
+                    >
+                      {card}
+                    </Link>
+                  ) : (
+                    card
+                  )}
+                </Reveal>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ───────── PRINCIPLES ─────────
+            Same four content beats; visually upgraded with an ambient
+            hover lift, a subtle inner cyan glow, and a hairline cyan
+            top-rule that brightens on hover. No motion lib added —
+            CSS transitions only, GPU-cheap, prefers-reduced-motion
+            collapsed by the global guard. */}
+        <section className="mb-28">
+          <Reveal duration={0.7}>
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              Principles
+            </span>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-12">
+              Four rules I build by.
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {PRINCIPLES.map((p, i) => (
@@ -220,31 +378,53 @@ export default function AboutPage() {
                   delay={i * 0.08}
                   y={16}
                   margin="-60px"
-                  className="liquid-glass rounded-2xl p-6 flex flex-col gap-3"
                 >
-                  <span className="text-primary/30 text-xs font-mono">
-                    {p.label}
-                  </span>
-                  <h3 className="text-primary font-medium text-lg leading-tight">
-                    {p.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    {p.body}
-                  </p>
+                  <div className="group relative rounded-2xl liquid-glass p-7 flex flex-col gap-3 h-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5">
+                    {/* Hairline cyan rule at top — barely visible at rest,
+                        steps up to ~40% on hover. Pure CSS via opacity
+                        transition; no extra elements in the DOM beyond
+                        this single ::before-style span. */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-x-7 top-0 h-px bg-[#00d2ff]/20 opacity-30 transition-opacity duration-500 group-hover:opacity-90"
+                    />
+                    {/* Inner cyan glow on hover — opacity gated so idle
+                        cards stay matte and only one card glows at a time. */}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                      style={{
+                        boxShadow: "inset 0 0 32px rgba(0,210,255,0.06)",
+                      }}
+                    />
+                    <span className="relative text-[#00d2ff]/60 text-xs font-mono tracking-wider">
+                      {p.label}
+                    </span>
+                    <h3 className="relative text-primary font-medium text-lg leading-tight">
+                      {p.title}
+                    </h3>
+                    <p className="relative text-tertiary text-[14.5px] leading-[1.75]">
+                      {p.body}
+                    </p>
+                  </div>
                 </Reveal>
               ))}
             </div>
           </Reveal>
         </section>
 
-        {/* ───────── SPECIALIZATIONS ───────── */}
-        <section className="mb-24">
+        {/* ───────── SPECIALIZATIONS ─────────
+            Largely unchanged in copy intent; tightened a few clauses
+            to drop double-clauses and removed the "Stripe-grade
+            checkout" simile because it reads as benchmarking to a
+            competitor that is not relevant here. */}
+        <section className="mb-28">
           <Reveal duration={0.7}>
             <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
               Specializations
             </span>
             <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-12">
-              Where my time goes.
+              Where the time goes.
             </h2>
             <div className="space-y-5">
               {SPECIALIZATIONS.map((s, i) => (
@@ -260,7 +440,7 @@ export default function AboutPage() {
                     {s.title}
                   </h3>
                   <div className="md:col-span-2 space-y-4">
-                    <p className="text-gray-400 text-sm leading-relaxed">
+                    <p className="text-tertiary text-[14.5px] leading-[1.8]">
                       {s.body}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -280,34 +460,90 @@ export default function AboutPage() {
           </Reveal>
         </section>
 
-        {/* ───────── SHIPPING CONSISTENCY ───────── */}
-        <section className="mb-24">
+        {/* ───────── CURRENTLY ─────────
+            New small section. Hand-curated state — what's open in the
+            workshop right now. Calm rows, mono eyebrow, no metrics,
+            no dashboard widgets. The footer's BuildBeacon handles the
+            live shipping pulse globally; this is the adjacent context. */}
+        <section className="mb-28">
           <Reveal duration={0.7}>
             <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
-              Shipping Consistency
+              Currently
+            </span>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-10">
+              On the bench, this week.
+            </h2>
+          </Reveal>
+          <dl className="divide-y divide-white/[0.05] border-y border-white/[0.05]">
+            {CURRENTLY.map((row, i) => (
+              <Reveal
+                key={row.label}
+                duration={0.5}
+                delay={i * 0.06}
+                y={8}
+                margin="-40px"
+              >
+                <div className="grid grid-cols-[110px_1fr] md:grid-cols-[170px_1fr] gap-5 md:gap-10 items-baseline py-5">
+                  <dt className="font-mono uppercase tracking-[0.20em] text-[10px] text-[#00d2ff]/70">
+                    {row.label}
+                  </dt>
+                  <dd className="text-secondary text-[15px] md:text-base leading-relaxed">
+                    {row.body}
+                  </dd>
+                </div>
+              </Reveal>
+            ))}
+          </dl>
+        </section>
+
+        {/* ───────── RECEIPTS ─────────
+            GitHub heatmap retained; copy reframed. The new paragraph
+            speaks to long-arc consistency rather than to suffering.
+            "Some days are full ship-days, some are a single PR. Not
+            every square is a win. Most are just showing up." */}
+        <section className="mb-28">
+          <Reveal duration={0.7}>
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              Receipts
             </span>
             <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-4">
-              The receipts.
+              Consistency over intensity.
             </h2>
-            <p className="text-gray-500 text-sm md:text-base leading-relaxed max-w-2xl mb-10">
-              Monk Mode is a discipline, not a slogan. Every cyan square below
-              is a day production code was committed — between 01:30 bakery
-              shifts and high-school exams.
+            <p className="text-tertiary text-sm md:text-base leading-[1.85] max-w-2xl mb-10">
+              Two years of mostly-daily commits. Some days are full
+              ship-days; some are a single PR. Not every cyan square is
+              a win — most are just showing up to the same desk and
+              writing the next file.
             </p>
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 md:p-8 overflow-x-auto">
-              <GithubActivity />
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 md:p-8 overflow-x-auto relative">
+              {/* Subtle ambient inner glow so the panel reads as a
+                  cinematic frame rather than as an inset card. No
+                  animation — static atmosphere. */}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 rounded-2xl"
+                style={{
+                  boxShadow: "inset 0 0 80px rgba(0,210,255,0.04)",
+                }}
+              />
+              <div className="relative">
+                <GithubActivity />
+              </div>
             </div>
           </Reveal>
         </section>
 
-        {/* ───────── FEATURED WORK ───────── */}
-        <section className="mb-24">
+        {/* ───────── IN FLIGHT ─────────
+            Same three projects; renamed from "Active projects" to
+            something lighter that doesn't double up on the
+            "Currently" eyebrow above. */}
+        <section className="mb-28">
           <Reveal duration={0.7}>
             <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
-              Currently Building
+              In flight
             </span>
             <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-12">
-              Active projects.
+              Live builds.
             </h2>
             <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
               {FEATURED.map((p, i) => (
@@ -323,20 +559,20 @@ export default function AboutPage() {
                     className="group flex items-center justify-between gap-6 py-6 hover:bg-white/[0.02] transition-colors duration-300 -mx-4 px-4 rounded-lg"
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-3 mb-1">
+                      <div className="flex items-baseline gap-3 mb-1 flex-wrap">
                         <h3 className="text-primary font-medium text-lg">
                           {p.title}
                         </h3>
-                        <span className="text-white/40 text-xs font-mono">
+                        <span className="text-tertiary text-xs font-mono">
                           {p.role}
                         </span>
                       </div>
-                      <p className="text-gray-400 text-sm leading-relaxed">
+                      <p className="text-tertiary text-sm leading-relaxed">
                         {p.blurb}
                       </p>
                     </div>
                     <ArrowRight
-                      className="w-4 h-4 text-primary/40 group-hover:text-primary transition-all duration-300 group-hover:translate-x-1 flex-shrink-0"
+                      className="w-4 h-4 text-quiet group-hover:text-primary transition-all duration-300 group-hover:translate-x-1 flex-shrink-0"
                       style={{ transform: "rotate(-45deg)" }}
                     />
                   </Link>
@@ -346,25 +582,42 @@ export default function AboutPage() {
           </Reveal>
         </section>
 
-        {/* ───────── VISION ───────── */}
+        {/* ───────── CLOSING TRANSMISSION ─────────
+            Replaces the "Where this is going" section. Slightly more
+            atmospheric framing, a quiet system pulse anchored to a
+            real place and time zone, and the same two CTAs. The
+            paragraph is half as long as the original and shifts from
+            roadmap-prediction to a stance.  */}
         <section>
           <Reveal duration={0.8}>
             <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
-              Where This Is Going
+              Closing transmission
             </span>
             <h2 className="text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5 mb-8">
               <span className="block">Building tools</span>
-              <span className="block text-white/60">engineers actually use.</span>
+              <span className="block text-white/55">engineers actually use.</span>
             </h2>
-            <p className="text-gray-400 max-w-2xl text-base md:text-lg leading-relaxed">
-              The next decade of cloud infrastructure won&apos;t be defined by
-              bigger models or fancier dashboards. It will be defined by smaller,
-              sharper systems that engineering teams can reason about — and by
-              tools that treat operator time as the scarcest resource in the
-              stack.
+            <p className="text-secondary max-w-2xl text-base md:text-lg leading-relaxed">
+              Smaller systems, sharper edges, fewer dashboards.
+              Infrastructure that engineering teams can hold in one
+              head. Operator time is the scarcest resource in the
+              stack; the work here is built around protecting it.
             </p>
-            <p className="text-gray-400 max-w-2xl mt-4 text-base md:text-lg leading-relaxed">
-              That&apos;s what I&apos;m building toward.
+
+            {/* Quiet system pulse — static, no animation, just a
+                single mono line that grounds the page in a real
+                place. The dot is a tiny cyan static disc; the live
+                shipping pulse already lives in the global footer. */}
+            <p className="mt-10 inline-flex items-center gap-2.5 rounded-full border border-white/[0.08] bg-white/[0.02] px-3.5 py-1.5 font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary">
+              <span
+                aria-hidden="true"
+                className="w-1.5 h-1.5 rounded-full bg-[#00d2ff]/80"
+              />
+              <span>Build window · open</span>
+              <span className="text-white/15">·</span>
+              <span>Adana</span>
+              <span className="text-white/15">·</span>
+              <span>GMT+3</span>
             </p>
 
             <div className="mt-12 flex flex-wrap gap-4">

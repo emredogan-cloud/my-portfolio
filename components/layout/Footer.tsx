@@ -56,7 +56,7 @@ export default function Footer() {
             invisible until CWH Pro has its first paying customer. */}
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4 flex-wrap">
           <p className="text-xs text-gray-500">
-            ED. — Built between 01:30 bakery shifts and high-school exams. © 2026
+            ED. — Long-arc systems, hand-built infrastructure. Adana, GMT+3. © 2026
           </p>
           <BuildBeacon />
           <LiveCustomerCounter />
