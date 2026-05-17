@@ -31,6 +31,9 @@ const SLUG_TO_KEY: Record<string, MetricKey> = {
   mrr: METRIC_KEYS.MRR_CURRENT,
   "telemetry-visits": METRIC_KEYS.TELEMETRY_VISITS,
   "changelog-visits": METRIC_KEYS.CHANGELOG_VISITS,
+  "lab-iam-visits": METRIC_KEYS.LAB_IAM_VISITS_DAILY,
+  "lab-iam-completions": METRIC_KEYS.LAB_IAM_COMPLETIONS_DAILY,
+  "lab-iam-cost": METRIC_KEYS.LAB_IAM_COST_USD_DAILY,
 };
 
 const CACHE_HEADERS = {

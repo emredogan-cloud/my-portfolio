@@ -136,6 +136,25 @@ const TILES: readonly TileSpec[] = [
     placeholder: "no visits yet",
     kvKey: METRIC_KEYS.CHANGELOG_VISITS,
   },
+  {
+    slug: "lab-iam-completions",
+    label: "IAM translator runs",
+    description:
+      "Streams completed by /lab/iam-translator since launch. Drives the lab adoption signal feeding into the Phase 2 sunset threshold.",
+    format: (n) => Math.round(n).toLocaleString("en-US"),
+    placeholder: "no completions yet",
+    kvKey: METRIC_KEYS.LAB_IAM_COMPLETIONS_DAILY,
+  },
+  {
+    slug: "lab-iam-cost",
+    label: "IAM translator cost",
+    description:
+      "Estimated Bedrock spend on the IAM translator over the rolling 36-hour window. Daily cap $5; the route refuses new calls past the ceiling.",
+    unit: "USD",
+    format: (n) => `$${n.toFixed(2)}`,
+    placeholder: "no spend yet",
+    kvKey: METRIC_KEYS.LAB_IAM_COST_USD_DAILY,
+  },
 ] as const;
 
 interface TileData {
