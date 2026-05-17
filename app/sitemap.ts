@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { projectsData } from "@/data/projects";
 import { notesData } from "@/data/notes";
+import { codexBooks } from "@/data/codex";
 import { getSiteUrl } from "@/lib/site-url";
 
 const STATIC_ROUTES = [
@@ -9,6 +10,7 @@ const STATIC_ROUTES = [
   "/projects",
   "/stack",
   "/notes",
+  "/codex",
   "/contact",
   "/architecture",
   "/architecture/cloud-waste-hunter",
@@ -42,5 +44,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [...staticEntries, ...projectEntries, ...noteEntries];
+  const codexEntries: MetadataRoute.Sitemap = codexBooks.map((b) => ({
+    url: `${base}/codex/${b.slug}`,
+    lastModified: now,
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
+
+  return [...staticEntries, ...projectEntries, ...noteEntries, ...codexEntries];
 }
