@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Reveal } from "@/components/ui/Reveal";
+import VisitPing from "@/components/telemetry/VisitPing";
 import {
   readMetric,
   METRIC_KEYS,
@@ -117,6 +118,24 @@ const TILES: readonly TileSpec[] = [
     placeholder: "no paid tier yet",
     kvKey: METRIC_KEYS.MRR_CURRENT,
   },
+  {
+    slug: "telemetry-visits",
+    label: "/telemetry visits",
+    description:
+      "Cumulative session-deduped visits to this page. Self-referential — closes the V4 § 5.1.2 observability contract.",
+    format: (n) => Math.round(n).toLocaleString("en-US"),
+    placeholder: "no visits yet",
+    kvKey: METRIC_KEYS.TELEMETRY_VISITS,
+  },
+  {
+    slug: "changelog-visits",
+    label: "/changelog visits",
+    description:
+      "Cumulative session-deduped visits to the public engineering changelog. Per V4 § 5.1.4.",
+    format: (n) => Math.round(n).toLocaleString("en-US"),
+    placeholder: "no visits yet",
+    kvKey: METRIC_KEYS.CHANGELOG_VISITS,
+  },
 ] as const;
 
 interface TileData {
@@ -145,8 +164,9 @@ function formatUpdatedAt(iso: string, now: number): string {
 }
 
 export default async function TelemetryPage() {
-  /* Parallel-fetch all five metrics. Five small KV reads on edge
-   * complete in ~50ms total — well under the LCP budget. */
+  /* Parallel-fetch every tile's KV value. Small reads, fan-out at
+   * the edge — even seven concurrent fetches complete well under
+   * the LCP budget. */
   const snapshots = await Promise.all(
     TILES.map((spec) =>
       readMetric(spec.kvKey as Parameters<typeof readMetric>[0]),
@@ -169,6 +189,12 @@ export default async function TelemetryPage() {
 
   return (
     <main id="main" className="relative min-h-screen bg-black">
+      {/* Visit ping — render-once client island, posts a single
+          /api/telemetry/visit POST on mount per tab session. Self-
+          referential per V4 § 5.1.2: the dashboard counts its own
+          visits as one of the surfaced metrics. */}
+      <VisitPing surface="telemetry" />
+
       {/* Ambient cyan atmosphere — same vocabulary as /about and
           /codex so the page reads as one site, not a tooling chunk. */}
       <div
