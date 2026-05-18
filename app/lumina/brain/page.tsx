@@ -575,6 +575,51 @@ export default async function LuminaBrainPage() {
           </p>
         </Reveal>
 
+        {/* SUB-AGENTS (Sub-PR 4.5) */}
+        <Reveal duration={0.7} className="mb-14">
+          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+            09 · Sub-agents
+          </h2>
+          <p className="text-secondary text-sm leading-relaxed mb-5 max-w-2xl">
+            One sub-agent runs alongside the default Lumina chat,
+            routed deterministically by a heuristic classifier (no
+            second LLM call). Ambiguous or unrelated turns always
+            land on the default — the constitutional MUST &ldquo;fail
+            back to single-agent mode&rdquo; is satisfied at the
+            router boundary.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-2 md:gap-6 py-4 border-t border-b border-white/[0.06]">
+            <div className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/80">
+              architecture-critic
+            </div>
+            <div className="text-secondary text-sm leading-relaxed">
+              Routed when the visitor&apos;s most recent message
+              contains a critique verb (review, evaluate, audit,
+              etc.) AND an architecture noun (system design,
+              tradeoff, pipeline, etc.) — or explicitly opens with
+              <code className="font-mono text-[12px] text-primary">
+                {" "}
+                @architecture-critic
+              </code>
+              .
+              {" "}
+              <Link
+                href="/lumina/brain/architecture-critic"
+                className="text-[#00d2ff]/90 hover:text-[#00d2ff] transition-colors"
+              >
+                Read the full agent transparency →
+              </Link>
+            </div>
+          </div>
+          <p className="text-tertiary text-[13px] leading-relaxed mt-5 max-w-2xl">
+            Visible orchestration trace: when the sub-agent fires
+            you&apos;ll see an <code className="font-mono text-[12px] text-primary">engaging architecture-critic</code>{" "}
+            pill in the chat-status strip before the response
+            streams. That pill is the trace surface the V4 § 4.4
+            directive mandates.
+          </p>
+        </Reveal>
+
         {/* LIVE TOOL USAGE (Sub-PR 4.3) */}
         <Reveal duration={0.7} className="mb-14">
           <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">

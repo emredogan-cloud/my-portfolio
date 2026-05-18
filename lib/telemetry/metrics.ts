@@ -316,6 +316,12 @@ export const LUMINA_TOOL_INVOCATIONS_HASH_KEY =
   "v4:adoption:lumina-tools:invocations";
 export const LUMINA_TOOL_ERRORS_HASH_KEY =
   "v4:adoption:lumina-tools:errors";
+/** Sub-PR 4.5 — router decision counter. Hash field per agent id
+ *  (e.g. "lumina", "architecture-critic"). Visible on the brain
+ *  page once Sub-PR 4.5's transparency loop ships, just like the
+ *  per-tool counts. */
+export const LUMINA_ROUTER_DECISIONS_HASH_KEY =
+  "v4:adoption:lumina-router:decisions";
 
 /** Increment the invocation counter for a single tool. Fire-and-
  *  forget from the tool wrapper — never blocks the chat turn. */
@@ -368,6 +374,36 @@ export async function readToolErrorCounts(): Promise<
   try {
     const stored = await kv.hgetall<Record<string, number | string>>(
       LUMINA_TOOL_ERRORS_HASH_KEY,
+    );
+    if (!stored || typeof stored !== "object") return {};
+    return normaliseHashNumbers(stored);
+  } catch {
+    return {};
+  }
+}
+
+/** Increment the router-decision counter for a given agent id.
+ *  Fired fire-and-forget from the chat route after every routing
+ *  decision — never blocks the chat turn. */
+export async function recordRoutingDecision(agent: string): Promise<void> {
+  if (!hasKv) return;
+  if (!agent || typeof agent !== "string") return;
+  try {
+    await kv.hincrby(LUMINA_ROUTER_DECISIONS_HASH_KEY, agent, 1);
+  } catch {
+    /* swallow */
+  }
+}
+
+/** Read all router-decision counts. Returns an empty object on
+ *  miss / error, same posture as the tool-count readers. */
+export async function readRoutingDecisions(): Promise<
+  Record<string, number>
+> {
+  if (!hasKv) return {};
+  try {
+    const stored = await kv.hgetall<Record<string, number | string>>(
+      LUMINA_ROUTER_DECISIONS_HASH_KEY,
     );
     if (!stored || typeof stored !== "object") return {};
     return normaliseHashNumbers(stored);
