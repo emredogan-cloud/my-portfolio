@@ -238,7 +238,12 @@ const MEMORY_PROPS: readonly { label: string; value: string }[] = [
   { label: "Verbatim context cap", value: "last 8 turns sent to the model" },
   { label: "Older turns", value: "Haiku-generated 2-3 sentence recap, cached in a sibling KV key" },
   { label: "Storage cap", value: "100 messages per session (oldest dropped)" },
-  { label: "Redaction", value: "emails, Turkish/international phones, AWS access keys — applied on write" },
+  {
+    label: "Redaction",
+    value:
+      "emails, Turkish/international phones, AWS access keys, IPv4 addresses, Turkish national IDs (TC Kimlik, checksum-validated), and common API-key prefixes (sk-, ghp_, xoxb-, AIza…) — applied on write",
+  },
+  { label: "Opt-out", value: "Database icon in the chat header — when off, no KV reads or writes for the duration; preference persists across visits" },
   { label: "Forget control", value: "eraser icon in the chat header — deletes both KV buckets server-side" },
 ];
 

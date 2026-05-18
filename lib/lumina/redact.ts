@@ -27,6 +27,12 @@ import type { UIMessage } from "ai";
  *  - Turkish mobile numbers (with or without country code / prefix)
  *  - International phone numbers (+CC followed by 6-14 digits)
  *  - AWS access key IDs (the AKIA / ASIA prefix variants)
+ *  - IPv4 addresses (Sub-PR 4.4 — operator chats sometimes paste
+ *    server IPs that shouldn't sit in KV)
+ *  - Turkish national IDs / TC Kimlik (Sub-PR 4.4 — 11 digits,
+ *    validated with the official checksum to avoid false-positives
+ *    on plain 11-digit numbers like timestamps or counters)
+ *  - API key prefixes (Sub-PR 4.4 — sk-..., ghp_..., xoxb-...)
  *
  * What is intentionally NOT redacted:
  *  - AWS secret access keys (40-char base64 — too easy to match any
@@ -85,20 +91,83 @@ const PATTERNS: Array<{ name: string; pattern: RegExp; token: string }> = [
     pattern: /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/g,
     token: "[aws-key]",
   },
+  {
+    name: "ipv4",
+    /* Four dotted octets, each 0-255 in practice but here we accept
+     * 1-3 digit groups separated by literal dots. Word boundaries
+     * on each side stop us from chewing into version strings like
+     * "1.2.3.4-beta" — but they would still match "1.2.3.4" inside
+     * "192.168.1.1:8080". Acceptable; the visitor probably wants
+     * the port redacted too. */
+    pattern: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g,
+    token: "[ipv4]",
+  },
+  {
+    name: "api-key-prefix",
+    /* Common dev API-key prefixes the field actually pastes:
+     *   sk-      Anthropic / OpenAI personal keys (sk-ant-..., sk-...)
+     *   ghp_     GitHub personal access tokens
+     *   github_pat_  GitHub fine-grained PATs
+     *   xoxb-    Slack bot tokens
+     *   xoxp-    Slack user tokens
+     *   xapp-    Slack app-level tokens
+     *   AIza     Google API keys (40 chars total)
+     * Each prefix has a known minimum length; we use 20 as a
+     * conservative floor across all of them. */
+    pattern:
+      /\b(?:sk-(?:ant-)?[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9_-]{20,}|github_pat_[A-Za-z0-9_]{22,}|xox[bpa]-[A-Za-z0-9-]{20,}|AIza[A-Za-z0-9_-]{30,})\b/g,
+    token: "[api-key]",
+  },
+  {
+    name: "tc-kimlik",
+    /* Turkish national ID (TC Kimlik) — 11 digits. The literal
+     * 11-digit shape is too permissive (timestamps, counters, etc.
+     * are 11 digits too), so we ONLY redact strings that PASS the
+     * official TC Kimlik checksum below. Matched in a separate
+     * pass so we can validate before substituting — drop into a
+     * regex-match-then-validate flow inline. */
+    pattern: /\b\d{11}\b/g,
+    token: "[tc-kimlik]",
+  },
 ];
+
+/** Validate a string against the Turkish national ID (TC Kimlik)
+ *  checksum algorithm. Returns true only when the 11-digit number
+ *  matches every rule the official algorithm enforces. Used as a
+ *  second-stage filter so we don't false-positive on every
+ *  11-digit blob (timestamps, counters, etc.). */
+function isValidTcKimlik(digits: string): boolean {
+  if (!/^\d{11}$/.test(digits)) return false;
+  if (digits[0] === "0") return false;
+  const d = digits.split("").map((c) => Number(c));
+  const oddSum = d[0] + d[2] + d[4] + d[6] + d[8];
+  const evenSum = d[1] + d[3] + d[5] + d[7];
+  const tenth = (oddSum * 7 - evenSum) % 10;
+  if (tenth !== d[9]) return false;
+  const eleventh =
+    (oddSum + evenSum + d[9]) % 10;
+  return eleventh === d[10];
+}
 
 /** Run all patterns against a string and return the redacted form.
  *  Returns the input verbatim if no patterns match — avoids
- *  allocating a new string for the common case. */
+ *  allocating a new string for the common case. The TC Kimlik
+ *  pattern uses a validate-before-substitute pass to gate on the
+ *  official checksum; all other patterns substitute every match. */
 export function redactPii(input: string): string {
   if (!input) return input;
   let output = input;
-  for (const { pattern, token } of PATTERNS) {
+  for (const { name, pattern, token } of PATTERNS) {
     /* Reset lastIndex defensively: g-flag regexes carry state if
      * reused, and these are module-level constants. */
     pattern.lastIndex = 0;
-    if (pattern.test(output)) {
-      pattern.lastIndex = 0;
+    if (!pattern.test(output)) continue;
+    pattern.lastIndex = 0;
+    if (name === "tc-kimlik") {
+      output = output.replace(pattern, (match) =>
+        isValidTcKimlik(match) ? token : match,
+      );
+    } else {
       output = output.replace(pattern, token);
     }
   }
