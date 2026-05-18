@@ -142,6 +142,11 @@ export const METRIC_KEYS = {
    *  corrections log. V4 Phase 4 Sub-PR 4.1 sibling of
    *  LUMINA_BRAIN_VISITS. */
   LUMINA_FAILURES_VISITS: "v4:telemetry:lumina-failures:visits",
+  /** Cumulative visit count for /playground (the experimental
+   *  research surface). V4 Phase 5 Sub-PR 5.1. The route ships
+   *  with no enabled experiments — the counter mostly stays at
+   *  zero until 5.2+ wires real surfaces and flips flags. */
+  PLAYGROUND_VISITS: "v4:telemetry:playground:visits",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];

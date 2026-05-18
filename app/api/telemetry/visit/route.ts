@@ -46,6 +46,11 @@ const SURFACE_TO_KEY: Record<string, MetricKey> = {
    * counts on the two new public meta-pages. */
   "lumina-brain": METRIC_KEYS.LUMINA_BRAIN_VISITS,
   "lumina-failures": METRIC_KEYS.LUMINA_FAILURES_VISITS,
+  /* Sub-PR 5.1 — experimental playground foundation. Even an
+   * empty playground deserves a visit counter — the lack of
+   * traffic is itself a signal about whether experiments earn
+   * their slot. */
+  playground: METRIC_KEYS.PLAYGROUND_VISITS,
 };
 
 interface VisitPayload {
