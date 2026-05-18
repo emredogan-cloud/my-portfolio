@@ -1,0 +1,495 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Reveal } from "@/components/ui/Reveal";
+import VisitPing from "@/components/telemetry/VisitPing";
+import { getSiteUrl } from "@/lib/site-url";
+
+/**
+ * V4 Phase 4 — Sub-PR 4.1: Public Lumina transparency surface.
+ *
+ * Mission (V4 § 2.3 "Public Transparency Disiplini"): every piece
+ * of Lumina's operating layer is visible to the visitor — the
+ * system prompt, the tool registry, the memory contract, the
+ * runtime topology, the privacy boundaries. The brain page reads
+ * as a calm operator console showing "this is how the chat
+ * actually works" with deep links into the public source files
+ * for anyone who wants the verbatim text.
+ *
+ * Caching contract:
+ *   - `revalidate = 3600` → hourly ISR. The content is intentionally
+ *     near-static (the only frequently-changing piece is the tool
+ *     count, and even that only shifts at sub-PR cadence). One
+ *     re-render per hour is plenty.
+ *
+ * Performance budget (V4 § 2.7):
+ *   - LCP < 1.5s. Static HTML, no data dependency, one tiny client
+ *     island for the visit ping. Hit easily.
+ *   - Bundle delta: 0 KB new code on the client beyond the
+ *     reused VisitPing component.
+ */
+
+export const revalidate = 3600;
+
+const PAGE_TITLE = "Brain — Lumina's operating layer | Emre Doğan";
+const PAGE_DESCRIPTION =
+  "Public transparency surface for Lumina, the chat embedded across emredogan.com. The model, the tool registry, the memory contract, the runtime topology, the privacy guarantees — every operating detail, with deep links into the public source.";
+
+export const metadata: Metadata = {
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
+  alternates: { canonical: `${getSiteUrl()}/lumina/brain` },
+  openGraph: {
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: `${getSiteUrl()}/lumina/brain`,
+    type: "website",
+  },
+  robots: { index: true, follow: true },
+};
+
+const REPO_BASE =
+  "https://github.com/emredogan-cloud/my-portfolio/blob/main";
+
+/* ── Inline manifest of the current Lumina tool registry ─────────
+ *
+ * Kept as a hand-rolled list rather than imported from
+ * `lib/lumina/tools` so the brain page stays decoupled from the
+ * tool module's runtime graph (AI SDK + zod + KV imports). Source
+ * of truth for the actual implementations is the linked file; this
+ * manifest is editorial — it's the description the visitor reads.
+ * When the tools registry changes, this list updates in the same
+ * sub-PR per V4 § 2.3 transparency discipline. */
+
+interface ToolRow {
+  name: string;
+  group: "Portfolio reads" | "Operator reads" | "Lab invocation";
+  purpose: string;
+}
+
+const TOOLS: readonly ToolRow[] = [
+  {
+    name: "listProjects",
+    group: "Portfolio reads",
+    purpose: "Returns every project on the portfolio with its id, title, status, and short description.",
+  },
+  {
+    name: "getProjectDetails",
+    group: "Portfolio reads",
+    purpose: "Full case-study record for one project — description, tech stack, status, live + GitHub URLs.",
+  },
+  {
+    name: "searchNotes",
+    group: "Portfolio reads",
+    purpose: "Substring match across the long-form notes; returns the top five hits.",
+  },
+  {
+    name: "getRecentCommits",
+    group: "Portfolio reads",
+    purpose: "The single most-recent commit Emre pushed. KV-cached from the GitHub Events feed.",
+  },
+  {
+    name: "getCurrentTelemetry",
+    group: "Operator reads",
+    purpose: "Six-metric snapshot — Lumina p95, auto-tweet successes, lab runs, npm weekly downloads, notes audio plays.",
+  },
+  {
+    name: "getRecentEngineering",
+    group: "Operator reads",
+    purpose: "Last five commits with the WHY paragraph parsed from each commit body.",
+  },
+  {
+    name: "getLabStatus",
+    group: "Operator reads",
+    purpose: "Current /lab experiment registry — each entry's name, purpose, status, and URL.",
+  },
+  {
+    name: "translateIamPolicy",
+    group: "Lab invocation",
+    purpose: "Loopback to /api/lab/iam-translate — runs the IAM Policy Translator with the visitor's IP forwarded.",
+  },
+  {
+    name: "rescuePrompt",
+    group: "Lab invocation",
+    purpose: "Loopback to /api/lab/prompt-rescue — runs the Prompt Rescuer.",
+  },
+  {
+    name: "narrateCommits",
+    group: "Lab invocation",
+    purpose: "Loopback to /api/lab/narrate-commits — runs the Commit Narrator on a public GitHub URL.",
+  },
+] as const;
+
+const TOOL_GROUPS = ["Portfolio reads", "Operator reads", "Lab invocation"] as const;
+
+interface ConfigRow {
+  label: string;
+  value: string;
+  detail?: string;
+}
+
+const MODEL_CONFIG: readonly ConfigRow[] = [
+  {
+    label: "Model",
+    value: "claude-haiku-4-5-20251001",
+    detail: "Pinned snapshot of Anthropic's Haiku 4.5. No alias.",
+  },
+  {
+    label: "Temperature",
+    value: "0.6",
+    detail: "Default for visitor chat — middle of warm and deterministic.",
+  },
+  {
+    label: "Step cap",
+    value: "stepCountIs(5)",
+    detail: "Claude may chain up to four tool calls before being forced to answer.",
+  },
+  {
+    label: "Runtime",
+    value: "edge",
+    detail: "Web Fetch + KV only. Lab routes run nodejs for the AWS SDK; voice STT runs nodejs for Whisper.",
+  },
+  {
+    label: "Streaming",
+    value: "ai-sdk/anthropic streamText",
+    detail: "Response streams as UIMessageStreamResponse; client renders deltas as they arrive.",
+  },
+];
+
+interface SourceLink {
+  label: string;
+  path: string;
+  note: string;
+}
+
+const SOURCE_LINKS: readonly SourceLink[] = [
+  {
+    label: "System prompt",
+    path: "lib/lumina/system-prompt.ts",
+    note: "The full voice + identity + tool-use rules. ~280 lines.",
+  },
+  {
+    label: "Tool registry",
+    path: "lib/lumina/tools.ts",
+    note: "The ten tools, their input schemas, their execute() bodies.",
+  },
+  {
+    label: "Memory layer",
+    path: "lib/lumina/memory.ts",
+    note: "KV save/load, 14-day TTL, MAX_MESSAGES cap, VERBATIM_CONTEXT_MESSAGES = 8.",
+  },
+  {
+    label: "PII redaction",
+    path: "lib/lumina/redact.ts",
+    note: "Email + phone + AWS access key regex sweep applied pre-storage.",
+  },
+  {
+    label: "Session summarization",
+    path: "lib/lumina/summarize.ts",
+    note: "Fire-and-forget Haiku call when older-turn block grows past threshold.",
+  },
+  {
+    label: "Chat route",
+    path: "app/api/chat/route.ts",
+    note: "POST entry point. Loads summary, trims to last 8 turns, calls streamText.",
+  },
+  {
+    label: "Forget-Me endpoint",
+    path: "app/api/chat/forget/route.ts",
+    note: "POST. Deletes both lumina:session:<id> and lumina:summary:<id> KV buckets.",
+  },
+];
+
+const MEMORY_PROPS: readonly { label: string; value: string }[] = [
+  { label: "Persistence", value: "anonymous sessionId minted client-side, kept in localStorage" },
+  { label: "TTL", value: "14 days (refreshes on every save)" },
+  { label: "Verbatim context cap", value: "last 8 turns sent to the model" },
+  { label: "Older turns", value: "Haiku-generated 2-3 sentence recap, cached in a sibling KV key" },
+  { label: "Storage cap", value: "100 messages per session (oldest dropped)" },
+  { label: "Redaction", value: "emails, Turkish/international phones, AWS access keys — applied on write" },
+  { label: "Forget control", value: "eraser icon in the chat header — deletes both KV buckets server-side" },
+];
+
+const TOPOLOGY_ROWS: readonly { surface: string; runtime: string; depends: string }[] = [
+  { surface: "/api/chat (POST)", runtime: "edge", depends: "Anthropic API, KV (optional)" },
+  { surface: "/api/chat/load (GET)", runtime: "edge", depends: "KV (graceful no-op without)" },
+  { surface: "/api/chat/forget (POST)", runtime: "edge", depends: "KV (graceful no-op without)" },
+  { surface: "/api/voice/transcribe (POST)", runtime: "edge", depends: "OpenAI Whisper, KV rate limit" },
+  { surface: "/api/voice/tts (POST)", runtime: "edge", depends: "ElevenLabs" },
+  { surface: "/api/lab/iam-translate (POST)", runtime: "nodejs", depends: "AWS Bedrock (SigV4 needs Node)" },
+  { surface: "/api/lab/prompt-rescue (POST)", runtime: "nodejs", depends: "AWS Bedrock" },
+  { surface: "/api/lab/narrate-commits (POST)", runtime: "nodejs", depends: "AWS Bedrock + GitHub Octokit" },
+];
+
+export default function LuminaBrainPage() {
+  return (
+    <main id="main" className="relative min-h-screen bg-black">
+      {/* Ambient cyan atmosphere — same gradient stack as /telemetry,
+          /changelog, /lab/<slug>, /lab/cloud. Visual continuity
+          across the meta-content surfaces. */}
+      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
+        <div
+          className="absolute top-[-200px] right-[-200px] w-[700px] h-[700px] rounded-full blur-[180px]"
+          style={{ background: "radial-gradient(ellipse, rgba(0,210,255,0.07) 0%, transparent 70%)" }}
+        />
+        <div
+          className="absolute bottom-[-200px] left-[-100px] w-[600px] h-[600px] rounded-full blur-[160px]"
+          style={{ background: "radial-gradient(ellipse, rgba(0,210,255,0.04) 0%, transparent 70%)" }}
+        />
+      </div>
+
+      <VisitPing surface="lumina-brain" />
+
+      <div className="relative z-10 max-w-3xl mx-auto px-6 pt-36 pb-32">
+        {/* HERO */}
+        <Reveal mode="mount" duration={0.7} className="mb-7">
+          <div className="flex items-center gap-3">
+            <span className="font-mono uppercase tracking-[0.20em] text-[10px] text-tertiary">
+              Lumina
+            </span>
+            <span aria-hidden="true" className="font-mono text-[10px] text-faint">/</span>
+            <span className="font-mono uppercase tracking-[0.20em] text-[10px] text-[#00d2ff]/80">
+              Brain
+            </span>
+            <Link
+              href="/lumina/failures"
+              className="ml-auto font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary hover:text-secondary transition-colors"
+            >
+              Failures →
+            </Link>
+          </div>
+        </Reveal>
+
+        <Reveal mode="mount" duration={0.8} className="mb-12">
+          <h1 className="text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary">
+            <span className="block">Brain.</span>
+            <span className="block text-white/55">The system behind the chat.</span>
+          </h1>
+          <p className="text-secondary max-w-2xl mt-7 text-base md:text-lg leading-relaxed">
+            Lumina is the AI embedded across this portfolio. Everything she
+            does — every tool she calls, every byte she stores, every model
+            decision — is visible on this page or one click away in the
+            public source. Operator-grade transparency is the brand contract.
+          </p>
+        </Reveal>
+
+        {/* MODEL CONFIG */}
+        <Reveal duration={0.7} className="mb-14">
+          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+            01 · Model configuration
+          </h2>
+          <dl className="divide-y divide-white/[0.06] border-t border-b border-white/[0.06]">
+            {MODEL_CONFIG.map((row) => (
+              <div
+                key={row.label}
+                className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-2 md:gap-6 py-4"
+              >
+                <dt className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary">
+                  {row.label}
+                </dt>
+                <dd className="text-sm text-primary">
+                  <span className="font-mono text-[13px] text-[#00d2ff]/90">
+                    {row.value}
+                  </span>
+                  {row.detail && (
+                    <span className="block text-secondary text-[13px] mt-1">
+                      {row.detail}
+                    </span>
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Reveal>
+
+        {/* TOOL REGISTRY */}
+        <Reveal duration={0.7} className="mb-14">
+          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+            02 · Tool registry
+          </h2>
+          <p className="text-secondary text-sm leading-relaxed mb-6 max-w-2xl">
+            Ten tools across three groups. Every <code className="font-mono text-[13px] text-primary">execute()</code> body
+            is server-side; nothing runs in the visitor&apos;s browser. The lab-
+            invocation tools loopback to the existing /api/lab routes with
+            the visitor&apos;s IP forwarded so rate limits and cost caps stay
+            attributed to them.
+          </p>
+          <div className="space-y-7">
+            {TOOL_GROUPS.map((group) => (
+              <div key={group}>
+                <h3 className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/70 mb-3">
+                  {group}
+                </h3>
+                <ul className="space-y-3">
+                  {TOOLS.filter((t) => t.group === group).map((t) => (
+                    <li key={t.name} className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-2 md:gap-5">
+                      <span className="font-mono text-[13px] text-primary">{t.name}</span>
+                      <span className="text-sm text-secondary leading-relaxed">{t.purpose}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+
+        {/* MEMORY CONTRACT */}
+        <Reveal duration={0.7} className="mb-14">
+          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+            03 · Memory contract
+          </h2>
+          <dl className="divide-y divide-white/[0.06] border-t border-b border-white/[0.06]">
+            {MEMORY_PROPS.map((row) => (
+              <div
+                key={row.label}
+                className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-2 md:gap-6 py-4"
+              >
+                <dt className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary">
+                  {row.label}
+                </dt>
+                <dd className="text-sm text-secondary leading-relaxed">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </Reveal>
+
+        {/* RUNTIME TOPOLOGY */}
+        <Reveal duration={0.7} className="mb-14">
+          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+            04 · Runtime topology
+          </h2>
+          <p className="text-secondary text-sm leading-relaxed mb-5 max-w-2xl">
+            Edge wherever possible; Node only where the dependency forces it
+            (AWS Bedrock SDK + Whisper transcribe binary upload).
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="py-2 pr-4 font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary font-normal">
+                    Surface
+                  </th>
+                  <th className="py-2 pr-4 font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary font-normal">
+                    Runtime
+                  </th>
+                  <th className="py-2 font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary font-normal">
+                    Depends on
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {TOPOLOGY_ROWS.map((row) => (
+                  <tr key={row.surface}>
+                    <td className="py-2.5 pr-4 font-mono text-[12.5px] text-primary">
+                      {row.surface}
+                    </td>
+                    <td className="py-2.5 pr-4 font-mono text-[12.5px]">
+                      <span
+                        className={
+                          row.runtime === "edge"
+                            ? "text-[#00d2ff]/90"
+                            : "text-amber-300/80"
+                        }
+                      >
+                        {row.runtime}
+                      </span>
+                    </td>
+                    <td className="py-2.5 text-secondary">{row.depends}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Reveal>
+
+        {/* PRIVACY */}
+        <Reveal duration={0.7} className="mb-14">
+          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+            05 · Privacy contract
+          </h2>
+          <ul className="space-y-3 text-secondary text-sm leading-relaxed list-disc list-inside marker:text-tertiary">
+            <li>
+              Anonymous sessionId only — no account, no fingerprint, no
+              cross-device link.
+            </li>
+            <li>
+              PII (emails, phone numbers, AWS access keys) is redacted
+              before storage. The KV bucket never holds raw values.
+            </li>
+            <li>
+              The eraser icon in the chat header deletes both KV buckets
+              server-side and wipes local state. One click, no
+              confirmation dialog, no toast.
+            </li>
+            <li>
+              Lab tool invocations carry your IP via the standard
+              forwarded headers so per-IP rate limits and the $5/day
+              per-experiment cost caps stay attributed to you across
+              surfaces.
+            </li>
+            <li>
+              No conversation is ever shared across visitors. No
+              fingerprinting, no third-party trackers.
+            </li>
+          </ul>
+        </Reveal>
+
+        {/* SOURCE LINKS */}
+        <Reveal duration={0.7} className="mb-14">
+          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+            06 · Source files
+          </h2>
+          <p className="text-secondary text-sm leading-relaxed mb-5 max-w-2xl">
+            The verbatim text for every behavior on this page lives in
+            the public repo. Click any row to read the file on GitHub.
+          </p>
+          <ul className="divide-y divide-white/[0.06] border-t border-b border-white/[0.06]">
+            {SOURCE_LINKS.map((s) => (
+              <li key={s.path}>
+                <Link
+                  href={`${REPO_BASE}/${s.path}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block py-4 grid grid-cols-1 md:grid-cols-[180px_1fr] gap-2 md:gap-6 hover:bg-white/[0.02] -mx-2 px-2 transition-colors rounded"
+                >
+                  <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary group-hover:text-secondary">
+                    {s.label}
+                  </span>
+                  <span>
+                    <span className="font-mono text-[13px] text-[#00d2ff]/90 block">
+                      {s.path}
+                    </span>
+                    <span className="text-secondary text-[13px] mt-1 block">
+                      {s.note}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+
+        {/* FOOTER */}
+        <Reveal duration={0.7}>
+          <div className="border-t border-white/[0.05] pt-6 mt-12">
+            <p className="font-mono uppercase tracking-[0.20em] text-[10px] text-quiet flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span
+                aria-hidden="true"
+                className="inline-block w-1 h-1 rounded-full bg-[#00d2ff]/60 align-middle"
+              />
+              <span>Public transparency</span>
+              <span className="text-faint">·</span>
+              <span>V4 § 2.3</span>
+              <span className="text-faint">·</span>
+              <Link
+                href="/lumina/failures"
+                className="text-tertiary hover:text-[#00d2ff] transition-colors"
+              >
+                Corrections log →
+              </Link>
+            </p>
+          </div>
+        </Reveal>
+      </div>
+    </main>
+  );
+}

@@ -29,9 +29,10 @@ const PRIMARY_LINKS = [
  * Grouped under "Systems". Order is intentional — the most
  * architecturally-flavoured surfaces (Architecture / Stack) lead;
  * the editorial reads (Notes / Codex) sit in the middle; the
- * operating-system surfaces (Lab / Telemetry / Changelog) close.
- * Each link still routes to the exact same href as before; the
- * dropdown is presentation only.
+ * operating-system surfaces (Lab / Telemetry / Changelog) close;
+ * Lumina Brain anchors the row as the transparency surface for
+ * the chat itself. Each link still routes to the exact same href
+ * as before; the dropdown is presentation only.
  */
 const SYSTEMS_LINKS = [
   { label: "Architecture", href: "/architecture" },
@@ -41,6 +42,7 @@ const SYSTEMS_LINKS = [
   { label: "Lab", href: "/lab" },
   { label: "Telemetry", href: "/telemetry" },
   { label: "Changelog", href: "/changelog" },
+  { label: "Brain", href: "/lumina/brain" },
 ] as const;
 
 const CONTACT_LINK = { label: "Contact", href: "/contact" } as const;
