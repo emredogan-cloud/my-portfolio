@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import OpeningSequence from "@/components/cinematic/OpeningSequence";
+import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import LuminaChat from "@/components/chat/LuminaChat";
 import GlobalGrain from "@/components/layout/GlobalGrain";
@@ -138,6 +139,12 @@ export default function RootLayout({
         {/* Global cinematic film-grain overlay — deferred 3.5s for intro perf */}
         <GlobalGrain />
         <OpeningSequence />
+        {/* Global navigation — single source of truth. Lives here at the
+            root so every route inherits the exact same nav surface. The
+            component is `fixed top-0 z-40`, so its DOM position doesn't
+            affect layout; placing it before `{children}` mirrors the
+            visual stack order (navbar above page content). */}
+        <Navbar />
         {children}
         <Footer />
         <LuminaChat />
