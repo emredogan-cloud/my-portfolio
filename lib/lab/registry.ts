@@ -72,6 +72,14 @@ export const LAB_EXPERIMENTS: readonly ExperimentEntry[] = [
     purpose: "The entire portfolio, accessible via your terminal.",
     status: "active",
   },
+  {
+    slug: "cloud",
+    index: "05",
+    name: "Cloud Lab",
+    purpose:
+      "The cross-account STS pattern Cloud Waste Hunter uses, generated for your AWS account — no credentials shared, no server-side calls.",
+    status: "active",
+  },
 ] as const;
 
 export function getExperiment(slug: string): ExperimentEntry | undefined {
