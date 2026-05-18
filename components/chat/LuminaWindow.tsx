@@ -78,6 +78,9 @@ const TOOL_LABEL: Record<string, string> = {
   translateIamPolicy: "translating IAM policy",
   rescuePrompt: "rescuing prompt",
   narrateCommits: "narrating commits",
+  readSourceFile: "reading source",
+  explainCommitRationale: "reading commit",
+  diffArchitectures: "diffing projects",
 };
 
 interface Props {

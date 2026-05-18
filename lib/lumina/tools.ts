@@ -6,6 +6,10 @@ import { notesData, type Note } from "@/data/notes";
 import { readMetric, METRIC_KEYS } from "@/lib/telemetry/metrics";
 import { getRecentCommits } from "@/lib/github-events";
 import { LAB_EXPERIMENTS } from "@/lib/lab/registry";
+import {
+  fetchPublicFile,
+  fetchCommitDetail,
+} from "@/lib/lumina/repo-aware";
 
 /**
  * Lumina tool registry.
@@ -47,6 +51,14 @@ import { LAB_EXPERIMENTS } from "@/lib/lab/registry";
  *                      /api/lab/* nodejs route — same rate-limit,
  *                      same cost cap, same telemetry counters as a
  *                      direct visitor invocation.
+ *   Repo-aware reads — readSourceFile, explainCommitRationale,
+ *                      diffArchitectures. V4 Phase 4 Sub-PR 4.2.
+ *                      Edge-safe direct fetches to GitHub's public
+ *                      REST API for THIS repo (emredogan-cloud/
+ *                      my-portfolio) only — no arbitrary repo input
+ *                      surface. KV-cached per resource type (1h for
+ *                      files, 7d for commits). Project diff is
+ *                      pure in-memory off data/projects.ts.
  *
  * Why not more tools (e.g. live AWS scans, blog drafts, etc.):
  *  - the registry is whitelisted via system-prompt descriptions, and
@@ -338,6 +350,124 @@ const STATIC_TOOLS = {
           status: e.status,
           url: `/lab/${e.slug}`,
         })),
+      };
+    },
+  }),
+
+  /* ── Repo-aware reads (Sub-PR 4.2) ───────────────────────────
+   *
+   * Three tools that let Lumina answer technical questions from
+   * the actual source rather than her trained-time approximation.
+   * Every read is scoped to the public portfolio repo (hardcoded
+   * `emredogan-cloud/my-portfolio`) — no arbitrary-repo input
+   * surface exists, which is the strongest possible enforcement
+   * of the V4 § 5.4 Sub-PR 4.2 "public-only repos" rule.
+   *
+   * Voice contract (see lib/lumina/system-prompt § "Repo-aware
+   * reads"): when Lumina invokes these she reads the result like
+   * a senior engineer who just opened the file — terse,
+   * specific, no editorial gloss. */
+
+  /**
+   * Return the contents of a file in the public portfolio repo.
+   * Path is repo-relative and must match the conservative
+   * `[a-zA-Z0-9_./-]+` alphabet — no traversal, no leading slash.
+   * Files larger than 50 KB are truncated; the response sets
+   * `truncated: true` so the model can mention the partial read.
+   */
+  readSourceFile: tool({
+    description:
+      "Return the verbatim contents of a file in Emre's public portfolio repo (emredogan-cloud/my-portfolio). Use when the visitor asks for the actual code of a specific module — 'show me the system prompt', 'how does the memory layer work', 'what's in lib/lumina/tools.ts'. Path is repo-relative (e.g. `lib/lumina/system-prompt.ts`, `app/api/chat/route.ts`). Do NOT invoke for vague questions about 'how it works in general' — answer those from the system prompt and the project-details tools first. The returned content is the literal file text; you may quote short snippets back, but DO NOT paste entire files — pull out the relevant 5-15 lines. Returns `{ path, sha, size, truncated, content }` or `{ error }`. Common errors: `invalid-path`, `not-found`, `rate-limited`, `fetch-failed`.",
+    inputSchema: z
+      .object({
+        path: z
+          .string()
+          .min(1)
+          .describe(
+            "Repo-relative file path, e.g. 'lib/lumina/system-prompt.ts' or 'app/lumina/brain/page.tsx'. No leading slash, no `..` traversal.",
+          ),
+      })
+      .strict(),
+    execute: async ({ path }) => {
+      return fetchPublicFile({ path });
+    },
+  }),
+
+  /**
+   * Return the full annotated detail for one commit in the public
+   * portfolio repo. Different from `getRecentCommits` (the latest
+   * push only) and `getRecentEngineering` (the last 5) — this
+   * takes a specific SHA and returns subject, body, parsed WHY,
+   * author, timestamp, and diff stats.
+   */
+  explainCommitRationale: tool({
+    description:
+      "Return the full annotated detail for a specific commit in Emre's public portfolio repo. Use when the visitor references a specific SHA — 'what did commit abc1234 do', 'explain the changes in a99af07'. Validates that the SHA is 7-40 hex characters. Returns `{ sha, subject, body, why, author, date, stats: { additions, deletions, changedFiles }, url }` or `{ error }`. The WHY paragraph is parsed from the commit body when the author wrote one (most commits on this repo do). When summarizing for the visitor, lead with the subject + WHY; mention diff stats only if asked.",
+    inputSchema: z
+      .object({
+        sha: z
+          .string()
+          .min(7)
+          .max(40)
+          .describe(
+            "Commit SHA, 7-40 hex characters. Both short and long forms are accepted.",
+          ),
+      })
+      .strict(),
+    execute: async ({ sha }) => {
+      return fetchCommitDetail({ sha });
+    },
+  }),
+
+  /**
+   * Compare two projects' architectural shape. Pure in-memory
+   * read off `data/projects.ts` — no network call, no cache. Used
+   * when the visitor asks "what's different between X and Y" or
+   * wants a structural comparison.
+   */
+  diffArchitectures: tool({
+    description:
+      "Compare the architectural shape of two of Emre's projects. Reads tech stacks, status, and descriptions from the portfolio data and returns a structured diff: tech stacks unique to each, tech stacks in common, and status. Use when the visitor explicitly asks for a comparison — 'how does Cloud Waste Hunter differ from VibingCoderAI', 'compare these two projects'. Project ids must match the slugs at /projects/<id> (e.g. `aws-waste-hunter`, `vibing-coder-ai`, `sixpack-ai`, `pawdoc`, `aevum`). Returns `{ idA, idB, sharedTech, uniqueToA, uniqueToB, statusA, statusB }` or `{ error: 'not-found', missing: string[] }`. Lead with the unique-to-each lists; the shared list is supporting context.",
+    inputSchema: z
+      .object({
+        idA: z
+          .string()
+          .min(1)
+          .describe("First project id (slug). E.g. 'aws-waste-hunter'."),
+        idB: z
+          .string()
+          .min(1)
+          .describe("Second project id (slug). E.g. 'vibing-coder-ai'."),
+      })
+      .strict(),
+    execute: async ({ idA, idB }) => {
+      const a = projectsData.find((p) => p.id === idA);
+      const b = projectsData.find((p) => p.id === idB);
+      if (!a || !b) {
+        return {
+          error: "not-found",
+          missing: [!a ? idA : null, !b ? idB : null].filter(
+            (v): v is string => v !== null,
+          ),
+        };
+      }
+      const stackA = new Set(a.techStack);
+      const stackB = new Set(b.techStack);
+      const sharedTech = [...stackA].filter((t) => stackB.has(t));
+      const uniqueToA = [...stackA].filter((t) => !stackB.has(t));
+      const uniqueToB = [...stackB].filter((t) => !stackA.has(t));
+      return {
+        idA: a.id,
+        idB: b.id,
+        nameA: a.title,
+        nameB: b.title,
+        statusA: a.status,
+        statusB: b.status,
+        shortDescriptionA: a.shortDescription,
+        shortDescriptionB: b.shortDescription,
+        sharedTech,
+        uniqueToA,
+        uniqueToB,
       };
     },
   }),
