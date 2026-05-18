@@ -2,7 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Mic, Square, Loader2, AudioLines, MicOff } from "lucide-react";
+import {
+  Mic,
+  Square,
+  Loader2,
+  AudioLines,
+  MicOff,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 
 /**
  * LuminaVoice — the mic button that sits next to the Send button.
@@ -22,9 +30,17 @@ import { Mic, Square, Loader2, AudioLines, MicOff } from "lucide-react";
  *      ↓
  *   <audio> plays it
  *
- * Voice mode "latches" the moment the visitor speaks — the very next
- * assistant turn is spoken aloud. Subsequent typed messages reset the
- * latch, so visitors can interleave voice + text without surprise TTS.
+ * Two latch modes coexist (Sub-PR 3.4):
+ *   - One-shot latch (default): the moment the visitor speaks, the
+ *     very next assistant turn is spoken aloud. Subsequent typed
+ *     messages reset the latch, so visitors can interleave voice +
+ *     text without surprise TTS.
+ *   - Persistent voice mode: a visitor can toggle the Volume2 button
+ *     to lock TTS on. Every subsequent assistant turn is spoken
+ *     aloud regardless of input modality, until the visitor
+ *     toggles it off. State lives in component memory only — not
+ *     localStorage — so closing the chat window resets to off,
+ *     keeping the affordance quiet and operator-grade.
  *
  * Reduced motion: the recording pulse and waveform shimmer collapse
  * via useReducedMotion; the static icon and status text remain so
@@ -99,6 +115,12 @@ export default function LuminaVoice({
   const [status, setStatus] = useState<Status>("idle");
   const [errorCode, setErrorCode] = useState<ErrorCode | null>(null);
 
+  /** Sticky TTS-on toggle (Sub-PR 3.4). When true, every assistant
+   *  turn is spoken aloud regardless of input modality. Tapped on,
+   *  tapped off — no localStorage, no cross-session memory; quiet
+   *  by design. */
+  const [persistentVoice, setPersistentVoice] = useState(false);
+
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -106,7 +128,8 @@ export default function LuminaVoice({
 
   /** True between "visitor finishes speaking" and "Lumina's next
    *  assistant message is spoken aloud". One-shot latch — typing a
-   *  text reply between turns clears it. */
+   *  text reply between turns clears it. Bypassed entirely when
+   *  persistentVoice is true. */
   const voiceLatchRef = useRef(false);
 
   /** Dedupe TTS playback: each assistant message id is consumed once. */
@@ -128,7 +151,6 @@ export default function LuminaVoice({
         audioRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* Auto-clear error after 4s so the affordance returns to idle. */
@@ -141,17 +163,22 @@ export default function LuminaVoice({
     return () => clearTimeout(t);
   }, [status]);
 
-  /* TTS trigger — plays the next assistant turn iff voice was the
-     most recent input modality. */
+  /* TTS trigger — plays the next assistant turn when either:
+       (a) voice was the most recent input modality (one-shot latch),
+           OR
+       (b) persistent voice mode is toggled on (sticky).
+     The lastPlayedIdRef guard dedupes so toggling persistent on
+     mid-conversation doesn't replay the previous turn. */
   useEffect(() => {
     if (!ttsTrigger) return;
-    if (!voiceLatchRef.current) return;
+    const shouldPlay = voiceLatchRef.current || persistentVoice;
+    if (!shouldPlay) return;
     if (lastPlayedIdRef.current === ttsTrigger.id) return;
     lastPlayedIdRef.current = ttsTrigger.id;
-    voiceLatchRef.current = false; // consume the latch
+    /* Only the one-shot latch is consumed; persistent stays sticky. */
+    if (!persistentVoice) voiceLatchRef.current = false;
     void playTts(ttsTrigger.text);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ttsTrigger]);
+  }, [ttsTrigger, persistentVoice]);
 
   function stopRecorder() {
     const r = recorderRef.current;
@@ -341,6 +368,24 @@ export default function LuminaVoice({
     void startRecording();
   }
 
+  /* Sticky-TTS toggle handler (Sub-PR 3.4). Disabling mid-playback
+     also stops the current TTS — the visitor's intent is clearly
+     "be quiet now". */
+  function handlePersistentToggle() {
+    if (disabled) return;
+    setPersistentVoice((prev) => {
+      const next = !prev;
+      if (!next && audioRef.current) {
+        try {
+          audioRef.current.pause();
+        } catch {
+          /* ignore */
+        }
+      }
+      return next;
+    });
+  }
+
   /* ── Rendering ───────────────────────────────────────────────── */
 
   const isRecording = status === "recording";
@@ -358,8 +403,36 @@ export default function LuminaVoice({
     error: errorCode ? ERROR_LABEL[errorCode] : "Voice error",
   };
 
+  const persistentLabel = persistentVoice
+    ? "Voice mode on — tap to disable"
+    : "Read responses aloud";
+
   return (
-    <div className="relative">
+    /* Fragment so the parent form's flex `gap-*` spaces the two
+       buttons identically to the existing input ↔ mic ↔ send rhythm.
+       Wrapping in a div would have introduced an extra gap step. */
+    <>
+      <button
+        type="button"
+        onClick={handlePersistentToggle}
+        disabled={disabled}
+        aria-pressed={persistentVoice}
+        aria-label={persistentLabel}
+        title={persistentLabel}
+        className={[
+          "shrink-0 w-10 h-10 inline-flex items-center justify-center rounded-xl transition-colors duration-200",
+          persistentVoice
+            ? "bg-[#00d2ff]/15 text-[#00d2ff] hover:bg-[#00d2ff]/25"
+            : "bg-white/[0.06] text-white/65 hover:bg-white/[0.10] hover:text-white",
+          "disabled:opacity-40 disabled:cursor-not-allowed",
+        ].join(" ")}
+      >
+        {persistentVoice ? (
+          <Volume2 className="w-4 h-4" aria-hidden="true" />
+        ) : (
+          <VolumeX className="w-4 h-4" aria-hidden="true" />
+        )}
+      </button>
       <button
         type="button"
         onClick={handleClick}
@@ -390,7 +463,7 @@ export default function LuminaVoice({
           <Mic className="w-4 h-4" aria-hidden="true" />
         )}
       </button>
-    </div>
+    </>
   );
 }
 
