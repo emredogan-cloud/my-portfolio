@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import VisitPing from "@/components/telemetry/VisitPing";
 import PlaygroundShell from "@/app/playground/_components/PlaygroundShell";
+import BodyMount from "@/app/playground/[slug]/BodyMount";
 import {
   getExperiment,
   isExperimentEnabled,
@@ -9,28 +10,34 @@ import {
 import { getSiteUrl } from "@/lib/site-url";
 
 /**
- * V4 Phase 5 Sub-PR 5.1 — Dynamic experiment route.
+ * V4 Phase 5 Sub-PR 5.3 — Dynamic experiment route, NOW wired.
  *
- * Sub-PR 5.1 ships the foundation: this route exists, the chrome
- * renders, the feature-flag gate is wired — but the registry is
- * empty by construction. Every request to /playground/<slug>
- * currently returns 404.
+ * 5.1 shipped this route with an empty registry and a documented
+ * dispatch pattern. 5.2 shipped the runtime guards
+ * (ExperimentMount, lazy-load helper, capability probes). 5.3
+ * wires the FIRST shell end-to-end and moves the dynamic dispatch
+ * into a client boundary (see ./BodyMount.tsx).
  *
- * Future sub-PRs (5.2+) add real experiments. Each adds an entry
- * to `lib/playground/registry`, optionally a body component
- * loaded via `next/dynamic({ ssr: false })`, and the body slot
- * below switches on `experiment.slug` to render it.
- *
- * Routing posture:
+ * Routing posture (unchanged from 5.1):
  *   - Slug NOT in registry → notFound() (Next.js 404)
  *   - Slug in registry but status !== "active" → notFound()
- *   - Slug active but flag OFF → notFound() (no "coming soon"
- *     decoy that would advertise disabled work)
- *   - Slug active AND flag ON → render the body via the shell
+ *   - Slug active but flag OFF → notFound() (no decoy)
+ *   - Slug active AND flag ON → server-render the shell, mount
+ *     the body via the client BodyMount dispatcher
  *
- * The triple gate (registry + status + flag) prevents accidental
- * exposure during transit between "shell exists" and "experiment
- * ready to ship".
+ * Why dispatch lives in a separate client component:
+ *   Next.js refuses `next/dynamic({ ssr: false })` calls reached
+ *   transitively from Server Components. The triple-gate logic
+ *   stays server-side (this file); the actual body lazy-load
+ *   lives in `./BodyMount.tsx` ("use client").
+ *
+ * Adding a new experiment:
+ *   1. Add an entry to `lib/playground/registry`
+ *   2. Create a `Body.tsx` under
+ *      `app/playground/_experiments/<slug>/Body.tsx`
+ *   3. Wire a `createExperimentBody` call + switch case in
+ *      `./BodyMount.tsx`
+ *   4. Run `npm run eval:playground` to verify alignment
  */
 
 export const dynamicParams = true;
@@ -71,19 +78,6 @@ export default async function PlaygroundExperimentPage({ params }: PageProps) {
   if (experiment.status !== "active") notFound();
   if (!isExperimentEnabled(slug)) notFound();
 
-  /* Body rendering is intentionally absent in 5.1 — the registry
-   * is empty so this line is unreachable for now. Future sub-PRs
-   * will add a switch:
-   *
-   *   switch (experiment.slug) {
-   *     case "...":
-   *       return <ShellWithDynamicBody experiment={experiment} />;
-   *   }
-   *
-   * Each `case` will use `next/dynamic({ ssr: false })` to
-   * lazy-load the body component so its bundle stays out of the
-   * initial JS until the visitor specifically navigates here. */
-
   return (
     <>
       <VisitPing surface="playground" />
@@ -94,14 +88,7 @@ export default async function PlaygroundExperimentPage({ params }: PageProps) {
         framing={experiment.purpose}
         risk={experiment.risk}
       >
-        <p className="text-secondary text-sm leading-relaxed">
-          This experiment&apos;s body lands in a later sub-PR. The
-          shell is reachable because its feature flag is on — see{" "}
-          <code className="font-mono text-[13px] text-primary">
-            lib/playground/registry.ts
-          </code>{" "}
-          for the wiring.
-        </p>
+        <BodyMount experiment={experiment} />
       </PlaygroundShell>
     </>
   );

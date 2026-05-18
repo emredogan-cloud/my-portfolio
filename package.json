@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "eslint",
     "eval:lumina": "node scripts/eval-lumina-tools.mjs",
+    "eval:playground": "node scripts/eval-playground.mjs",
     "lumina-chat:build": "npm run build --workspace=@emredogan/lumina-chat",
     "lumina-chat:clean": "npm run clean --workspace=@emredogan/lumina-chat",
     "emredogan-cli:build": "npm run build --workspace=@emredogan/cli",
