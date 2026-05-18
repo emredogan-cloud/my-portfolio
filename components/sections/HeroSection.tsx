@@ -6,16 +6,6 @@ import Link from "next/link";
 import WordsPullUp from "@/components/ui/WordsPullUp";
 import HeroTopology from "@/components/home/HeroTopology";
 
-const NAV_ITEMS = [
-  { label: "About", href: "/about" },
-  { label: "Projects", href: "/projects" },
-  { label: "Architecture", href: "/architecture" },
-  { label: "Stack", href: "/stack" },
-  { label: "Notes", href: "/notes" },
-  { label: "Codex", href: "/codex" },
-  { label: "Contact", href: "/contact" },
-] as const;
-
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 export default function HeroSection() {
@@ -42,22 +32,12 @@ export default function HeroSection() {
         style={{ boxShadow: "inset 0 0 220px rgba(0,0,0,0.55)" }}
       />
 
-      {/* ── Pill navbar — hangs from the top edge of the section ── */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 z-30">
-        <div className="bg-black rounded-b-2xl md:rounded-b-3xl px-4 py-2 md:px-8">
-          <nav className="flex items-center gap-3 sm:gap-6 md:gap-10 lg:gap-14">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="inline-flex items-center min-h-[44px] px-2 text-[10px] sm:text-xs md:text-sm whitespace-nowrap text-secondary hover:text-primary transition-colors duration-200"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </div>
+      {/* The global `<Navbar />` (mounted in app/layout.tsx) overlays
+          this hero via `fixed top-0 z-40`. The previous inline pill
+          nav has been removed — single source of truth lives in
+          components/layout/Navbar.tsx. The `pt-28 lg:pt-32` below
+          still gives the hero content clear headroom under the h-16
+          fixed navbar (~64px nav + ~48px breathing room). */}
 
       {/* ── Hero grid — split composition ── */}
       <div className="relative z-10 min-h-screen flex items-center pt-28 pb-16 lg:pt-32 lg:pb-20">
