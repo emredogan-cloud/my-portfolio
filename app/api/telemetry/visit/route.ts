@@ -41,6 +41,11 @@ const SURFACE_TO_KEY: Record<string, MetricKey> = {
    * on first node interaction. */
   "notes-audio-play": METRIC_KEYS.NOTES_AUDIO_PLAYS,
   "notes-diagram-interaction": METRIC_KEYS.NOTES_DIAGRAM_INTERACTIONS,
+  /* Sub-PR 4.1 — Public Lumina Transparency Layer (V4 § 2.3).
+   * Same shape as `telemetry` / `changelog` — cumulative visit
+   * counts on the two new public meta-pages. */
+  "lumina-brain": METRIC_KEYS.LUMINA_BRAIN_VISITS,
+  "lumina-failures": METRIC_KEYS.LUMINA_FAILURES_VISITS,
 };
 
 interface VisitPayload {

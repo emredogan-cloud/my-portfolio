@@ -26,8 +26,14 @@ import { useEffect } from "react";
  */
 
 interface VisitPingProps {
-  /** Slug routed to the visit endpoint's surface-allow-list. */
-  surface: "telemetry" | "changelog";
+  /** Slug routed to the visit endpoint's surface-allow-list.
+   *  Keep this union in lockstep with `SURFACE_TO_KEY` over in
+   *  `app/api/telemetry/visit/route.ts`. */
+  surface:
+    | "telemetry"
+    | "changelog"
+    | "lumina-brain"
+    | "lumina-failures";
 }
 
 const STORAGE_PREFIX = "v4:telemetry:ping:";

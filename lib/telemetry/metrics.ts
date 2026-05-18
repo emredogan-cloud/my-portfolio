@@ -131,6 +131,17 @@ export const METRIC_KEYS = {
    *  doesn't run up the counter. Per V4 § 5.2.5. */
   NOTES_DIAGRAM_INTERACTIONS:
     "v4:adoption:notes:diagram_interactions",
+  /** Cumulative visit count for /lumina/brain — Lumina's public
+   *  transparency surface (system architecture, tool registry,
+   *  memory contract, runtime topology). V4 Phase 4 Sub-PR 4.1,
+   *  per § 2.3 (Public Transparency Disiplini). Same pattern as
+   *  TELEMETRY_VISITS / CHANGELOG_VISITS — incremented by the
+   *  VisitPing client island via /api/telemetry/visit. */
+  LUMINA_BRAIN_VISITS: "v4:telemetry:lumina-brain:visits",
+  /** Cumulative visit count for /lumina/failures — Lumina's public
+   *  corrections log. V4 Phase 4 Sub-PR 4.1 sibling of
+   *  LUMINA_BRAIN_VISITS. */
+  LUMINA_FAILURES_VISITS: "v4:telemetry:lumina-failures:visits",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];
