@@ -6,7 +6,7 @@ import {
   type UIMessage,
 } from "ai";
 import { buildLuminaSystemPrompt } from "@/lib/lumina/system-prompt";
-import { LUMINA_TOOLS } from "@/lib/lumina/tools";
+import { createLuminaTools } from "@/lib/lumina/tools";
 import { saveSession, isValidSessionId } from "@/lib/lumina/memory";
 import {
   recordLatencySample,
@@ -20,10 +20,15 @@ import { captureRouteError } from "@/lib/sentry";
  * Phase 2 / Sub-PR 4 — adds tool-use auto-loop + KV-backed thread
  * persistence to the streaming chat surface from Phase 1.
  *
- *   tools           → LUMINA_TOOLS (lib/lumina/tools.ts) wired through
- *                     streamText; the SDK executes each tool whose
- *                     definition carries an execute() body and feeds
- *                     the result back to the model in the next step.
+ *   tools           → createLuminaTools(req) (lib/lumina/tools.ts).
+ *                     Built per-request so the lab-invocation tools
+ *                     (Sub-PR 3.2) can close over the originating
+ *                     Request and forward IP headers to the
+ *                     loopback POST against the nodejs lab routes.
+ *                     Wired through streamText; the SDK executes
+ *                     each tool whose definition carries an
+ *                     execute() body and feeds the result back to
+ *                     the model in the next step.
  *   stopWhen        → stepCountIs(5). Allows Claude to chain up to
  *                     four tool invocations before being forced to
  *                     answer; in practice it almost always converges
@@ -88,7 +93,7 @@ export async function POST(req: Request) {
       system: buildLuminaSystemPrompt(),
       messages: await convertToModelMessages(messages),
       temperature: 0.6,
-      tools: LUMINA_TOOLS,
+      tools: createLuminaTools(req),
       stopWhen: stepCountIs(5),
     });
 

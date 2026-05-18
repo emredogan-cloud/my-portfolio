@@ -10,12 +10,24 @@ import { LAB_EXPERIMENTS } from "@/lib/lab/registry";
 /**
  * Lumina tool registry.
  *
- * Each tool is a pure data accessor — no side effects, no external
+ * Static tools are pure data accessors — no side effects, no external
  * network calls except KV reads (build beacon, telemetry snapshots)
  * + the GitHub Public Events feed for the changelog (KV-cached at
- * 30-min TTL inside `lib/github-events`). All execute() bodies are
- * Edge-compatible (no Node-only deps), matching the chat route's
+ * 30-min TTL inside `lib/github-events`). All static execute() bodies
+ * are Edge-compatible (no Node-only deps), matching the chat route's
  * runtime: edge.
+ *
+ * Lab-invocation tools (Sub-PR 3.2) require per-request context —
+ * the originating Request's IP headers — so they're exposed via
+ * `createLuminaTools(req)` rather than the static export. They
+ * loopback-fetch the existing `/api/lab/*` nodejs routes (which run
+ * Bedrock); the chat route can't import the Bedrock SDK directly
+ * because it would crash the edge runtime (precedent:
+ * `app/api/cwh-demo/route.ts`). The loopback forwards `x-real-ip`
+ * and `x-forwarded-for` so rate-limit and cost-cap budgets stay
+ * attributed to the originating visitor — invoking a lab experiment
+ * via Lumina costs the same rate-limit slot as invoking it directly
+ * from the lab page.
  *
  * Tool groups
  *   Portfolio reads  — listProjects, getProjectDetails, searchNotes,
@@ -27,6 +39,14 @@ import { LAB_EXPERIMENTS } from "@/lib/lab/registry";
  *                      The reads tap the same KV + lib primitives
  *                      that /telemetry, /changelog, and /lab already
  *                      consume — no new infrastructure.
+ *   Lab invocation   — translateIamPolicy, rescuePrompt,
+ *                      narrateCommits. V3 expansion (Sub-PR 3.2)
+ *                      that lets Lumina run the three existing /lab
+ *                      experiments on behalf of the visitor. Each
+ *                      tool is an HTTP-loopback to the corresponding
+ *                      /api/lab/* nodejs route — same rate-limit,
+ *                      same cost cap, same telemetry counters as a
+ *                      direct visitor invocation.
  *
  * Why not more tools (e.g. live AWS scans, blog drafts, etc.):
  *  - the registry is whitelisted via system-prompt descriptions, and
@@ -75,7 +95,7 @@ function summarizeNote(n: Note) {
   };
 }
 
-export const LUMINA_TOOLS = {
+const STATIC_TOOLS = {
   /**
    * Lists every project Emre has documented in this portfolio. Returns
    * compact summaries (id + title + status + shortDescription) so the
@@ -322,3 +342,186 @@ export const LUMINA_TOOLS = {
     },
   }),
 } as const;
+
+/**
+ * Backwards-compat re-export. The legacy `LUMINA_TOOLS` symbol resolves
+ * to the static 7-tool set. Production code (the chat route) imports
+ * `createLuminaTools(req)` which extends this with the lab-invocation
+ * tools that require per-request context.
+ */
+export const LUMINA_TOOLS = STATIC_TOOLS;
+
+/* ── Lab-invocation tools (Sub-PR 3.2) ──────────────────────
+ *
+ * Edge → nodejs HTTP loopback. The chat route can't import the
+ * Bedrock SDK (edge incompatibility), so we POST to the existing
+ * `/api/lab/*` nodejs routes the same way a visitor's browser
+ * does — but with the visitor's IP headers forwarded, so the
+ * rate-limit and cost-cap budgets on the lab side stay attributed
+ * to the originating visitor instead of an internal Vercel hop.
+ *
+ * Response shape: the lab routes stream `text/plain; charset=utf-8`.
+ * `response.text()` buffers the entire body — fine here because
+ * the model can't consume a stream as a tool result anyway. The
+ * tool returns `{ text }` for success or `{ error, ...details }`
+ * mirroring the lab route's own error codes (rate-limited /
+ * daily-cost-cap-reached / sandbox-offline / etc.) so Lumina's
+ * system prompt can give the visitor the right verbal hand-off.
+ */
+
+const MAX_LAB_OUTPUT_CHARS = 7000;
+
+/** Resolve the absolute base URL of the originating request — works
+ *  in dev (`http://localhost:3000`), preview, and production. */
+function getBaseUrl(req: Request): string {
+  return new URL(req.url).origin;
+}
+
+/** Build the headers used for internal lab POSTs. Forwards the
+ *  visitor's IP so per-IP rate limits remain meaningful. */
+function buildLoopbackHeaders(req: Request): HeadersInit {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const realIp = req.headers.get("x-real-ip");
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  if (realIp) headers["x-real-ip"] = realIp;
+  if (forwardedFor) headers["x-forwarded-for"] = forwardedFor;
+  return headers;
+}
+
+/** Cap the model-visible payload so a runaway lab response can't
+ *  blow the chat turn's token budget. The lab routes themselves
+ *  cap output via max_tokens; this is the second-line guard. */
+function capLabOutput(text: string): string {
+  if (text.length <= MAX_LAB_OUTPUT_CHARS) return text;
+  return `${text.slice(0, MAX_LAB_OUTPUT_CHARS)}\n\n[output truncated at ${MAX_LAB_OUTPUT_CHARS} chars]`;
+}
+
+interface LabErrorPayload {
+  error: string;
+  [k: string]: unknown;
+}
+
+/** Single HTTP loopback call against one of the lab routes. Returns
+ *  either the buffered text or a structured error object that the
+ *  caller hands back to the model verbatim. */
+async function invokeLab(
+  req: Request,
+  path: string,
+  body: Record<string, unknown>,
+): Promise<{ text: string } | LabErrorPayload> {
+  let response: Response;
+  try {
+    response = await fetch(`${getBaseUrl(req)}${path}`, {
+      method: "POST",
+      headers: buildLoopbackHeaders(req),
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return { error: "lab-unreachable" };
+  }
+
+  if (!response.ok) {
+    /* Lab routes return JSON errors with `{error, ...}`. Pass them
+     * through so the prompt can route on the code. */
+    try {
+      const payload = (await response.json()) as LabErrorPayload;
+      return payload;
+    } catch {
+      return { error: "lab-error", status: response.status };
+    }
+  }
+
+  const text = await response.text();
+  return { text: capLabOutput(text.trim()) };
+}
+
+function createLabInvocationTools(req: Request) {
+  return {
+    /**
+     * Run the IAM Translator experiment for the visitor. Same path
+     * a direct /lab/iam-translator visit would take, with the
+     * visitor's IP forwarded so rate-limits and cost caps stay
+     * coherent across surfaces.
+     */
+    translateIamPolicy: tool({
+      description:
+        "Run the IAM Policy Translator experiment for the visitor: parse an AWS IAM policy JSON and return a structured plain-English explanation. Use when the visitor has pasted (or clearly intends to paste) a JSON IAM policy and asks for a translation, audit, or risk reading. Do NOT invoke for generic 'what does an IAM policy do' questions — call this only when there's actual policy text to translate. Returns the lab's full structured output verbatim. Hand off to /lab/iam-translator if the policy is large (over 4 KB) or if the visitor wants to iterate on edits — the lab page has the proper editor surface.",
+      inputSchema: z
+        .object({
+          policy: z
+            .string()
+            .min(1)
+            .describe(
+              "The raw IAM policy JSON text — pass exactly what the visitor provided, do not reformat or summarize. The lab route does its own JSON validation.",
+            ),
+        })
+        .strict(),
+      execute: async ({ policy }) => {
+        return invokeLab(req, "/api/lab/iam-translate", { policy });
+      },
+    }),
+
+    /**
+     * Run the Prompt Rescuer experiment. Takes the visitor's prose
+     * prompt and returns a six-section engineering rewrite.
+     */
+    rescuePrompt: tool({
+      description:
+        "Run the Prompt Rescuer experiment for the visitor: take a vague or thin prose prompt and return a six-section engineering rewrite (Diagnosis, Rewrite, Rationale, etc.). Use when the visitor has pasted a prompt they want strengthened, or describes one they intend to send to a model. Do NOT invoke for meta questions about prompt engineering ('how do I write better prompts'); only when there's an actual prompt to rescue. Hand off to /lab/prompt-rescuer if they want to iterate or compare rewrites.",
+      inputSchema: z
+        .object({
+          prompt: z
+            .string()
+            .min(12)
+            .describe(
+              "The visitor's prompt text — pass it verbatim, no rewording. The lab route enforces its own 12-char minimum and 4000-char maximum.",
+            ),
+        })
+        .strict(),
+      execute: async ({ prompt }) => {
+        return invokeLab(req, "/api/lab/prompt-rescue", { prompt });
+      },
+    }),
+
+    /**
+     * Run the Commit Narrator experiment. Highest-cost of the three
+     * lab tools — fetches up to 20 commits from GitHub then runs a
+     * larger Bedrock context. Per the system prompt, Lumina prefers
+     * to hand off to the lab page URL unless the visitor explicitly
+     * asks for an in-conversation run.
+     */
+    narrateCommits: tool({
+      description:
+        "Run the Commit Narrator experiment for the visitor: fetch the last 20 commits from a public GitHub repository and return a per-commit narration with the engineering 'why' inferred from each subject + body. Use ONLY when the visitor has explicitly pasted a github.com/owner/repo URL AND asked Lumina to narrate or summarize it inline. For exploratory mentions ('check this repo', 'what about XYZ'), respond by pointing them to /lab/commit-narrator instead — this tool runs a heavier Bedrock call (up to ~8 s) and consumes a 3/hr rate-limit slot, so should not fire speculatively. Hand off after one invocation per conversation; do not chain.",
+      inputSchema: z
+        .object({
+          url: z
+            .string()
+            .min(1)
+            .describe(
+              "A github.com/owner/repo URL — pass exactly what the visitor provided. The lab route does its own URL parsing and rejects anything that isn't a GitHub repo URL.",
+            ),
+        })
+        .strict(),
+      execute: async ({ url }) => {
+        return invokeLab(req, "/api/lab/narrate-commits", { url });
+      },
+    }),
+  };
+}
+
+/**
+ * Build the full Lumina tool registry for one chat request. Static
+ * data-accessor tools are merged with the per-request lab-invocation
+ * tools that close over the originating Request (for IP forwarding
+ * and base URL resolution). Call this per request from the chat
+ * route handler — do NOT cache the result across requests.
+ */
+export function createLuminaTools(req: Request) {
+  return {
+    ...STATIC_TOOLS,
+    ...createLabInvocationTools(req),
+  };
+}
