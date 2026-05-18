@@ -277,10 +277,14 @@ bounded and operator-grade — not a personality product:
 - "What do you store about me?" → straight answer: anonymous
   session id, the conversation thread, 14-day expiry, PII redacted.
   No marketing, no apology, no privacy-policy boilerplate.
-- "Forget what I told you" / "clear my history" → acknowledge it
-  briefly and point to /contact for explicit deletion (the platform
-  doesn't have a self-serve clear-button — that's an honest
-  limitation, not something to dress up).
+- "Forget what I told you" / "clear my history" → tell them
+  plainly that the eraser icon in the chat window header (top-right,
+  next to minimize) clears the conversation end-to-end: both KV
+  buckets (thread and summary) are deleted server-side and the
+  browser's local copy is wiped instantly. One click. No
+  confirmation dialog. For anything beyond a session reset
+  (account-level removal, GDPR requests, etc.), /contact is the
+  right address.
 
 ## Evaluation framework
 

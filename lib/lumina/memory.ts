@@ -146,6 +146,23 @@ export async function loadSummary(
   }
 }
 
+/** Delete both KV buckets (thread + summary) for the given session.
+ *  Called by /api/chat/forget when the visitor clicks the Forget-Me
+ *  control in the chat header. Always silent on errors — the
+ *  client-side state reset must succeed regardless of KV reachability,
+ *  and KV records expire naturally within 14 days anyway. */
+export async function forgetSession(sessionId: string): Promise<void> {
+  if (!hasKv) return;
+  if (!isValidSessionId(sessionId)) return;
+  try {
+    /* del() accepts varargs; sending both keys in one round-trip
+     * keeps the privacy action atomic from the client's POV. */
+    await kv.del(sessionKey(sessionId), summaryKey(sessionId));
+  } catch {
+    /* swallow — the data falls out naturally on TTL expiry */
+  }
+}
+
 /** Persist a freshly-generated session summary. Caps the body at
  *  2000 chars so a runaway model response can't bloat KV. */
 export async function saveSummary(

@@ -18,7 +18,7 @@ import {
   type UIDataTypes,
   type UITools,
 } from "ai";
-import { X, ArrowUp, Copy, Check, RotateCcw, Loader2 } from "lucide-react";
+import { X, ArrowUp, Copy, Check, Eraser, Loader2 } from "lucide-react";
 import { LuminaAvatar } from "./LuminaAvatar";
 import LuminaVoice from "./LuminaVoice";
 import { confirmHaptic } from "@/lib/haptic";
@@ -203,16 +203,44 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
     }
   };
 
-  const handleNewConversation = () => {
+  /* Forget-Me control — fires the privacy contract end-to-end:
+     1. Send a fire-and-forget POST to /api/chat/forget so the server
+        deletes both KV buckets (`lumina:session:<id>` and
+        `lumina:summary:<id>`). We don't await because the user's
+        instruction was an *instant* reset; the server call settles
+        in background, and a KV blip would just leave the records
+        to expire on TTL anyway.
+     2. Reset every client-side trace immediately: messages, both
+        storages, the in-memory sessionId. The visitor sees a blank
+        slate the instant they click.
+     3. Mint a fresh session id so subsequent turns get a new KV
+        bucket — the prior one is gone server-side, so we'd hit a
+        cold start anyway. */
+  const handleForgetMe = () => {
+    const priorSessionId = sessionId;
     setMessages([]);
     try {
       sessionStorage.removeItem(CONVERSATION_KEY);
     } catch {
       /* ignore */
     }
-    /* Rotate the session id so the server starts a fresh KV bucket;
-       the old thread keeps its 7-day TTL but is no longer reachable
-       from this browser. */
+    try {
+      localStorage.removeItem(SESSION_ID_KEY);
+    } catch {
+      /* ignore */
+    }
+    if (priorSessionId) {
+      void fetch("/api/chat/forget", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: priorSessionId }),
+        keepalive: true,
+      }).catch(() => {
+        /* swallow — local reset is the source of truth from the
+           visitor's perspective; KV record falls out on its 14-day
+           TTL regardless. */
+      });
+    }
     const fresh = mintSessionId();
     if (fresh) {
       setSessionId(fresh);
@@ -221,6 +249,8 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
       } catch {
         /* ignore */
       }
+    } else {
+      setSessionId(null);
     }
     inputRef.current?.focus();
   };
@@ -506,14 +536,22 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
                 AAA touch-target minimum. Previously p-2.5 (~36px),
                 which was tight on mobile and a frequent fat-finger
                 miss into the input below. */}
+            {/* Forget-Me — privacy control. Clears the thread server-
+                side AND client-side. Same hit-target sizing as the
+                minimize button (44 × 44, WCAG 2.5.5 AAA). Cinematic
+                quiet aesthetic: text-white/40 → /85 on hover, no
+                destructive red, no confirmation dialog (the action
+                is fully reversible only in the sense that the next
+                conversation is also private; we don't pretend to
+                "undo" privacy). */}
             <button
               type="button"
-              onClick={handleNewConversation}
+              onClick={handleForgetMe}
               className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-3.5 -m-1.5 rounded"
-              aria-label="New conversation"
-              title="New conversation"
+              aria-label="Forget conversation"
+              title="Forget conversation — clears stored history"
             >
-              <RotateCcw className="w-4 h-4" />
+              <Eraser className="w-4 h-4" />
             </button>
             <button
               type="button"
