@@ -34,6 +34,13 @@ export const runtime = "edge";
 const SURFACE_TO_KEY: Record<string, MetricKey> = {
   telemetry: METRIC_KEYS.TELEMETRY_VISITS,
   changelog: METRIC_KEYS.CHANGELOG_VISITS,
+  /* Sub-PR 2.5 — notes 2.0 adoption signals. The naming
+   * keeps the `surface` semantically close to the metric:
+   * `notes-audio-play` fires from AudioPlayer.onPlay;
+   * `notes-diagram-interaction` fires from InteractiveDiagram
+   * on first node interaction. */
+  "notes-audio-play": METRIC_KEYS.NOTES_AUDIO_PLAYS,
+  "notes-diagram-interaction": METRIC_KEYS.NOTES_DIAGRAM_INTERACTIONS,
 };
 
 interface VisitPayload {

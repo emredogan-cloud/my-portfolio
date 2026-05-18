@@ -221,6 +221,24 @@ const TILES: readonly TileSpec[] = [
     placeholder: "0.1.0 not yet on npm",
     kvKey: METRIC_KEYS.EMREDOGAN_CLI_NPM_WEEKLY,
   },
+  {
+    slug: "notes-audio-plays",
+    label: "Notes audio plays",
+    description:
+      "Session-deduped audio play events on /notes/[slug] pages. Fired once per (visitor session × note) when the visitor presses play on the AudioPlayer.",
+    format: (n) => Math.round(n).toLocaleString("en-US"),
+    placeholder: "no plays yet",
+    kvKey: METRIC_KEYS.NOTES_AUDIO_PLAYS,
+  },
+  {
+    slug: "notes-diagram-interactions",
+    label: "Notes diagram interactions",
+    description:
+      "First-click events on the InteractiveDiagram tab across all notes. Session-deduped per (visitor session × note).",
+    format: (n) => Math.round(n).toLocaleString("en-US"),
+    placeholder: "no interactions yet",
+    kvKey: METRIC_KEYS.NOTES_DIAGRAM_INTERACTIONS,
+  },
 ] as const;
 
 interface TileData {
