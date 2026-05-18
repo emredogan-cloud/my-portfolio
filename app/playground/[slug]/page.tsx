@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import VisitPing from "@/components/telemetry/VisitPing";
+import ExperimentVisitPing from "@/app/playground/_components/ExperimentVisitPing";
 import PlaygroundShell from "@/app/playground/_components/PlaygroundShell";
 import BodyMount from "@/app/playground/[slug]/BodyMount";
 import {
@@ -80,7 +80,10 @@ export default async function PlaygroundExperimentPage({ params }: PageProps) {
 
   return (
     <>
-      <VisitPing surface="playground" />
+      {/* Sub-PR 5.4 — per-experiment visit counter. Fires once
+          per tab session per slug. Replaces the generic
+          `playground` surface ping used pre-5.4. */}
+      <ExperimentVisitPing slug={experiment.slug} />
       <PlaygroundShell
         crumb={experiment.name}
         title={experiment.name}

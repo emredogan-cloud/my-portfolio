@@ -328,6 +328,26 @@ export const LUMINA_TOOL_ERRORS_HASH_KEY =
 export const LUMINA_ROUTER_DECISIONS_HASH_KEY =
   "v4:adoption:lumina-router:decisions";
 
+/* Sub-PR 5.4 — playground experiment funnel counters.
+ *
+ * Three hashes per experiment slug:
+ *   visit         → page reached (any [slug] route, gate passed)
+ *   mount         → body successfully rendered
+ *   capability-miss → requirements failed (visitor saw Fallback)
+ *
+ * The three counts form a clean funnel:
+ *   visit = mount + capability-miss + (errors / failed loads)
+ *
+ * Same hash-per-class pattern as Phase 4.3 (per-tool counters)
+ * — no new METRIC_KEYS slots needed for each experiment slug;
+ * the hash field IS the slug. */
+export const PLAYGROUND_EXPERIMENT_VISITS_HASH_KEY =
+  "v5:playground:experiment-visits";
+export const PLAYGROUND_EXPERIMENT_MOUNTS_HASH_KEY =
+  "v5:playground:experiment-mounts";
+export const PLAYGROUND_CAPABILITY_MISSES_HASH_KEY =
+  "v5:playground:capability-misses";
+
 /** Increment the invocation counter for a single tool. Fire-and-
  *  forget from the tool wrapper — never blocks the chat turn. */
 export async function recordToolInvocation(name: string): Promise<void> {
@@ -414,6 +434,92 @@ export async function readRoutingDecisions(): Promise<
     return normaliseHashNumbers(stored);
   } catch {
     return {};
+  }
+}
+
+/* ── Playground experiment counters (Sub-PR 5.4) ──────────── */
+
+/** Generic playground hash incrementer. Called by the
+ *  /api/playground/event endpoint after validating the inbound
+ *  type + slug. Fire-and-forget; never blocks the request. */
+async function incrementPlaygroundHash(
+  hashKey: string,
+  field: string,
+): Promise<void> {
+  if (!hasKv) return;
+  if (!field || typeof field !== "string") return;
+  try {
+    await kv.hincrby(hashKey, field, 1);
+  } catch {
+    /* swallow — playground telemetry is decorative */
+  }
+}
+
+/** Record one visit to an experiment page. Fires from
+ *  ExperimentVisitPing after the triple gate passes. */
+export async function recordPlaygroundVisit(slug: string): Promise<void> {
+  return incrementPlaygroundHash(
+    PLAYGROUND_EXPERIMENT_VISITS_HASH_KEY,
+    slug,
+  );
+}
+
+/** Record one successful body mount. Fires from ExperimentMount
+ *  when the body has actually rendered (capabilities passed,
+ *  lazy chunk loaded, no error caught). */
+export async function recordPlaygroundMount(slug: string): Promise<void> {
+  return incrementPlaygroundHash(
+    PLAYGROUND_EXPERIMENT_MOUNTS_HASH_KEY,
+    slug,
+  );
+}
+
+/** Record one capability-miss event. Fires from ExperimentMount
+ *  when the visitor's environment failed any declared
+ *  requirement. The exact reasons aren't broken out — just the
+ *  count per slug, sufficient signal for the conditional
+ *  decision-making this layer serves. */
+export async function recordPlaygroundCapabilityMiss(
+  slug: string,
+): Promise<void> {
+  return incrementPlaygroundHash(
+    PLAYGROUND_CAPABILITY_MISSES_HASH_KEY,
+    slug,
+  );
+}
+
+/** Read every playground counter in three KV round-trips. Returns
+ *  zero-objects on miss; safe to call from the playground index
+ *  page render path. */
+export async function readPlaygroundCounters(): Promise<{
+  visits: Record<string, number>;
+  mounts: Record<string, number>;
+  capabilityMisses: Record<string, number>;
+}> {
+  if (!hasKv) {
+    return { visits: {}, mounts: {}, capabilityMisses: {} };
+  }
+  try {
+    const [visits, mounts, capabilityMisses] = await Promise.all([
+      kv.hgetall<Record<string, number | string>>(
+        PLAYGROUND_EXPERIMENT_VISITS_HASH_KEY,
+      ),
+      kv.hgetall<Record<string, number | string>>(
+        PLAYGROUND_EXPERIMENT_MOUNTS_HASH_KEY,
+      ),
+      kv.hgetall<Record<string, number | string>>(
+        PLAYGROUND_CAPABILITY_MISSES_HASH_KEY,
+      ),
+    ]);
+    return {
+      visits: visits ? normaliseHashNumbers(visits) : {},
+      mounts: mounts ? normaliseHashNumbers(mounts) : {},
+      capabilityMisses: capabilityMisses
+        ? normaliseHashNumbers(capabilityMisses)
+        : {},
+    };
+  } catch {
+    return { visits: {}, mounts: {}, capabilityMisses: {} };
   }
 }
 

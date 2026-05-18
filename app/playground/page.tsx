@@ -3,6 +3,7 @@ import VisitPing from "@/components/telemetry/VisitPing";
 import PlaygroundShell from "@/app/playground/_components/PlaygroundShell";
 import { getSiteUrl } from "@/lib/site-url";
 import { getEnabledExperiments } from "@/lib/playground/registry";
+import { readPlaygroundCounters } from "@/lib/telemetry/metrics";
 
 /**
  * V4 Phase 5 Sub-PR 5.1 — Experimental playground index.
@@ -42,9 +43,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function PlaygroundIndexPage() {
+export default async function PlaygroundIndexPage() {
   const enabled = getEnabledExperiments();
   const isEmpty = enabled.length === 0;
+  /* Sub-PR 5.4: per-experiment funnel counters. KV-read at
+   * regen time; ISR cadence (1h) decides freshness. Three
+   * hashes parallel-fetched in a single Promise.all. */
+  const counters = await readPlaygroundCounters();
 
   return (
     <>
@@ -71,35 +76,79 @@ export default function PlaygroundIndexPage() {
           </div>
         ) : (
           <ul className="space-y-4">
-            {enabled.map((e) => (
-              <li
-                key={e.slug}
-                className="border border-white/[0.06] rounded-xl bg-white/[0.02] p-5 hover:bg-white/[0.04] transition-colors"
-              >
-                <a
-                  href={`/playground/${e.slug}`}
-                  className="block group"
+            {enabled.map((e) => {
+              const v = counters.visits[e.slug] ?? 0;
+              const m = counters.mounts[e.slug] ?? 0;
+              const miss = counters.capabilityMisses[e.slug] ?? 0;
+              const hasFunnel = v + m + miss > 0;
+              return (
+                <li
+                  key={e.slug}
+                  className="border border-white/[0.06] rounded-xl bg-white/[0.02] p-5 hover:bg-white/[0.04] transition-colors"
                 >
-                  <div className="flex items-baseline justify-between mb-2 gap-3">
-                    <h2 className="text-lg font-medium text-primary tracking-tight group-hover:text-[#00d2ff] transition-colors">
-                      {e.name}
-                    </h2>
-                    <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-tertiary">
-                      /playground/{e.slug}
-                    </span>
-                  </div>
-                  <p className="text-secondary text-sm leading-relaxed">
-                    {e.purpose}
-                  </p>
-                  <p className="font-mono uppercase tracking-[0.16em] text-[9px] text-amber-300/70 mt-3">
-                    {e.risk}
-                  </p>
-                </a>
-              </li>
-            ))}
+                  <a href={`/playground/${e.slug}`} className="block group">
+                    <div className="flex items-baseline justify-between mb-2 gap-3">
+                      <h2 className="text-lg font-medium text-primary tracking-tight group-hover:text-[#00d2ff] transition-colors">
+                        {e.name}
+                      </h2>
+                      <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-tertiary">
+                        /playground/{e.slug}
+                      </span>
+                    </div>
+                    <p className="text-secondary text-sm leading-relaxed">
+                      {e.purpose}
+                    </p>
+                    <p className="font-mono uppercase tracking-[0.16em] text-[9px] text-amber-300/70 mt-3">
+                      {e.risk}
+                    </p>
+                    {hasFunnel && (
+                      <dl className="mt-4 grid grid-cols-3 gap-2 text-[11px]">
+                        <FunnelCell label="visit" value={v} />
+                        <FunnelCell label="mount" value={m} />
+                        <FunnelCell label="cap-miss" value={miss} amber={miss > 0} />
+                      </dl>
+                    )}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         )}
       </PlaygroundShell>
     </>
+  );
+}
+
+/* Sub-PR 5.4 funnel cell. Three of these per experiment row
+ * when ANY of the three counters is non-zero — the playground
+ * surface shouldn't surface zero-data noise. */
+function FunnelCell({
+  label,
+  value,
+  amber,
+}: {
+  label: string;
+  value: number;
+  amber?: boolean;
+}) {
+  return (
+    <div
+      className={`flex flex-col gap-0.5 rounded px-2 py-1.5 ${
+        amber
+          ? "bg-amber-400/[0.06] border border-amber-400/20"
+          : "bg-white/[0.02] border border-white/[0.04]"
+      }`}
+    >
+      <span className="font-mono uppercase tracking-[0.16em] text-[9px] text-tertiary">
+        {label}
+      </span>
+      <span
+        className={`font-mono text-[12px] ${
+          amber ? "text-amber-300/90" : "text-[#00d2ff]/90"
+        }`}
+      >
+        {value.toLocaleString("en-US")}
+      </span>
+    </div>
   );
 }

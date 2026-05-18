@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentType } from "react";
+import { useEffect, type ComponentType } from "react";
 import {
   useCapabilities,
   checkRequirements,
@@ -9,7 +9,7 @@ import {
 import type { PlaygroundExperiment } from "@/lib/playground/registry";
 
 /**
- * Experiment mount — V4 Phase 5 Sub-PR 5.2.
+ * Experiment mount — V4 Phase 5 Sub-PR 5.2 + 5.4.
  *
  * Combines the capability probe with the experiment's declared
  * requirements and decides one of three outcomes:
@@ -20,17 +20,20 @@ import type { PlaygroundExperiment } from "@/lib/playground/registry";
  *      the requirement check completes.
  *
  *   2. Capabilities ready, one or more requirements unmet →
- *      render the inline fallback explaining what's missing.
- *      No body load, no chunk fetch, no CPU spend.
+ *      render the inline fallback explaining what's missing,
+ *      AND fire a fire-and-forget capability-miss telemetry
+ *      event (Sub-PR 5.4). No body load, no chunk fetch, no
+ *      CPU spend.
  *
  *   3. Capabilities ready, all requirements met → render the
- *      lazy-loaded body. The body's chunk fetches on demand;
- *      see `lib/playground/lazy` for the bundle-isolation
- *      contract.
+ *      lazy-loaded body AND fire a fire-and-forget mount event.
+ *      The body's chunk fetches on demand; see
+ *      `lib/playground/lazy` for the bundle-isolation contract.
  *
- * Every experiment page in /playground/[slug] passes through
- * this component. It's the single mount-time guard the audit
- * gives us.
+ * Telemetry (Sub-PR 5.4): the mount + capability-miss events
+ * fire once per tab session per slug, session-storage-guarded.
+ * The events power the playground index's per-experiment
+ * funnel display. Failures swallow silently.
  */
 
 interface ExperimentMountProps {
@@ -41,11 +44,66 @@ interface ExperimentMountProps {
   BodyComponent: ComponentType;
 }
 
+const MOUNT_STORAGE_PREFIX = "v5:playground:mount:";
+const MISS_STORAGE_PREFIX = "v5:playground:capability-miss:";
+
+function firePlaygroundEvent(
+  type: "mount" | "capability-miss",
+  slug: string,
+) {
+  void fetch("/api/playground/event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type, slug }),
+    keepalive: true,
+  }).catch(() => {
+    /* swallow — telemetry is decorative */
+  });
+}
+
+/** Fire an event ONCE per tab session per (slug, type) pair.
+ *  Mirrors the same session-storage-guarded pattern the
+ *  ExperimentVisitPing uses. */
+function fireOnce(
+  prefix: string,
+  slug: string,
+  type: "mount" | "capability-miss",
+) {
+  const key = `${prefix}${slug}`;
+  try {
+    if (sessionStorage.getItem(key) === "fired") return;
+    sessionStorage.setItem(key, "fired");
+  } catch {
+    /* sessionStorage blocked — still fire (one extra count is
+     * acceptable). */
+  }
+  firePlaygroundEvent(type, slug);
+}
+
 export default function ExperimentMount({
   experiment,
   BodyComponent,
 }: ExperimentMountProps) {
   const caps = useCapabilities();
+  const misses = caps.ready
+    ? checkRequirements(experiment.requirements, caps)
+    : [];
+
+  /* Telemetry effect — runs once the capability probe has
+   * resolved. Branches on misses vs mount and fires the
+   * appropriate event ONCE per tab session per slug. The
+   * deps include caps.ready and misses.length so the effect
+   * re-runs if a resize / motion toggle changes the outcome —
+   * but the session-storage guard ensures we count each
+   * transition at most once per session. */
+  useEffect(() => {
+    if (!caps.ready) return;
+    if (misses.length > 0) {
+      fireOnce(MISS_STORAGE_PREFIX, experiment.slug, "capability-miss");
+    } else {
+      fireOnce(MOUNT_STORAGE_PREFIX, experiment.slug, "mount");
+    }
+  }, [caps.ready, misses.length, experiment.slug]);
 
   /* SSR + first client render: caps.ready === false. Show the
    * neutral placeholder rather than letting the body render with
@@ -55,7 +113,6 @@ export default function ExperimentMount({
     return <Checking />;
   }
 
-  const misses = checkRequirements(experiment.requirements, caps);
   if (misses.length > 0) {
     return <Fallback experiment={experiment} misses={misses} />;
   }
