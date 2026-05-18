@@ -1,4 +1,5 @@
 import { flagEnvName, isExperimentEnabled } from "@/lib/playground/feature-flags";
+import type { ExperimentRequirements } from "@/lib/playground/capabilities";
 
 /**
  * Playground experiment registry — V4 Phase 5 Sub-PR 5.1.
@@ -41,6 +42,11 @@ export interface PlaygroundExperiment {
   risk: string;
   /** Lifecycle state. */
   status: ExperimentStatus;
+  /** Sub-PR 5.2: optional environment requirements. The
+   *  ExperimentMount component checks these on the client and
+   *  renders a fallback instead of the body when any aren't met.
+   *  Omit for experiments that work everywhere. */
+  requirements?: ExperimentRequirements;
 }
 
 /* Empty by construction. Sub-PR 5.2+ adds real entries. */
