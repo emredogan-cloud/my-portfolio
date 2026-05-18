@@ -121,6 +121,16 @@ export const METRIC_KEYS = {
    *  LUMINA_CHAT_NPM_WEEKLY). Null until first poll lands in a
    *  later sub-PR. */
   EMREDOGAN_CLI_NPM_WEEKLY: "v4:adoption:emredogan-cli:downloads_weekly",
+  /** Cumulative count of `<audio>` play events on notes pages.
+   *  Fired client-side from AudioPlayer's onPlay handler via the
+   *  existing /api/telemetry/visit endpoint. Per V4 § 5.2.5. */
+  NOTES_AUDIO_PLAYS: "v4:adoption:notes:audio_plays",
+  /** Cumulative count of first-interaction events on a notes
+   *  InteractiveDiagram (node click / drag). One per session,
+   *  guarded by sessionStorage so a single curious visitor
+   *  doesn't run up the counter. Per V4 § 5.2.5. */
+  NOTES_DIAGRAM_INTERACTIONS:
+    "v4:adoption:notes:diagram_interactions",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];

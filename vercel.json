@@ -8,6 +8,10 @@
     {
       "path": "/api/auto-tweet?mode=weekly_architecture",
       "schedule": "0 5 * * 2"
+    },
+    {
+      "path": "/api/notes/regenerate-audio",
+      "schedule": "0 4 * * 1"
     }
   ]
 }

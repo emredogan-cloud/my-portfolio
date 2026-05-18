@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight, Clock } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Reveal } from "@/components/ui/Reveal";
+import NotesTabs from "@/components/notes/NotesTabs";
 import { notesData, formatMonthYear } from "@/data/notes";
 
 /* ── Static-generation enablement ─────────────────────────── */
@@ -106,25 +107,39 @@ export default async function NoteDetailPage({
           </div>
         </Reveal>
 
-        {/* ── Article body ── */}
+        {/* ── Article body ──
+            Sub-PR 2.5: when a note declares `formats.audio` or
+            `formats.diagram`, NotesTabs wraps the article with a
+            Read / Listen / Diagram tab strip. Notes without
+            `formats` render exactly as the V3 layout — NotesTabs
+            short-circuits to the read content when only the Read
+            tab is available. */}
         <Reveal mode="mount" duration={0.7} delay={0.25} y={16}>
-          <article
-            className="
-              mt-14 pt-10 border-t border-white/[0.08]
-              prose prose-invert max-w-none
-              prose-headings:font-medium prose-headings:tracking-tight prose-headings:text-primary
-              prose-p:text-white/80 prose-p:leading-[1.85]
-              prose-strong:text-primary prose-strong:font-semibold
-              prose-em:text-white/90
-              prose-li:text-white/80 prose-li:leading-[1.7] prose-li:my-1
-              prose-ol:my-6 prose-ul:my-6
-              prose-a:text-[#00d2ff] prose-a:no-underline hover:prose-a:underline
-              prose-code:text-[#00d2ff] prose-code:bg-white/[0.04] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
-              prose-hr:border-white/[0.08]
-            "
-          >
-            <ReactMarkdown>{note.body}</ReactMarkdown>
-          </article>
+          <div className="mt-14 pt-10 border-t border-white/[0.08]">
+            <NotesTabs
+              slug={note.slug}
+              audio={note.formats?.audio}
+              diagram={note.formats?.diagram}
+              readContent={
+                <article
+                  className="
+                    prose prose-invert max-w-none
+                    prose-headings:font-medium prose-headings:tracking-tight prose-headings:text-primary
+                    prose-p:text-white/80 prose-p:leading-[1.85]
+                    prose-strong:text-primary prose-strong:font-semibold
+                    prose-em:text-white/90
+                    prose-li:text-white/80 prose-li:leading-[1.7] prose-li:my-1
+                    prose-ol:my-6 prose-ul:my-6
+                    prose-a:text-[#00d2ff] prose-a:no-underline hover:prose-a:underline
+                    prose-code:text-[#00d2ff] prose-code:bg-white/[0.04] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
+                    prose-hr:border-white/[0.08]
+                  "
+                >
+                  <ReactMarkdown>{note.body}</ReactMarkdown>
+                </article>
+              }
+            />
+          </div>
         </Reveal>
 
         {/* ── Footer / next steps ── */}
