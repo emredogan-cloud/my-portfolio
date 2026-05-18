@@ -1,6 +1,6 @@
 {
   "name": "@emredogan/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Tiny terminal companion for emredogan.com — browse the portfolio, ask Lumina questions from the shell, list projects, open a /lab experiment.",
   "keywords": [
     "cli",

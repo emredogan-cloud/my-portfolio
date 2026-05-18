@@ -40,27 +40,67 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const COMMANDS = [
+interface CommandRow {
+  command: string;
+  purpose: string;
+  group: "Core" | "Read" | "Build";
+}
+
+const COMMANDS: readonly CommandRow[] = [
   {
+    group: "Core",
     command: "emredogan browse",
     purpose: "Open emredogan.com in the default browser.",
   },
   {
+    group: "Core",
     command: 'emredogan ask "<question>"',
     purpose:
       "Stream a Lumina reply to stdout — same model + system prompt as the chat widget on the live site.",
   },
   {
+    group: "Core",
     command: "emredogan project list",
     purpose:
       "Print the live projects: title, status, blurb, live and GitHub URLs.",
   },
   {
+    group: "Core",
     command: "emredogan demo <slug>",
     purpose:
       "Open a /lab experiment in the default browser. Known slugs: iam-translator, prompt-rescuer, commit-narrator, cli.",
   },
-] as const;
+  {
+    group: "Read",
+    command: "emredogan changelog",
+    purpose:
+      "Fetch the last 5 commits from the public engineering log and print each with its WHY paragraph (wrapped at 76 columns).",
+  },
+  {
+    group: "Read",
+    command: "emredogan telemetry",
+    purpose:
+      "Print a curated 6-metric snapshot of the platform as a 3-column ASCII table — Lumina p95, auto-tweet successes, npm downloads, lab adoption.",
+  },
+  {
+    group: "Read",
+    command: "emredogan hire",
+    purpose:
+      "Print Emre's contact card as a bordered Unicode box. Static — no network call, renders identically offline.",
+  },
+  {
+    group: "Build",
+    command: 'emredogan lab <experiment> "<input>"',
+    purpose:
+      "POST to a /lab experiment and stream the reply to stdout. Aliases: iam | prompt | commit. Backend rate-limit + cost-cap apply transparently.",
+  },
+];
+
+const COMMAND_GROUPS: ReadonlyArray<CommandRow["group"]> = [
+  "Core",
+  "Read",
+  "Build",
+];
 
 export default function CliLabPage() {
   const experiment = getExperiment("cli");
@@ -146,27 +186,41 @@ export default function CliLabPage() {
         </p>
       </section>
 
-      {/* COMMANDS */}
+      {/* COMMANDS — grouped into Core / Read / Build so eight rows
+          read as one cohesive set rather than a flat dump. */}
       <section className="mb-4">
         <h2 className="font-mono uppercase tracking-[0.20em] text-[10px] text-[#00d2ff]/80 mb-4">
           Commands
         </h2>
-        <dl className="divide-y divide-white/[0.05] border-y border-white/[0.05]">
-          {COMMANDS.map((c) => (
-            <div
-              key={c.command}
-              className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-2 md:gap-6 py-4"
-            >
-              <dt className="font-mono text-[13px] text-primary/90 leading-snug">
-                <span className="text-[#00d2ff]/70 select-none">$ </span>
-                {c.command}
-              </dt>
-              <dd className="text-tertiary text-[13.5px] leading-[1.75]">
-                {c.purpose}
-              </dd>
+        {COMMAND_GROUPS.map((group) => {
+          const rows = COMMANDS.filter((c) => c.group === group);
+          if (rows.length === 0) return null;
+          return (
+            <div key={group} className="mb-7 last:mb-0">
+              <h3 className="font-mono uppercase tracking-[0.18em] text-[9px] text-quiet mb-2">
+                {group}
+              </h3>
+              <dl className="divide-y divide-white/[0.05] border-y border-white/[0.05]">
+                {rows.map((c) => (
+                  <div
+                    key={c.command}
+                    className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-2 md:gap-6 py-4"
+                  >
+                    <dt className="font-mono text-[13px] text-primary/90 leading-snug">
+                      <span className="text-[#00d2ff]/70 select-none">
+                        ${" "}
+                      </span>
+                      {c.command}
+                    </dt>
+                    <dd className="text-tertiary text-[13.5px] leading-[1.75]">
+                      {c.purpose}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
-          ))}
-        </dl>
+          );
+        })}
         <p className="font-mono uppercase tracking-[0.18em] text-[10px] text-quiet mt-5 flex flex-wrap items-center gap-x-3 gap-y-1">
           <span>--help, -h</span>
           <span className="text-faint">·</span>

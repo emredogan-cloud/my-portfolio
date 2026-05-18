@@ -80,6 +80,25 @@ const SCRIPT: readonly Step[] = [
   { kind: "snap", line: "output", text: "" },
   { kind: "snap", line: "output", text: "FormAI               [shipped]", postDelayMs: 80 },
   { kind: "snap", line: "output", text: "  Flutter fitness coach with real-time pose detection.", postDelayMs: 60 },
+  { kind: "pause", ms: 1200 },
+
+  /* Telemetry showpiece — added in CLI v0.1.1. Demonstrates the
+   * new `emredogan telemetry` command. The table contents below
+   * are deterministic sample data, not a live read — the visitor
+   * gets a sense of the output shape without the cost of an
+   * actual /api/cli/telemetry round-trip on every animation
+   * frame. */
+  { kind: "type", line: "prompt", text: "emredogan telemetry", charDelayMs: 45 },
+  { kind: "pause", ms: 380 },
+  { kind: "snap", line: "output", text: "" },
+  { kind: "snap", line: "output", text: "  METRIC                        VALUE            UPDATED", postDelayMs: 80 },
+  { kind: "snap", line: "output", text: "  ───────────────────────────   ──────────────   ──────────", postDelayMs: 80 },
+  { kind: "snap", line: "output", text: "  lumina p95 latency            423 ms           3m ago", postDelayMs: 80 },
+  { kind: "snap", line: "output", text: "  auto-tweet successes          12               1h ago", postDelayMs: 80 },
+  { kind: "snap", line: "output", text: "  iam translator runs           8                12m ago", postDelayMs: 80 },
+  { kind: "snap", line: "output", text: "  @emredogan/lumina-chat        41 /wk           2h ago", postDelayMs: 80 },
+  { kind: "snap", line: "output", text: "  @emredogan/cli                5 /wk            2h ago", postDelayMs: 80 },
+  { kind: "snap", line: "output", text: "  notes audio plays             22               4h ago", postDelayMs: 80 },
 
   { kind: "pause", ms: 2800 },
   { kind: "clear" },
