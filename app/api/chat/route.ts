@@ -7,7 +7,13 @@ import {
 } from "ai";
 import { buildLuminaSystemPrompt } from "@/lib/lumina/system-prompt";
 import { createLuminaTools } from "@/lib/lumina/tools";
-import { saveSession, isValidSessionId } from "@/lib/lumina/memory";
+import {
+  saveSession,
+  loadSummary,
+  isValidSessionId,
+  VERBATIM_CONTEXT_MESSAGES,
+} from "@/lib/lumina/memory";
+import { maybeRegenerateSummary } from "@/lib/lumina/summarize";
 import {
   recordLatencySample,
   METRIC_KEYS,
@@ -33,9 +39,19 @@ import { captureRouteError } from "@/lib/sentry";
  *                     four tool invocations before being forced to
  *                     answer; in practice it almost always converges
  *                     in 1-2 steps.
- *   memory          → onFinish stores the final UIMessage[] under
- *                     the visitor's sessionId. Reads happen via
- *                     /api/chat/load on cold mount, not here.
+ *   memory          → onFinish redacts + persists the final
+ *                     UIMessage[] under the visitor's sessionId,
+ *                     then fires the summary regenerator if the
+ *                     thread has grown past the verbatim context
+ *                     window. Reads happen via /api/chat/load on
+ *                     cold mount, not here.
+ *   verbatim cap    → Only the last VERBATIM_CONTEXT_MESSAGES turns
+ *                     are sent to the model verbatim. Older turns
+ *                     are represented by the cached session summary
+ *                     loaded via loadSummary() and prepended to the
+ *                     system prompt as an "earlier in this session"
+ *                     note. The visitor's UI still shows the full
+ *                     thread — the cap is model-side only.
  *   time-of-day     → small dynamic suffix appended to the static
  *                     system prompt every request. Cache impact is
  *                     negligible for an 800-token prompt and reading
@@ -84,14 +100,32 @@ export async function POST(req: Request) {
       );
     }
 
+    /* Memory contract (Sub-PR 3.3): load the cached recap of older
+     * turns if a session is in play AND the thread is past the
+     * verbatim window. The recap gets folded into the system prompt;
+     * the model only sees the last VERBATIM_CONTEXT_MESSAGES turns
+     * verbatim. The visitor's UI still renders the full thread —
+     * the cap is model-side, not UI-side. */
+    const summaryRecord =
+      sessionId && messages.length > VERBATIM_CONTEXT_MESSAGES
+        ? await loadSummary(sessionId)
+        : null;
+    const verbatimMessages =
+      messages.length > VERBATIM_CONTEXT_MESSAGES
+        ? messages.slice(-VERBATIM_CONTEXT_MESSAGES)
+        : messages;
+
     const result = streamText({
       /* Claude Haiku 4.5 — current Haiku snapshot. Naming convention for
          the 4.x family is `claude-{family}-{major}-{minor}-{snapshot}`
          (family precedes version, unlike the 3.x format). Pinned to a
          specific snapshot rather than an alias for production stability. */
       model: anthropic("claude-haiku-4-5-20251001"),
-      system: buildLuminaSystemPrompt(),
-      messages: await convertToModelMessages(messages),
+      system: buildLuminaSystemPrompt(
+        new Date(),
+        summaryRecord?.summary ?? null,
+      ),
+      messages: await convertToModelMessages(verbatimMessages),
       temperature: 0.6,
       tools: createLuminaTools(req),
       stopWhen: stepCountIs(5),
@@ -110,6 +144,12 @@ export async function POST(req: Request) {
         );
         if (!sessionId) return;
         await saveSession(sessionId, finalMessages);
+        /* Fire-and-forget: regenerate the cached summary if the
+         * thread has grown past the verbatim window by enough to
+         * warrant it. The function itself decides whether to run —
+         * see lib/lumina/summarize#shouldRegenerate. Errors swallow
+         * silently; next save attempt will retry. */
+        void maybeRegenerateSummary(sessionId, finalMessages);
       },
     });
   } catch (err) {
