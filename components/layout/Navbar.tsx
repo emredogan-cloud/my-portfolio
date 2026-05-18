@@ -1,23 +1,73 @@
 "use client";
 
-import { motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const MotionLink = motion.create(Link);
 
-const NAV_LINKS = [
+/**
+ * Primary navigation surfaces (always visible on desktop).
+ *
+ * Phase 2 polish — nav refinement. The previous flat row carried
+ * seven items: About / Projects / Architecture / Stack / Notes /
+ * Codex / Contact. Two new Phase 2 surfaces (/lab, /telemetry)
+ * landed without a discovery path. Adding them as #8 and #9 on
+ * the flat row would inflate density at the moment of maturity —
+ * the opposite of the intended atmosphere.
+ *
+ * The grouped row now: About · Projects · Systems ▾ · Contact.
+ * Everything that previously sat between Projects and Contact
+ * moves into the Systems dropdown.
+ */
+const PRIMARY_LINKS = [
   { label: "About", href: "/about" },
   { label: "Projects", href: "/projects" },
+] as const;
+
+/**
+ * Grouped under "Systems". Order is intentional — the most
+ * architecturally-flavoured surfaces (Architecture / Stack) lead;
+ * the editorial reads (Notes / Codex) sit in the middle; the
+ * operating-system surfaces (Lab / Telemetry) close. Each link
+ * still routes to the exact same href as before; the dropdown
+ * is presentation only.
+ */
+const SYSTEMS_LINKS = [
   { label: "Architecture", href: "/architecture" },
   { label: "Stack", href: "/stack" },
   { label: "Notes", href: "/notes" },
   { label: "Codex", href: "/codex" },
-  { label: "Contact", href: "/contact" },
+  { label: "Lab", href: "/lab" },
+  { label: "Telemetry", href: "/telemetry" },
 ] as const;
+
+const CONTACT_LINK = { label: "Contact", href: "/contact" } as const;
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 export default function Navbar() {
+  const [systemsOpen, setSystemsOpen] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+
+  /* Global Esc-to-close. Only attaches the listener when the
+   * menu is open so we don't leak a keydown subscriber site-wide
+   * for a feature that's idle 99% of the time. */
+  useEffect(() => {
+    if (!systemsOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setSystemsOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [systemsOpen]);
+
+  /* Motion-safe duration. The global CSS reduced-motion guard
+   * collapses CSS transitions but motion/react drives its
+   * animations via RAF — useReducedMotion is the canonical
+   * path. Mirrors the BuildBeacon precedent in this repo. */
+  const fadeDuration = prefersReducedMotion ? 0 : 0.18;
+
   return (
     <motion.nav
       className="fixed top-0 inset-x-0 z-40 h-16 border-b border-white/5 bg-[#0c0c0c]/70 backdrop-blur-md"
@@ -31,7 +81,7 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          {NAV_LINKS.map((link) => (
+          {PRIMARY_LINKS.map((link) => (
             <MotionLink
               key={link.label}
               href={link.href}
@@ -41,6 +91,77 @@ export default function Navbar() {
               {link.label}
             </MotionLink>
           ))}
+
+          {/* Systems dropdown.
+              The wrapper unifies the hover region so the mouse can
+              travel from trigger to panel without losing hover —
+              the panel sits inside this same div and inherits the
+              mouseenter/leave scope. */}
+          <div
+            className="relative"
+            onMouseEnter={() => setSystemsOpen(true)}
+            onMouseLeave={() => setSystemsOpen(false)}
+          >
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={systemsOpen}
+              aria-controls="systems-menu"
+              onClick={() => setSystemsOpen((v) => !v)}
+              className="flex items-center text-white/60 text-sm transition-colors duration-200 hover:text-white focus:text-white focus-visible:outline-none"
+            >
+              Systems
+              <span
+                aria-hidden="true"
+                className={`ml-1.5 text-[9px] text-white/30 transition-transform duration-200 ${
+                  systemsOpen ? "rotate-180" : ""
+                }`}
+              >
+                ▾
+              </span>
+            </button>
+
+            <AnimatePresence>
+              {systemsOpen && (
+                <motion.div
+                  id="systems-menu"
+                  role="menu"
+                  aria-label="Systems"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: fadeDuration, ease: EASE }}
+                  /* `top-full + mt-3` lands the panel 12px below
+                     the trigger baseline. The wrapper extends
+                     vertically to enclose that 12px gap because
+                     the absolute-positioned panel still counts as
+                     a child for mouseenter/leave purposes — the
+                     mouse can cross the gap without losing hover. */
+                  className="absolute top-full left-1/2 -translate-x-1/2 mt-3 min-w-[176px] rounded-xl border border-white/[0.06] bg-[#0c0c0c]/95 backdrop-blur-md py-2"
+                >
+                  {SYSTEMS_LINKS.map((link) => (
+                    <Link
+                      key={link.label}
+                      href={link.href}
+                      role="menuitem"
+                      onClick={() => setSystemsOpen(false)}
+                      className="block px-4 py-2 text-sm text-white/60 hover:text-white transition-colors duration-200"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <MotionLink
+            href={CONTACT_LINK.href}
+            className="text-white/60 text-sm transition-colors duration-200 hover:text-white"
+            whileHover={{ opacity: 1 }}
+          >
+            {CONTACT_LINK.label}
+          </MotionLink>
         </div>
 
         <a
