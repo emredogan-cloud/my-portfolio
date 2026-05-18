@@ -292,6 +292,104 @@ export async function readMetric(
   }
 }
 
+/* ── Lumina tool telemetry + eval (Sub-PR 4.3) ──────────────────
+ *
+ * The 13-tool Lumina registry needs per-tool observability without
+ * adding 26 entries to METRIC_KEYS. We use a single KV hash per
+ * metric class — Upstash supports HINCRBY for atomic field
+ * increments and HGETALL for a single-round-trip read. Compatible
+ * with @vercel/kv's hash surface.
+ *
+ * Schema (V4 § 2.13 extension):
+ *   v4:adoption:lumina-tools:invocations  → hash { toolName: count }
+ *   v4:adoption:lumina-tools:errors       → hash { toolName: count }
+ *   v4:eval:lumina-tools:summary          → string (JSON eval blob)
+ *
+ * `error` here means EITHER an exception thrown inside execute()
+ * OR an execute() return value of shape `{ error: ... }`. From the
+ * operator's POV both are "this tool didn't deliver useful output";
+ * splitting them isn't useful at the Phase 4 maturity stage.
+ *
+ * All four helpers are graceful no-ops when KV is unavailable. */
+
+export const LUMINA_TOOL_INVOCATIONS_HASH_KEY =
+  "v4:adoption:lumina-tools:invocations";
+export const LUMINA_TOOL_ERRORS_HASH_KEY =
+  "v4:adoption:lumina-tools:errors";
+
+/** Increment the invocation counter for a single tool. Fire-and-
+ *  forget from the tool wrapper — never blocks the chat turn. */
+export async function recordToolInvocation(name: string): Promise<void> {
+  if (!hasKv) return;
+  if (!name || typeof name !== "string") return;
+  try {
+    await kv.hincrby(LUMINA_TOOL_INVOCATIONS_HASH_KEY, name, 1);
+  } catch {
+    /* swallow */
+  }
+}
+
+/** Increment the error counter for a single tool. Counts both
+ *  thrown exceptions and `{error: ...}` return values. */
+export async function recordToolError(name: string): Promise<void> {
+  if (!hasKv) return;
+  if (!name || typeof name !== "string") return;
+  try {
+    await kv.hincrby(LUMINA_TOOL_ERRORS_HASH_KEY, name, 1);
+  } catch {
+    /* swallow */
+  }
+}
+
+/** Read the entire invocation hash. Returns an empty object when KV
+ *  is unavailable, the hash hasn't been touched yet, or the read
+ *  errors. Used by /lumina/brain and the eval script. */
+export async function readToolInvocationCounts(): Promise<
+  Record<string, number>
+> {
+  if (!hasKv) return {};
+  try {
+    const stored = await kv.hgetall<Record<string, number | string>>(
+      LUMINA_TOOL_INVOCATIONS_HASH_KEY,
+    );
+    if (!stored || typeof stored !== "object") return {};
+    return normaliseHashNumbers(stored);
+  } catch {
+    return {};
+  }
+}
+
+/** Read the entire error hash. Same shape + failure posture as
+ *  readToolInvocationCounts. */
+export async function readToolErrorCounts(): Promise<
+  Record<string, number>
+> {
+  if (!hasKv) return {};
+  try {
+    const stored = await kv.hgetall<Record<string, number | string>>(
+      LUMINA_TOOL_ERRORS_HASH_KEY,
+    );
+    if (!stored || typeof stored !== "object") return {};
+    return normaliseHashNumbers(stored);
+  } catch {
+    return {};
+  }
+}
+
+/* @vercel/kv returns hash field values as strings sometimes (Upstash
+ * REST quirk depending on the API version) and as numbers others.
+ * Normalise to number, dropping anything that doesn't parse. */
+function normaliseHashNumbers(
+  raw: Record<string, number | string>,
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    const n = typeof v === "number" ? v : Number(v);
+    if (Number.isFinite(n)) out[k] = n;
+  }
+  return out;
+}
+
 function percentile(values: number[], p: number): number {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
