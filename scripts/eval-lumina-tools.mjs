@@ -133,6 +133,16 @@ function findUnwrappedTools(src, toolNames) {
   return unwrapped;
 }
 
+/* Sub-PR 4.5 introduced synthetic tools that live OUTSIDE the
+ * top-level tools.ts registry — they're added per-request when the
+ * router picks a sub-agent. They have TOOL_LABEL entries (the pill
+ * IS the orchestration trace) but no `<name>: tool({` definition
+ * in tools.ts. Listing them here keeps the orphan-label check
+ * honest without flagging them as regressions. */
+const KNOWN_SYNTHETIC_LABELS = new Set([
+  "selectArchitectureCritic",
+]);
+
 const definedTools = extractToolNames(toolsSrc);
 const labelTools = extractToolLabels(windowSrc);
 const brainTools = extractBrainManifest(brainSrc);
@@ -157,8 +167,12 @@ const results = definedTools.map((name) => {
 });
 
 /* Detect orphan entries — labels or manifest rows that don't
- * correspond to any tool definition. */
-const orphanLabels = labelTools.filter((n) => !definedTools.includes(n));
+ * correspond to any tool definition. Synthetic sub-agent tools
+ * (selectArchitectureCritic, etc.) are intentionally excluded
+ * because they're added per-request, not in the static registry. */
+const orphanLabels = labelTools.filter(
+  (n) => !definedTools.includes(n) && !KNOWN_SYNTHETIC_LABELS.has(n),
+);
 const orphanManifest = brainTools.filter((n) => !definedTools.includes(n));
 
 const passed = results.filter((r) => r.status === "pass").length;

@@ -7,6 +7,13 @@ import {
 } from "ai";
 import { buildLuminaSystemPrompt } from "@/lib/lumina/system-prompt";
 import { createLuminaTools } from "@/lib/lumina/tools";
+import { routeRequest } from "@/lib/lumina/router";
+import {
+  ARCHITECTURE_CRITIC_ID,
+  ARCHITECTURE_CRITIC_INIT_TOOL,
+  ARCHITECTURE_CRITIC_SYSTEM_PROMPT,
+  architectureCriticInitTool,
+} from "@/lib/lumina/agents/architecture-critic";
 import {
   saveSession,
   loadSummary,
@@ -16,6 +23,7 @@ import {
 import { maybeRegenerateSummary } from "@/lib/lumina/summarize";
 import {
   recordLatencySample,
+  recordRoutingDecision,
   METRIC_KEYS,
 } from "@/lib/telemetry/metrics";
 import { captureRouteError } from "@/lib/sentry";
@@ -57,6 +65,19 @@ import { captureRouteError } from "@/lib/sentry";
  *                     negligible for an 800-token prompt and reading
  *                     "Emre is at the bakery right now" is the kind
  *                     of detail that makes Lumina feel embodied.
+ *   routing         → Sub-PR 4.5. routeRequest(messages) classifies
+ *                     each turn into either default Lumina or the
+ *                     architecture-critic sub-agent. The decision is
+ *                     deterministic (heuristic, NOT LLM-based) so
+ *                     adds < 1 ms to the chat-turn latency, and
+ *                     always falls back to single-agent mode for
+ *                     anything ambiguous (the constitutional MUST).
+ *                     When the sub-agent fires, the synthetic
+ *                     selectArchitectureCritic tool is appended to
+ *                     the registry and the prompt instructs the
+ *                     model to call it once at the start — the
+ *                     resulting tool-status pill IS the visible
+ *                     orchestration trace.
  *
  * Runtime stays edge — @ai-sdk/anthropic v3 is built on Web Fetch and
  * the new dependencies (KV, our tool/memory modules) are also
@@ -123,19 +144,49 @@ export async function POST(req: Request) {
         ? messages.slice(-VERBATIM_CONTEXT_MESSAGES)
         : messages;
 
+    /* Sub-PR 4.5 routing layer. routeRequest is pure + deterministic
+     * — heuristic classifier that always returns SOMETHING, never
+     * throws. The decision is recorded fire-and-forget so a KV blip
+     * can never affect the routing path itself. Constitutional MUST
+     * #1 (fail back to single-agent mode) is satisfied at the
+     * router boundary: any ambiguous or unrecognized input lands on
+     * the "lumina" branch. */
+    const routing = routeRequest(messages);
+    void recordRoutingDecision(routing.agent);
+
+    /* Compose the prompt + tool registry per the routing decision.
+     * The architecture-critic overlay APPENDS to the default Lumina
+     * prompt — the sub-agent inherits Lumina's voice, tool surface,
+     * and operator-awareness rules verbatim, then adds the critique
+     * discipline overlay last (highest recency in attention). The
+     * synthetic init tool is gated to the sub-agent path only — base
+     * tool registry stays unchanged for default chats. */
+    const baseSystemPrompt = buildLuminaSystemPrompt(
+      new Date(),
+      summaryRecord?.summary ?? null,
+    );
+    const baseTools = createLuminaTools(req);
+    const isCritic = routing.agent === ARCHITECTURE_CRITIC_ID;
+    const systemPrompt = isCritic
+      ? `${baseSystemPrompt}\n\n${ARCHITECTURE_CRITIC_SYSTEM_PROMPT}`
+      : baseSystemPrompt;
+    const tools = isCritic
+      ? {
+          ...baseTools,
+          [ARCHITECTURE_CRITIC_INIT_TOOL]: architectureCriticInitTool,
+        }
+      : baseTools;
+
     const result = streamText({
       /* Claude Haiku 4.5 — current Haiku snapshot. Naming convention for
          the 4.x family is `claude-{family}-{major}-{minor}-{snapshot}`
          (family precedes version, unlike the 3.x format). Pinned to a
          specific snapshot rather than an alias for production stability. */
       model: anthropic("claude-haiku-4-5-20251001"),
-      system: buildLuminaSystemPrompt(
-        new Date(),
-        summaryRecord?.summary ?? null,
-      ),
+      system: systemPrompt,
       messages: await convertToModelMessages(verbatimMessages),
       temperature: 0.6,
-      tools: createLuminaTools(req),
+      tools,
       stopWhen: stepCountIs(5),
     });
 

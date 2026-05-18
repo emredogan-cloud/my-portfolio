@@ -95,6 +95,11 @@ const TOOL_LABEL: Record<string, string> = {
   readSourceFile: "reading source",
   explainCommitRationale: "reading commit",
   diffArchitectures: "diffing projects",
+  /* Sub-PR 4.5 — orchestration trace. The synthetic init tool the
+     architecture-critic agent calls before producing its response.
+     The pill IS the visible orchestration trace the constitutional
+     directive requires; no other UI is needed. */
+  selectArchitectureCritic: "engaging architecture-critic",
 };
 
 interface Props {
