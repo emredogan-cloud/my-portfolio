@@ -60,9 +60,13 @@ const SESSION_ID_KEY = "lumina-session-id-v1";
 /* Short labels for the tool-status pill rendered inline above tool
    outputs. Keys must match the tool names registered in
    lib/lumina/tools.ts. Unknown tool name falls back to its raw id.
-   The operator-awareness labels (Sub-PR 3.1) read in the same
-   calm mono pill vocabulary as the existing four — no dashboard
-   verbs ("loading dashboard…"), no emojis, no spectacle. */
+   The operator-awareness (Sub-PR 3.1) and lab-invocation (Sub-PR 3.2)
+   labels read in the same calm mono pill vocabulary as the original
+   four — no dashboard verbs ("loading dashboard…"), no emojis, no
+   spectacle. The lab labels deliberately match the verb each /lab
+   page uses on its own surface, so the visitor sees the same
+   "translating IAM policy" wording whether they invoked via Lumina
+   or via the lab page directly. */
 const TOOL_LABEL: Record<string, string> = {
   listProjects: "checking projects",
   getProjectDetails: "reading project case",
@@ -71,6 +75,9 @@ const TOOL_LABEL: Record<string, string> = {
   getCurrentTelemetry: "reading telemetry",
   getRecentEngineering: "reading recent commits",
   getLabStatus: "checking lab",
+  translateIamPolicy: "translating IAM policy",
+  rescuePrompt: "rescuing prompt",
+  narrateCommits: "narrating commits",
 };
 
 interface Props {
