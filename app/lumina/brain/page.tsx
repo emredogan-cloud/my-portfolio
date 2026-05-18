@@ -62,7 +62,11 @@ const REPO_BASE =
 
 interface ToolRow {
   name: string;
-  group: "Portfolio reads" | "Operator reads" | "Lab invocation";
+  group:
+    | "Portfolio reads"
+    | "Operator reads"
+    | "Lab invocation"
+    | "Repo-aware reads";
   purpose: string;
 }
 
@@ -117,9 +121,29 @@ const TOOLS: readonly ToolRow[] = [
     group: "Lab invocation",
     purpose: "Loopback to /api/lab/narrate-commits — runs the Commit Narrator on a public GitHub URL.",
   },
+  {
+    name: "readSourceFile",
+    group: "Repo-aware reads",
+    purpose: "Verbatim file contents from the public portfolio repo. Path-validated, 50 KB cap, KV-cached 1h.",
+  },
+  {
+    name: "explainCommitRationale",
+    group: "Repo-aware reads",
+    purpose: "Subject + WHY paragraph + diff stats for a specific commit SHA. KV-cached 7d (immutable).",
+  },
+  {
+    name: "diffArchitectures",
+    group: "Repo-aware reads",
+    purpose: "Structural diff of two projects' tech stacks. In-memory off data/projects.ts; no network.",
+  },
 ] as const;
 
-const TOOL_GROUPS = ["Portfolio reads", "Operator reads", "Lab invocation"] as const;
+const TOOL_GROUPS = [
+  "Portfolio reads",
+  "Operator reads",
+  "Lab invocation",
+  "Repo-aware reads",
+] as const;
 
 interface ConfigRow {
   label: string;
@@ -165,12 +189,17 @@ const SOURCE_LINKS: readonly SourceLink[] = [
   {
     label: "System prompt",
     path: "lib/lumina/system-prompt.ts",
-    note: "The full voice + identity + tool-use rules. ~280 lines.",
+    note: "The full voice + identity + tool-use rules.",
   },
   {
     label: "Tool registry",
     path: "lib/lumina/tools.ts",
-    note: "The ten tools, their input schemas, their execute() bodies.",
+    note: "The thirteen tools, their input schemas, their execute() bodies.",
+  },
+  {
+    label: "Repo-aware helpers",
+    path: "lib/lumina/repo-aware.ts",
+    note: "Edge-safe direct fetch to GitHub's REST API. Path / SHA validation. KV cache per resource type.",
   },
   {
     label: "Memory layer",
@@ -307,11 +336,13 @@ export default function LuminaBrainPage() {
             02 · Tool registry
           </h2>
           <p className="text-secondary text-sm leading-relaxed mb-6 max-w-2xl">
-            Ten tools across three groups. Every <code className="font-mono text-[13px] text-primary">execute()</code> body
+            Thirteen tools across four groups. Every <code className="font-mono text-[13px] text-primary">execute()</code> body
             is server-side; nothing runs in the visitor&apos;s browser. The lab-
             invocation tools loopback to the existing /api/lab routes with
             the visitor&apos;s IP forwarded so rate limits and cost caps stay
-            attributed to them.
+            attributed to them. The repo-aware tools read this very repo
+            via direct fetch to GitHub&apos;s public REST API — KV-cached so
+            the same file isn&apos;t fetched twice per hour.
           </p>
           <div className="space-y-7">
             {TOOL_GROUPS.map((group) => (
