@@ -1,3 +1,5 @@
+"use client";
+
 import dynamic from "next/dynamic";
 import type { ComponentType, ReactNode } from "react";
 
@@ -12,6 +14,13 @@ import type { ComponentType, ReactNode } from "react";
  * The simplest way to enforce that is one helper, used uniformly,
  * so each experiment can't roll its own (slightly different,
  * slightly wrong) lazy-load pattern.
+ *
+ * Why "use client" at the top:
+ *   Next.js refuses to render `next/dynamic({ ssr: false })`
+ *   that's transitively imported by a Server Component. The
+ *   helper must live in a Client Component boundary; consumers
+ *   call it from their own "use client" modules (typically a
+ *   per-experiment dispatcher).
  *
  * Contract:
  *   - `ssr: false` keeps the body out of the server bundle. The

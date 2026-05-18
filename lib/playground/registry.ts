@@ -49,8 +49,27 @@ export interface PlaygroundExperiment {
   requirements?: ExperimentRequirements;
 }
 
-/* Empty by construction. Sub-PR 5.2+ adds real entries. */
-export const PLAYGROUND_EXPERIMENTS: readonly PlaygroundExperiment[] = [];
+export const PLAYGROUND_EXPERIMENTS: readonly PlaygroundExperiment[] = [
+  /* Sub-PR 5.3 — the FIRST shell. Demonstrates the full
+   * registry-body-switch-flag contract end-to-end. Default state
+   * is OFF (no PLAYGROUND_FLAG_HELLO_PLAYGROUND=1 in any env);
+   * the operator can enable it locally for verification or in a
+   * deploy env when ready to surface the diagnostic page. The
+   * body itself is purely diagnostic — it renders the visitor's
+   * capability snapshot so future experiments can use this shell
+   * to verify their requirement gates. No animation, no
+   * interactivity, no network. */
+  {
+    slug: "hello-playground",
+    name: "Hello, playground",
+    purpose:
+      "Diagnostic shell — renders the visitor's capability snapshot to verify the experiment-mount contract end-to-end.",
+    risk: "no risk — diagnostic page",
+    status: "active",
+    /* No requirements declared. The shell renders on every viewport,
+     * with or without WebGPU, in any motion preference. */
+  },
+];
 
 /** Look up an experiment by slug. Returns undefined when the slug
  *  doesn't match any registered entry. */
