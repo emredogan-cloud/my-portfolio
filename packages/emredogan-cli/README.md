@@ -29,13 +29,15 @@ npm install -g @emredogan/cli
 emredogan <command>
 ```
 
-Requires **Node.js 20+**. macOS and Linux only for v0.1; Windows support is deferred to v0.2.
+Requires **Node.js 20+**. macOS and Linux only; Windows support deferred to v0.2.
 
 ---
 
 ## Commands
 
-### `emredogan browse`
+### Core
+
+#### `emredogan browse`
 
 Opens [`https://emredogan.com`](https://emredogan.com) in the platform default browser via `open` (macOS) or `xdg-open` (Linux).
 
@@ -43,7 +45,7 @@ Opens [`https://emredogan.com`](https://emredogan.com) in the platform default b
 emredogan browse
 ```
 
-### `emredogan ask "<question>"`
+#### `emredogan ask "<question>"`
 
 Streams a reply from Lumina to stdout. Same model + system prompt as the chat widget on the live site (Claude Haiku 4.5). Per-IP rate limited.
 
@@ -52,7 +54,7 @@ emredogan ask "What does the CWH cron actually do at 06:00 UTC?"
 emredogan ask "How is /telemetry cached?"
 ```
 
-### `emredogan project list`
+#### `emredogan project list`
 
 Prints a tight list of the live projects: title, role, blurb, GitHub and live URLs. Pulled from the public `/api/projects` JSON.
 
@@ -60,7 +62,7 @@ Prints a tight list of the live projects: title, role, blurb, GitHub and live UR
 emredogan project list
 ```
 
-### `emredogan demo <slug>`
+#### `emredogan demo <slug>`
 
 Opens `/lab/<slug>` in the default browser. Useful when chasing a link from a tweet or a notes page.
 
@@ -71,6 +73,52 @@ emredogan demo commit-narrator
 ```
 
 Known slugs are the active `/lab` experiments. Unknown slugs still open the URL — the lab index page handles 404s for retired experiments.
+
+### Read
+
+#### `emredogan changelog`
+
+Fetches the last 5 commits from the public engineering log and prints each with its WHY paragraph (wrapped at 76 columns, 4-space indent). Same KV-cached source as the `/changelog` web page.
+
+```bash
+emredogan changelog
+```
+
+#### `emredogan telemetry`
+
+Prints a curated 6-metric snapshot of the platform as a 3-column ASCII table — Lumina p95 latency, auto-tweet successes, IAM translator runs, weekly npm downloads, notes audio plays.
+
+```bash
+emredogan telemetry
+```
+
+#### `emredogan hire`
+
+Prints Emre's contact card as a bordered Unicode box: email, LinkedIn, site, GitHub, current operating tempo. No network call — renders identically offline.
+
+```bash
+emredogan hire
+```
+
+### Build
+
+#### `emredogan lab <experiment> "<input>"`
+
+POSTs to a `/lab` experiment endpoint and streams the reply to stdout. Aliases let you skip the URL:
+
+| Alias | Experiment | Input shape |
+|---|---|---|
+| `iam` or `iam-translator` | IAM Translator | IAM policy JSON |
+| `prompt` or `prompt-rescuer` | Prompt Rescuer | vague developer ask |
+| `commit` or `commit-narrator` | Commit Narrator | public github.com repo URL |
+
+```bash
+emredogan lab iam '{"Effect":"Allow","Action":"*","Resource":"*"}'
+emredogan lab prompt "build a chat app with auth and payments"
+emredogan lab commit "github.com/emredogan-cloud/my-portfolio"
+```
+
+The backend's per-IP rate limit and per-day cost cap apply transparently; the CLI maps each to a deterministic exit code.
 
 ---
 
