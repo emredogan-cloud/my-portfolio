@@ -18,7 +18,15 @@ import {
   type UIDataTypes,
   type UITools,
 } from "ai";
-import { X, ArrowUp, Copy, Check, Eraser, Loader2 } from "lucide-react";
+import {
+  X,
+  ArrowUp,
+  Copy,
+  Check,
+  Eraser,
+  Loader2,
+  Database,
+} from "lucide-react";
 import { LuminaAvatar } from "./LuminaAvatar";
 import LuminaVoice from "./LuminaVoice";
 import { confirmHaptic } from "@/lib/haptic";
@@ -56,6 +64,12 @@ const CONVERSATION_KEY = "lumina-conversation-v1";
    thread across days. v1 suffix mirrors CONVERSATION_KEY in case the
    memory schema ever needs a hard break. */
 const SESSION_ID_KEY = "lumina-session-id-v1";
+
+/* Sub-PR 4.4 memory opt-out preference. Persists across visits so a
+   visitor who toggled memory off once stays opted out until they
+   toggle back on. Value "1" means opted out; anything else (missing
+   key, "0", garbage) means opted in. */
+const MEMORY_OPT_OUT_KEY = "lumina-memory-opt-out-v1";
 
 /* Short labels for the tool-status pill rendered inline above tool
    outputs. Keys must match the tool names registered in
@@ -128,15 +142,28 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
     sessionIdRef.current = sessionId;
   }, [sessionId]);
 
-  /* Stable transport — created once, reads the live sessionId via the
-     ref every time it builds a request body. */
+  /* Sub-PR 4.4 memory opt-out toggle. Default false (memory enabled).
+     Mirrored to a ref so the transport's body function sees the live
+     value without rebuilding the transport on every toggle. */
+  const [memoryOptOut, setMemoryOptOut] = useState(false);
+  const memoryOptOutRef = useRef(false);
+  useEffect(() => {
+    memoryOptOutRef.current = memoryOptOut;
+  }, [memoryOptOut]);
+
+  /* Stable transport — created once, reads the live sessionId AND
+     memory-opt-out flag via refs every time it builds a request body. */
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
         body: () => {
           const id = sessionIdRef.current;
-          return id ? { sessionId: id } : {};
+          const optOut = memoryOptOutRef.current;
+          const payload: { sessionId?: string; memoryOptOut?: boolean } = {};
+          if (id) payload.sessionId = id;
+          if (optOut) payload.memoryOptOut = true;
+          return payload;
         },
       }),
     [],
@@ -258,17 +285,46 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
     inputRef.current?.focus();
   };
 
+  /* Memory toggle handler (Sub-PR 4.4). Flips the opt-out state and
+     persists to localStorage. Unlike Forget-Me, this does NOT delete
+     existing KV data — that's a separate operator concern. The
+     transport's next request will carry the new flag, and from the
+     next chat turn forward the server stops writing to KV. */
+  const handleMemoryToggle = () => {
+    setMemoryOptOut((prev) => {
+      const next = !prev;
+      try {
+        if (next) {
+          localStorage.setItem(MEMORY_OPT_OUT_KEY, "1");
+        } else {
+          localStorage.removeItem(MEMORY_OPT_OUT_KEY);
+        }
+      } catch {
+        /* localStorage blocked — toggle still works in-session */
+      }
+      return next;
+    });
+  };
+
   /* Session-id bootstrap. Reads or mints once per browser. The "was
      returning" ref distinguishes a returning visitor (server might
      have a saved thread) from a first-ever visitor (server is empty,
-     skip the load fetch). */
+     skip the load fetch). The opt-out preference (Sub-PR 4.4) is
+     read in the same effect so the state flip happens before any
+     hydration effect runs. */
   const wasReturningRef = useRef(false);
   useEffect(() => {
     let existing: string | null = null;
+    let storedOptOut: string | null = null;
     try {
       existing = localStorage.getItem(SESSION_ID_KEY);
+      storedOptOut = localStorage.getItem(MEMORY_OPT_OUT_KEY);
     } catch {
       /* localStorage blocked — degrade to in-memory id, no cross-tab persistence */
+    }
+    if (storedOptOut === "1") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMemoryOptOut(true);
     }
     if (existing) {
       wasReturningRef.current = true;
@@ -324,7 +380,9 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
   /* Cross-session hydration — only fires when:
        1. sessionStorage was empty (Phase 1 path didn't already restore), and
        2. the visitor is "returning" (had a session id in localStorage on
-          mount — first-ever visitors get the welcome sequence instead).
+          mount — first-ever visitors get the welcome sequence instead), and
+       3. memory opt-out is NOT engaged (Sub-PR 4.4: visitors who opted
+          out get a fresh blank chat on every visit, no KV read).
      The effect refuses to act if the welcome sequence has already
      started (sequenceFiredRef latched) so we never paste a server
      thread on top of welcome messages. */
@@ -332,6 +390,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
     if (!sessionId) return;
     if (!wasReturningRef.current) return;
     if (sequenceFiredRef.current) return;
+    if (memoryOptOut) return;
 
     let cancelled = false;
     (async () => {
@@ -356,7 +415,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, setMessages]);
+  }, [sessionId, setMessages, memoryOptOut]);
 
   /* Persist conversation on every change. Skipped on the empty initial
      state so a freshly cleared "New conversation" doesn't immediately
@@ -539,6 +598,38 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
                 AAA touch-target minimum. Previously p-2.5 (~36px),
                 which was tight on mobile and a frequent fat-finger
                 miss into the input below. */}
+            {/* Memory toggle (Sub-PR 4.4) — explicit opt-out
+                control. Default state is ON (memory enabled,
+                matches Phase 3 behaviour); OFF stops the chat
+                route writing to KV and the client fetching from
+                /api/chat/load. Persisted to localStorage so a
+                visitor who opts out stays opted out across
+                visits. Amber accent in the off state signals
+                "you have intentionally disabled this" without
+                shouting. */}
+            <button
+              type="button"
+              onClick={handleMemoryToggle}
+              aria-pressed={!memoryOptOut}
+              aria-label={
+                memoryOptOut
+                  ? "Conversation memory — currently off, tap to enable"
+                  : "Conversation memory — currently on, tap to disable"
+              }
+              title={
+                memoryOptOut
+                  ? "Memory off — chat is not persisted (tap to enable)"
+                  : "Memory on — 14-day persistence with PII redacted (tap to disable)"
+              }
+              className={[
+                "inline-flex items-center justify-center transition-colors duration-200 p-3.5 -m-1.5 rounded",
+                memoryOptOut
+                  ? "text-amber-300/80 hover:text-amber-300"
+                  : "text-white/40 hover:text-white/85",
+              ].join(" ")}
+            >
+              <Database className="w-4 h-4" />
+            </button>
             {/* Forget-Me — privacy control. Clears the thread server-
                 side AND client-side. Same hit-target sizing as the
                 minimize button (44 × 44, WCAG 2.5.5 AAA). Cinematic

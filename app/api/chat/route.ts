@@ -69,6 +69,10 @@ export const maxDuration = 30;
 interface ChatRequestBody {
   messages: UIMessage[];
   sessionId?: string;
+  /** Sub-PR 4.4: when true the visitor has explicitly opted out
+   *  of conversation memory. The route skips every KV operation
+   *  for the turn — no load, no save, no summary regen. */
+  memoryOptOut?: boolean;
 }
 
 function isMissingApiKey(): boolean {
@@ -90,6 +94,9 @@ export async function POST(req: Request) {
       typeof body.sessionId === "string" && isValidSessionId(body.sessionId)
         ? body.sessionId
         : undefined;
+    /* Sub-PR 4.4 opt-out flag. Default false (memory enabled);
+     * true only when the client toggle is in the off position. */
+    const memoryOptOut = body.memoryOptOut === true;
 
     if (isMissingApiKey()) {
       return new Response(
@@ -100,14 +107,15 @@ export async function POST(req: Request) {
       );
     }
 
-    /* Memory contract (Sub-PR 3.3): load the cached recap of older
-     * turns if a session is in play AND the thread is past the
-     * verbatim window. The recap gets folded into the system prompt;
-     * the model only sees the last VERBATIM_CONTEXT_MESSAGES turns
-     * verbatim. The visitor's UI still renders the full thread —
-     * the cap is model-side, not UI-side. */
+    /* Memory contract (Sub-PR 3.3 + 4.4): load the cached recap of
+     * older turns if a session is in play AND the thread is past
+     * the verbatim window AND the visitor has not opted out. The
+     * recap gets folded into the system prompt; the model only
+     * sees the last VERBATIM_CONTEXT_MESSAGES turns verbatim. The
+     * visitor's UI still renders the full thread — the cap is
+     * model-side, not UI-side. */
     const summaryRecord =
-      sessionId && messages.length > VERBATIM_CONTEXT_MESSAGES
+      !memoryOptOut && sessionId && messages.length > VERBATIM_CONTEXT_MESSAGES
         ? await loadSummary(sessionId)
         : null;
     const verbatimMessages =
@@ -143,6 +151,10 @@ export async function POST(req: Request) {
           Date.now() - start,
         );
         if (!sessionId) return;
+        /* Sub-PR 4.4: opt-out turns this side of the contract into
+         * a complete no-op. No save, no summary regen — KV is
+         * never touched for the duration of the off state. */
+        if (memoryOptOut) return;
         await saveSession(sessionId, finalMessages);
         /* Fire-and-forget: regenerate the cached summary if the
          * thread has grown past the verbatim window by enough to
