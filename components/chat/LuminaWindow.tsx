@@ -59,12 +59,18 @@ const SESSION_ID_KEY = "lumina-session-id-v1";
 
 /* Short labels for the tool-status pill rendered inline above tool
    outputs. Keys must match the tool names registered in
-   lib/lumina/tools.ts. Unknown tool name falls back to its raw id. */
+   lib/lumina/tools.ts. Unknown tool name falls back to its raw id.
+   The operator-awareness labels (Sub-PR 3.1) read in the same
+   calm mono pill vocabulary as the existing four — no dashboard
+   verbs ("loading dashboard…"), no emojis, no spectacle. */
 const TOOL_LABEL: Record<string, string> = {
   listProjects: "checking projects",
   getProjectDetails: "reading project case",
   searchNotes: "searching notes",
   getRecentCommits: "checking GitHub",
+  getCurrentTelemetry: "reading telemetry",
+  getRecentEngineering: "reading recent commits",
+  getLabStatus: "checking lab",
 };
 
 interface Props {
