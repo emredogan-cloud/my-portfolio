@@ -35,6 +35,15 @@ interface ExperimentFrameProps {
    *  can read in its own voice. */
   framing: string;
   children: ReactNode;
+  /** Optional override for the page's bottom mono row. When the
+   *  experiment is a sandbox (IAM Translator, Prompt Rescuer,
+   *  Commit Narrator), leave this unset and the default
+   *  "Per-IP 5/hr · Daily budget $5 · Streaming via Bedrock"
+   *  notice renders. Non-sandbox experiments (e.g. /lab/cli,
+   *  which is documentation + a looping animation, no backend)
+   *  pass their own footer node to replace the default. Pass
+   *  `null` to omit the footer entirely. */
+  customFooter?: ReactNode | null;
 }
 
 const STATUS_LABEL: Record<ExperimentEntry["status"], string> = {
@@ -56,6 +65,7 @@ export default function ExperimentFrame({
   tagline,
   framing,
   children,
+  customFooter,
 }: ExperimentFrameProps) {
   return (
     <main id="main" className="relative min-h-screen bg-black">
@@ -127,26 +137,32 @@ export default function ExperimentFrame({
           {children}
         </Reveal>
 
-        {/* SANDBOX NOTICE — same posture as the page footers on
-            /telemetry and /changelog: a quiet mono row with a
-            single cyan dot. */}
-        <Reveal duration={0.7}>
-          <div className="border-t border-white/[0.05] pt-6 mt-12">
-            <p className="font-mono uppercase tracking-[0.20em] text-[10px] text-quiet flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span
-                aria-hidden="true"
-                className="inline-block w-1 h-1 rounded-full bg-[#00d2ff]/60 align-middle"
-              />
-              <span>Sandbox</span>
-              <span className="text-faint">·</span>
-              <span>Per-IP 5/hr</span>
-              <span className="text-faint">·</span>
-              <span>Daily budget $5</span>
-              <span className="text-faint">·</span>
-              <span>Streaming via Bedrock</span>
-            </p>
-          </div>
-        </Reveal>
+        {/* FOOTER — sandbox notice by default; replaced by
+            `customFooter` when the caller supplies one (e.g.
+            /lab/cli, which is documentation, not a sandbox).
+            Pass `customFooter={null}` to omit the footer
+            block entirely. */}
+        {customFooter === null ? null : (
+          <Reveal duration={0.7}>
+            <div className="border-t border-white/[0.05] pt-6 mt-12">
+              {customFooter ?? (
+                <p className="font-mono uppercase tracking-[0.20em] text-[10px] text-quiet flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span
+                    aria-hidden="true"
+                    className="inline-block w-1 h-1 rounded-full bg-[#00d2ff]/60 align-middle"
+                  />
+                  <span>Sandbox</span>
+                  <span className="text-faint">·</span>
+                  <span>Per-IP 5/hr</span>
+                  <span className="text-faint">·</span>
+                  <span>Daily budget $5</span>
+                  <span className="text-faint">·</span>
+                  <span>Streaming via Bedrock</span>
+                </p>
+              )}
+            </div>
+          </Reveal>
+        )}
       </div>
     </main>
   );
