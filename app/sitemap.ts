@@ -23,6 +23,7 @@ const STATIC_ROUTES = [
   "/lab/iam-translator",
   "/lab/prompt-rescuer",
   "/lab/commit-narrator",
+  "/lab/cli",
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {

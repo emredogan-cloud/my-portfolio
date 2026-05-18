@@ -65,6 +65,13 @@ export const LAB_EXPERIMENTS: readonly ExperimentEntry[] = [
       "Point it at a public GitHub repo. The last twenty commits get drafted WHY annotations, ready for the changelog.",
     status: "active",
   },
+  {
+    slug: "cli",
+    index: "04",
+    name: "emredogan-cli",
+    purpose: "The entire portfolio, accessible via your terminal.",
+    status: "active",
+  },
 ] as const;
 
 export function getExperiment(slug: string): ExperimentEntry | undefined {

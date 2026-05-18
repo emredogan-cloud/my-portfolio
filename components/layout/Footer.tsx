@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Download } from "lucide-react";
 import BuildBeacon from "./BuildBeacon";
 import LiveCustomerCounter from "./LiveCustomerCounter";
+import FooterCliPrompt from "./FooterCliPrompt";
 
 /* ─── Inline brand SVGs (lucide v1.14 has no Github/Linkedin) ─── */
 function GitHubIcon({ className }: { className?: string }) {
@@ -60,6 +61,10 @@ export default function Footer() {
           </p>
           <BuildBeacon />
           <LiveCustomerCounter />
+          {/* CLI discovery surface (Phase 2 polish) — a quiet
+              terminal prompt next to the signature. Click to
+              copy. Discoverability lands without a CTA card. */}
+          <FooterCliPrompt />
         </div>
         <nav className="flex items-center gap-6">
           <Link
