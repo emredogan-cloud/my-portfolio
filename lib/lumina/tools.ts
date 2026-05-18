@@ -3,7 +3,12 @@ import { z } from "zod";
 import { kv } from "@vercel/kv";
 import { projectsData, type Project } from "@/data/projects";
 import { notesData, type Note } from "@/data/notes";
-import { readMetric, METRIC_KEYS } from "@/lib/telemetry/metrics";
+import {
+  readMetric,
+  METRIC_KEYS,
+  recordToolInvocation,
+  recordToolError,
+} from "@/lib/telemetry/metrics";
 import { getRecentCommits } from "@/lib/github-events";
 import { LAB_EXPERIMENTS } from "@/lib/lab/registry";
 import {
@@ -107,6 +112,47 @@ function summarizeNote(n: Note) {
   };
 }
 
+/**
+ * Telemetry wrapper applied to every tool's execute body. Sub-PR 4.3
+ * (Eval + Telemetry Expansion).
+ *
+ *   - Fires `recordToolInvocation(name)` fire-and-forget the moment
+ *     the wrapped function is entered.
+ *   - On a thrown exception: records an error AND rethrows so the
+ *     AI SDK's error path still works.
+ *   - On a returned `{error: ...}` object: records an error but
+ *     passes the value through unchanged. The tool already chose
+ *     to return a structured error to the model; we just observe.
+ *   - Returns shapes other than `{error: ...}` pass through.
+ *
+ * Generic over (TArgs, TResult) so each wrapped execute keeps its
+ * original signature — TypeScript inference at the tool() call
+ * site continues to enforce the zod schema → execute argument
+ * relationship.
+ */
+function withTelemetry<TArgs, TResult>(
+  name: string,
+  fn: (args: TArgs) => Promise<TResult>,
+): (args: TArgs) => Promise<TResult> {
+  return async (args: TArgs) => {
+    void recordToolInvocation(name);
+    try {
+      const result = await fn(args);
+      if (
+        result !== null &&
+        typeof result === "object" &&
+        "error" in (result as Record<string, unknown>)
+      ) {
+        void recordToolError(name);
+      }
+      return result;
+    } catch (err) {
+      void recordToolError(name);
+      throw err;
+    }
+  };
+}
+
 const STATIC_TOOLS = {
   /**
    * Lists every project Emre has documented in this portfolio. Returns
@@ -119,14 +165,14 @@ const STATIC_TOOLS = {
     description:
       "List all projects in Emre's portfolio with their ids, titles, status, and one-sentence descriptions. Use this when the visitor asks broadly about his work, or as a first step before getProjectDetails when you don't know the project id yet.",
     inputSchema: z.object({}).strict(),
-    execute: async () => {
+    execute: withTelemetry("listProjects", async () => {
       return projectsData.map((p) => ({
         id: p.id,
         title: p.title,
         status: p.status,
         shortDescription: p.shortDescription,
       }));
-    },
+    }),
   }),
 
   /**
@@ -145,13 +191,13 @@ const STATIC_TOOLS = {
           "The project id (slug). Must match an id returned by listProjects.",
         ),
     }).strict(),
-    execute: async ({ projectId }) => {
+    execute: withTelemetry("getProjectDetails", async ({ projectId }) => {
       const project = projectsData.find((p) => p.id === projectId);
       if (!project) {
         return { error: "not-found", projectId };
       }
       return summarizeProject(project);
-    },
+    }),
   }),
 
   /**
@@ -170,7 +216,7 @@ const STATIC_TOOLS = {
           "Free-text search term. Empty string lists every note (newest first).",
         ),
     }).strict(),
-    execute: async ({ query }) => {
+    execute: withTelemetry("searchNotes", async ({ query }) => {
       const q = query.trim().toLowerCase();
       const haystack =
         q === ""
@@ -188,7 +234,7 @@ const STATIC_TOOLS = {
               return blob.includes(q);
             });
       return haystack.slice(0, 5).map(summarizeNote);
-    },
+    }),
   }),
 
   /**
@@ -200,7 +246,7 @@ const STATIC_TOOLS = {
     description:
       "Return Emre's most recent code push: timestamp, repository name, commit message, and SHA. Use when the visitor asks 'what's he working on right now', 'last commit', 'what did he just ship'.",
     inputSchema: z.object({}).strict(),
-    execute: async () => {
+    execute: withTelemetry("getRecentCommits", async () => {
       if (!hasKv) {
         return { error: "kv-unavailable" };
       }
@@ -213,7 +259,7 @@ const STATIC_TOOLS = {
       } catch {
         return { error: "kv-read-failed" };
       }
-    },
+    }),
   }),
 
   /* ── Operator-awareness tools (Sub-PR 3.1) ────────────────
@@ -242,7 +288,7 @@ const STATIC_TOOLS = {
     description:
       "Return a snapshot of the platform's current operational telemetry: Lumina p95 latency, auto-tweet successes (lifetime), IAM translator completions, weekly npm downloads for @emredogan/lumina-chat and @emredogan/cli, and notes audio plays. Use when the visitor asks operator-shaped questions: 'how is the platform doing', 'what's the current Lumina latency', 'how many people have used the lab', 'is the auto-tweet cron healthy'. Do NOT invoke this for casual questions — only when the visitor is genuinely asking about platform state. Read the result like an operator: name the metric, the value, the freshness. Skip metrics that are null (no data yet) rather than padding the answer.",
     inputSchema: z.object({}).strict(),
-    execute: async () => {
+    execute: withTelemetry("getCurrentTelemetry", async () => {
       const [
         p95,
         autotweetSuccesses,
@@ -295,7 +341,7 @@ const STATIC_TOOLS = {
           },
         ],
       };
-    },
+    }),
   }),
 
   /**
@@ -310,7 +356,7 @@ const STATIC_TOOLS = {
     description:
       "Return the last 5 commits Emre pushed, with subject, repo, timestamp, and the WHY paragraph parsed from the commit body. Use when the visitor asks about recent shipping: 'what has he shipped this week', 'what's the latest engineering work', 'what changes landed recently'. Different from getRecentCommits (which returns ONE commit — the head) — this returns five with context for each. Read each commit conversationally: subject, when, and what the WHY paragraph says. Skip the SHA unless the visitor specifically asks.",
     inputSchema: z.object({}).strict(),
-    execute: async () => {
+    execute: withTelemetry("getRecentEngineering", async () => {
       try {
         const commits = await getRecentCommits(5);
         return {
@@ -327,7 +373,7 @@ const STATIC_TOOLS = {
       } catch {
         return { error: "changelog-unavailable" };
       }
-    },
+    }),
   }),
 
   /**
@@ -341,7 +387,7 @@ const STATIC_TOOLS = {
     description:
       "Return the current /lab experiment registry: each entry's name, purpose, status (active | coming-soon | archived), and URL. Use when the visitor asks: 'what experiments are running', 'what's in the lab', 'is the IAM translator live', 'what can I try'. Answer with the active experiments first; mention coming-soon entries only if relevant.",
     inputSchema: z.object({}).strict(),
-    execute: async () => {
+    execute: withTelemetry("getLabStatus", async () => {
       return {
         experiments: LAB_EXPERIMENTS.map((e) => ({
           slug: e.slug,
@@ -351,7 +397,7 @@ const STATIC_TOOLS = {
           url: `/lab/${e.slug}`,
         })),
       };
-    },
+    }),
   }),
 
   /* ── Repo-aware reads (Sub-PR 4.2) ───────────────────────────
@@ -388,9 +434,9 @@ const STATIC_TOOLS = {
           ),
       })
       .strict(),
-    execute: async ({ path }) => {
+    execute: withTelemetry("readSourceFile", async ({ path }) => {
       return fetchPublicFile({ path });
-    },
+    }),
   }),
 
   /**
@@ -414,9 +460,9 @@ const STATIC_TOOLS = {
           ),
       })
       .strict(),
-    execute: async ({ sha }) => {
+    execute: withTelemetry("explainCommitRationale", async ({ sha }) => {
       return fetchCommitDetail({ sha });
-    },
+    }),
   }),
 
   /**
@@ -440,7 +486,7 @@ const STATIC_TOOLS = {
           .describe("Second project id (slug). E.g. 'vibing-coder-ai'."),
       })
       .strict(),
-    execute: async ({ idA, idB }) => {
+    execute: withTelemetry("diffArchitectures", async ({ idA, idB }) => {
       const a = projectsData.find((p) => p.id === idA);
       const b = projectsData.find((p) => p.id === idB);
       if (!a || !b) {
@@ -469,7 +515,7 @@ const STATIC_TOOLS = {
         uniqueToA,
         uniqueToB,
       };
-    },
+    }),
   }),
 } as const;
 
@@ -588,9 +634,9 @@ function createLabInvocationTools(req: Request) {
             ),
         })
         .strict(),
-      execute: async ({ policy }) => {
+      execute: withTelemetry("translateIamPolicy", async ({ policy }) => {
         return invokeLab(req, "/api/lab/iam-translate", { policy });
-      },
+      }),
     }),
 
     /**
@@ -610,9 +656,9 @@ function createLabInvocationTools(req: Request) {
             ),
         })
         .strict(),
-      execute: async ({ prompt }) => {
+      execute: withTelemetry("rescuePrompt", async ({ prompt }) => {
         return invokeLab(req, "/api/lab/prompt-rescue", { prompt });
-      },
+      }),
     }),
 
     /**
@@ -635,9 +681,9 @@ function createLabInvocationTools(req: Request) {
             ),
         })
         .strict(),
-      execute: async ({ url }) => {
+      execute: withTelemetry("narrateCommits", async ({ url }) => {
         return invokeLab(req, "/api/lab/narrate-commits", { url });
-      },
+      }),
     }),
   };
 }

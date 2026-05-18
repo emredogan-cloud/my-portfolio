@@ -3,6 +3,10 @@ import Link from "next/link";
 import { Reveal } from "@/components/ui/Reveal";
 import VisitPing from "@/components/telemetry/VisitPing";
 import { getSiteUrl } from "@/lib/site-url";
+import {
+  readToolInvocationCounts,
+  readToolErrorCounts,
+} from "@/lib/telemetry/metrics";
 
 /**
  * V4 Phase 4 — Sub-PR 4.1: Public Lumina transparency surface.
@@ -249,7 +253,22 @@ const TOPOLOGY_ROWS: readonly { surface: string; runtime: string; depends: strin
   { surface: "/api/lab/narrate-commits (POST)", runtime: "nodejs", depends: "AWS Bedrock + GitHub Octokit" },
 ];
 
-export default function LuminaBrainPage() {
+export default async function LuminaBrainPage() {
+  /* Per-tool counters (Sub-PR 4.3). Both reads are KV hashes; a
+   * KV-less environment returns empty objects and the section
+   * below shows the "no data yet" placeholder. */
+  const [invocations, errors] = await Promise.all([
+    readToolInvocationCounts(),
+    readToolErrorCounts(),
+  ]);
+  const usageRows = TOOLS.map((t) => ({
+    name: t.name,
+    group: t.group,
+    invocations: invocations[t.name] ?? 0,
+    errors: errors[t.name] ?? 0,
+  }));
+  const hasUsageData = usageRows.some((r) => r.invocations > 0);
+
   return (
     <main id="main" className="relative min-h-screen bg-black">
       {/* Ambient cyan atmosphere — same gradient stack as /telemetry,
@@ -497,6 +516,124 @@ export default function LuminaBrainPage() {
               </li>
             ))}
           </ul>
+        </Reveal>
+
+        {/* CONSISTENCY EVAL (Sub-PR 4.3) */}
+        <Reveal duration={0.7} className="mb-14">
+          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+            07 · Tool consistency eval
+          </h2>
+          <p className="text-secondary text-sm leading-relaxed mb-5 max-w-2xl">
+            A deterministic consistency check runs over every tool
+            in the registry: it verifies the tool exists in{" "}
+            <code className="font-mono text-[13px] text-primary">
+              lib/lumina/tools.ts
+            </code>
+            , has a matching spinner label in{" "}
+            <code className="font-mono text-[13px] text-primary">
+              TOOL_LABEL
+            </code>
+            , has a row in the manifest above, and that its{" "}
+            <code className="font-mono text-[13px] text-primary">
+              execute()
+            </code>{" "}
+            body is wrapped in{" "}
+            <code className="font-mono text-[13px] text-primary">
+              withTelemetry
+            </code>{" "}
+            so its invocation count fires. The script is the public,
+            runnable surface — invoke it locally and the result is
+            yours to read directly.
+          </p>
+          <div className="font-mono text-[12.5px] bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 text-secondary">
+            <div className="text-[#00d2ff]/80">$ npm run eval:lumina</div>
+            <div className="text-tertiary">
+              (or:{" "}
+              <code className="text-primary">
+                node scripts/eval-lumina-tools.mjs
+              </code>
+              )
+            </div>
+          </div>
+          <p className="text-secondary text-[13px] leading-relaxed mt-4 max-w-2xl">
+            Exit 0 means every tool surfaces consistently across the
+            four files; exit 1 flags the regression. Source at{" "}
+            <Link
+              href={`${REPO_BASE}/scripts/eval-lumina-tools.mjs`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#00d2ff]/90 hover:text-[#00d2ff] transition-colors"
+            >
+              scripts/eval-lumina-tools.mjs
+            </Link>
+            .
+          </p>
+        </Reveal>
+
+        {/* LIVE TOOL USAGE (Sub-PR 4.3) */}
+        <Reveal duration={0.7} className="mb-14">
+          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+            08 · Live tool usage
+          </h2>
+          <p className="text-secondary text-sm leading-relaxed mb-5 max-w-2xl">
+            Per-tool invocation counters fire on every chat turn —
+            one fire-and-forget KV{" "}
+            <code className="font-mono text-[13px] text-primary">
+              HINCRBY
+            </code>{" "}
+            per call. Refreshed at the brain page&apos;s hourly ISR
+            cadence; latency contributed to the chat is &lt; 5 ms.
+          </p>
+          {hasUsageData ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-white/[0.06]">
+                    <th className="py-2 pr-4 font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary font-normal">
+                      Tool
+                    </th>
+                    <th className="py-2 pr-4 font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary font-normal">
+                      Group
+                    </th>
+                    <th className="py-2 pr-4 font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary font-normal text-right">
+                      Calls
+                    </th>
+                    <th className="py-2 font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary font-normal text-right">
+                      Errors
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {usageRows
+                    .slice()
+                    .sort((a, b) => b.invocations - a.invocations)
+                    .map((row) => (
+                      <tr key={row.name}>
+                        <td className="py-2 pr-4 font-mono text-[12.5px] text-primary">
+                          {row.name}
+                        </td>
+                        <td className="py-2 pr-4 text-secondary text-[12.5px]">
+                          {row.group}
+                        </td>
+                        <td className="py-2 pr-4 font-mono text-[12.5px] text-[#00d2ff]/90 text-right">
+                          {row.invocations.toLocaleString("en-US")}
+                        </td>
+                        <td
+                          className={`py-2 font-mono text-[12.5px] text-right ${row.errors > 0 ? "text-amber-300/80" : "text-tertiary"}`}
+                        >
+                          {row.errors.toLocaleString("en-US")}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-tertiary text-sm italic">
+              No tool invocations recorded yet. Counters land here
+              the moment a chat turn calls a tool.
+            </p>
+          )}
         </Reveal>
 
         {/* FOOTER */}
