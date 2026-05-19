@@ -179,6 +179,12 @@ export const METRIC_KEYS = {
    *  topology). The per-section inspection signal lives separately
    *  at v5:operating:adoption (Phase 9.1). */
   OPERATING_PAGE_VISITS: "v5:telemetry:operating-page:visits",
+  /** Cumulative visit count for /v5/journal — the living
+   *  engineering journal index shipped in V5 Phase 9 Sub-PR 9.3.
+   *  One scalar for the index + per-entry pages combined; the
+   *  per-event distribution (index_view vs entry_view) lives at
+   *  v5:journal:adoption (Phase 9.3). */
+  JOURNAL_PAGE_VISITS: "v5:telemetry:journal-page:visits",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];

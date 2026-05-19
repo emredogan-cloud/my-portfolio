@@ -12,6 +12,10 @@
     {
       "path": "/api/notes/regenerate-audio",
       "schedule": "0 4 * * 1"
+    },
+    {
+      "path": "/api/cron/v5-journal",
+      "schedule": "0 3 * * 1"
     }
   ]
 }

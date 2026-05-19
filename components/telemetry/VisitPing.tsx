@@ -38,7 +38,8 @@ interface VisitPingProps {
     | "v5-perception"
     | "evolution"
     | "topology"
-    | "operating";
+    | "operating"
+    | "journal";
 }
 
 const STORAGE_PREFIX = "v4:telemetry:ping:";

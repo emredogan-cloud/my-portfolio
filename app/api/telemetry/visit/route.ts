@@ -74,6 +74,11 @@ const SURFACE_TO_KEY: Record<string, MetricKey> = {
    * data layer. Scalar visit counter; the per-section inspection
    * hash lives at v5:operating:adoption (Phase 9.1). */
   operating: METRIC_KEYS.OPERATING_PAGE_VISITS,
+  /* V5 Phase 9 Sub-PR 9.3 — living engineering journal.
+   * Counts both the /v5/journal index and per-week detail
+   * page visits. Per-event distribution (index_view vs
+   * entry_view) lives at v5:journal:adoption. */
+  journal: METRIC_KEYS.JOURNAL_PAGE_VISITS,
 };
 
 interface VisitPayload {
