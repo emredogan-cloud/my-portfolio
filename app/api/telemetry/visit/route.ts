@@ -56,6 +56,12 @@ const SURFACE_TO_KEY: Record<string, MetricKey> = {
    * the visit counter is the only signal it collects (consent
    * is what unlocks any v5:perception:* writes). */
   "v5-perception": METRIC_KEYS.V5_PERCEPTION_PAGE_VISITS,
+  /* V5 Phase 7 Sub-PR 7.1 — public engineering memory archive.
+   * The /evolution surface renders the temporal event registry;
+   * the visit count is the V4-level signal symmetric with
+   * /telemetry and /changelog. Surface-specific filter +
+   * deep-link signal lives separately at v5:temporal:adoption. */
+  evolution: METRIC_KEYS.EVOLUTION_PAGE_VISITS,
 };
 
 interface VisitPayload {
