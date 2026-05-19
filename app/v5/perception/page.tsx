@@ -8,6 +8,7 @@ import {
   ADOPTION_BUCKETS,
   COGNITION_SIGNAL_BUCKETS,
   DWELL_TIME_BUCKETS,
+  PACING_TRANSITION_BUCKETS,
   SCROLL_VELOCITY_BUCKETS,
   TAB_VISIBILITY_BUCKETS,
 } from "@/lib/v5/perception/buckets";
@@ -118,6 +119,13 @@ const CATEGORY_ROWS: readonly CategoryRow[] = [
     buckets: COGNITION_SIGNAL_BUCKETS,
     detail:
       "A three-state qualitative bucket derived from the per-session page counter — arrival on first navigation, exploring through 2-4 routes, engaged from 5 onward. The state never regresses within a session and is computed entirely client-side; only the bucket label reaches the endpoint.",
+  },
+  {
+    category: "pacing-transition",
+    signal: "How many navigations the session reached before backgrounding",
+    buckets: PACING_TRANSITION_BUCKETS,
+    detail:
+      "Fired exactly once per session via sendBeacon when the tab is first backgrounded — captures the visitor's departure-time depth. Four progressively widening buckets (first / few / many / deep) match the cognition taxonomy's boundaries. No raw count is persisted; the bucket label is the level of detail.",
   },
   {
     category: "adoption",

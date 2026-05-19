@@ -54,6 +54,11 @@ export const PERCEPTION_HASH_KEYS: Record<PerceptionCategory, string> = {
    * key keeps the 2-segment shape Sub-PR 6.1 established so the
    * record / read pipeline doesn't fork. */
   "cognition-signal": "v5:perception:cognition-signal",
+  /* Sub-PR 6.3 — pacing engine's session-end signal. Maps to the
+   * V5 § 5.1 telemetry slot `v5:pacing:transitions_per_session`;
+   * the literal hash key keeps the 2-segment shape Sub-PR 6.1
+   * established so the record / read pipeline doesn't fork. */
+  "pacing-transition": "v5:perception:pacing-transition",
   adoption: "v5:perception:adoption",
 } as const;
 
