@@ -185,6 +185,16 @@ export const METRIC_KEYS = {
    *  per-event distribution (index_view vs entry_view) lives at
    *  v5:journal:adoption (Phase 9.3). */
   JOURNAL_PAGE_VISITS: "v5:telemetry:journal-page:visits",
+  /** Cumulative visit count for /v5/ambient — the public ambient
+   *  intelligence transparency surface shipped in V5 Phase 10 Sub-PR
+   *  10.3 (the final manifestation of V5 § 2.3's transparency law).
+   *  Symmetric with the other V5 page-visit scalars (perception,
+   *  evolution, topology, operating, journal). The foundation
+   *  registry composition + endpoint signal live at
+   *  v5:ambient:adoption (Phase 10.1); Lumina-side ambient
+   *  consumption signal lives at v5:lumina-v5:ambient (Phase 10.2);
+   *  this scalar is the raw page visit count. */
+  AMBIENT_PAGE_VISITS: "v5:telemetry:ambient-page:visits",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];

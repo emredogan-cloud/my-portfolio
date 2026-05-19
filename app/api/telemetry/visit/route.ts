@@ -79,6 +79,14 @@ const SURFACE_TO_KEY: Record<string, MetricKey> = {
    * page visits. Per-event distribution (index_view vs
    * entry_view) lives at v5:journal:adoption. */
   journal: METRIC_KEYS.JOURNAL_PAGE_VISITS,
+  /* V5 Phase 10 Sub-PR 10.3 — public ambient intelligence
+   * transparency. /v5/ambient renders the foundation contract
+   * + the live aggregate context snapshot. Scalar visit
+   * counter; the foundation composition + endpoint signal
+   * lives at v5:ambient:adoption (Phase 10.1), the Lumina-
+   * side consumption signal at v5:lumina-v5:ambient
+   * (Phase 10.2). */
+  ambient: METRIC_KEYS.AMBIENT_PAGE_VISITS,
 };
 
 interface VisitPayload {
