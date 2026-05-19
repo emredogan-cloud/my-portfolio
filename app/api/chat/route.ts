@@ -27,6 +27,10 @@ import {
   METRIC_KEYS,
 } from "@/lib/telemetry/metrics";
 import { captureRouteError } from "@/lib/sentry";
+import { isAmbientEnabled } from "@/lib/v5/ambient/flags";
+import { composeAmbientContext } from "@/lib/v5/ambient/registry";
+import { recordLuminaAmbientEvent } from "@/lib/lumina/ambient-context";
+import type { AmbientContext } from "@/lib/v5/ambient/schema";
 
 /**
  * Lumina chat endpoint (V2).
@@ -128,17 +132,39 @@ export async function POST(req: Request) {
       );
     }
 
-    /* Memory contract (Sub-PR 3.3 + 4.4): load the cached recap of
-     * older turns if a session is in play AND the thread is past
-     * the verbatim window AND the visitor has not opted out. The
-     * recap gets folded into the system prompt; the model only
-     * sees the last VERBATIM_CONTEXT_MESSAGES turns verbatim. The
-     * visitor's UI still renders the full thread — the cap is
-     * model-side, not UI-side. */
-    const summaryRecord =
+    /* Memory contract (Sub-PR 3.3 + 4.4) + Phase 10.2 ambient
+     * context: load the cached recap of older turns AND compose the
+     * ambient operator context in parallel. Both are graceful no-ops
+     * when their inputs aren't available (no sessionId / opt-out /
+     * thread shorter than the window / ambient flag off / compose
+     * failed). Promise.all is safe because neither helper throws —
+     * the ambient compose's `viewOperating` catches its own failures
+     * and returns null. */
+    const wantsAmbient = isAmbientEnabled();
+    const [summaryRecord, ambientContext] = await Promise.all([
       !memoryOptOut && sessionId && messages.length > VERBATIM_CONTEXT_MESSAGES
-        ? await loadSummary(sessionId)
-        : null;
+        ? loadSummary(sessionId)
+        : Promise.resolve(null),
+      wantsAmbient
+        ? composeAmbientContext().catch(
+            (): AmbientContext | null => null,
+          )
+        : Promise.resolve(null),
+    ]);
+
+    /* Phase 10.2 telemetry — fire-and-forget per chat turn. The
+     * three event kinds (context_consumed / context_unavailable /
+     * context_skipped) cover every code path; the operator can
+     * read `v5:lumina-v5:ambient` to know Lumina's ambient
+     * adoption ratio without instrumenting the chat path further. */
+    if (!wantsAmbient) {
+      void recordLuminaAmbientEvent("context_skipped");
+    } else if (ambientContext) {
+      void recordLuminaAmbientEvent("context_consumed");
+    } else {
+      void recordLuminaAmbientEvent("context_unavailable");
+    }
+
     const verbatimMessages =
       messages.length > VERBATIM_CONTEXT_MESSAGES
         ? messages.slice(-VERBATIM_CONTEXT_MESSAGES)
@@ -164,6 +190,7 @@ export async function POST(req: Request) {
     const baseSystemPrompt = buildLuminaSystemPrompt(
       new Date(),
       summaryRecord?.summary ?? null,
+      ambientContext,
     );
     const baseTools = createLuminaTools(req);
     const isCritic = routing.agent === ARCHITECTURE_CRITIC_ID;
