@@ -4,6 +4,7 @@ import Link from "next/link";
 import AdoptionBeacon from "@/app/evolution/_components/AdoptionBeacon";
 import VisitPing from "@/components/telemetry/VisitPing";
 import { Reveal } from "@/components/ui/Reveal";
+import TimelineSlider from "@/components/v5/TimelineSlider";
 import { getSiteUrl } from "@/lib/site-url";
 import {
   getEvolutionEvents,
@@ -19,6 +20,10 @@ import {
   isEvolutionEventCategory,
 } from "@/lib/v5/temporal/schema";
 import { readTemporalAdoption } from "@/lib/v5/temporal/telemetry";
+import {
+  computeEngagementRate,
+  readTimelineEngagement,
+} from "@/lib/v5/temporal/timeline-telemetry";
 
 /**
  * V5 Phase 7 Sub-PR 7.1 — Evolution. The engineering memory
@@ -39,31 +44,36 @@ import { readTemporalAdoption } from "@/lib/v5/temporal/telemetry";
  *   NOT diary, social feed, marketing roadmap, or changelog
  *   duplicate.
  *
- * Page structure
- *   01  hero
- *   02  registry summary (totals + category distribution)
- *   03  category filter (server-rendered Links)
- *   04  the events themselves (the memory)
- *   05  source files + reference catalogue
+ * Page structure (post-Sub-PR 7.3)
+ *   01  registry summary (totals + category distribution)
+ *   02  filter by category
+ *   03  scrub the timeline  ← NEW in 7.3 (mounts the slider)
+ *   04  the memory (event cards)
+ *   05  live adoption + playback + timeline engagement
+ *   06  source files
  *
  * Caching: 1h ISR. Same cadence as /lumina/brain and
  * /v5/perception. The registry changes only on deploy (the data
  * file is the source of record), so the snapshot is stale-safe.
  *
- * Performance posture (Phase 7 brief):
- *   - Static-first. Every section above is server-rendered.
- *   - Zero new dependencies. Reveal + Link + VisitPing are
- *     already in the bundle.
- *   - No client-side timeline, no canvas, no GSAP, no animation
- *     framework beyond the existing Reveal wrapper.
- *   - Reduced-motion inherits the global CSS guard.
- *   - Mobile: the layout is single-column at < 768px; every
- *     interactive surface is a same-origin Link.
+ * Performance posture (Phase 7 brief)
+ *   - Static-first. Every section above is server-rendered
+ *     except the new slider (Sub-PR 7.3) which is a single
+ *     client island consuming the Phase 7.2 playback primitive.
+ *   - Slider bundle delta (frames + playback + slider combined):
+ *     ~7-11 KB minified, ~3-4 KB gzipped. Within V5 § 2.7
+ *     envelope for the /v5/* + /evolution route family.
+ *   - No canvas, no GSAP, no animation framework. The slider
+ *     uses pure CSS transitions guarded by the
+ *     prefers-reduced-motion preference.
+ *   - Mobile: single-column at < 768px; the slider's 44px
+ *     hit-target row satisfies WCAG 2.5.5 AAA.
  *
- * What this page does NOT do (Phase 7.1 explicit deferrals):
- *   - No timeline slider / scrubber. That lands in Sub-PR 7.2+.
- *   - No architecture playback / interpolation. Same.
- *   - No cinematic transitions between snapshots. Same.
+ * What this page does NOT do (Phase 7.3 explicit deferrals)
+ *   - No architecture playback / interpolation. Sub-PR 7.4 will
+ *     mount the slider with `system === slug` on the
+ *     /architecture/<slug> pages and add the visual snapshot
+ *     fade layer.
  *   - No WebGPU / 3D surfaces. Phase 8 owns that quarantined
  *     spectacle.
  *   - No per-event detail page. The list view exposes
@@ -153,6 +163,16 @@ const SOURCE_LINKS: readonly SourceLink[] = [
     note: "Aggregate-only KV hash at v5:topology:playback. Five event kinds (seek / scrub / play / pause / step). Graceful no-op when KV is unavailable.",
   },
   {
+    label: "Timeline slider (7.3)",
+    path: "components/v5/TimelineSlider.tsx",
+    note: "The first consumer of the 7.2 playback controller. WAI-ARIA slider role, keyboard + mouse + touch all functional, WCAG 2.5.5 AAA hit targets, reduced-motion preserves the slider but removes the thumb transition.",
+  },
+  {
+    label: "Timeline engagement (7.3)",
+    path: "lib/v5/temporal/timeline-telemetry.ts",
+    note: "Aggregate-only KV hash at v5:topology:timeline. Two event kinds (mounted / engaged). The engagement_rate the V5 doc names is computed downstream as engaged / mounted.",
+  },
+  {
     label: "Event data",
     path: "data/temporal/events.ts",
     note: "The canonical hand-curated registry. Append-only by convention. Each entry carries id / date / category / summary plus optional version / system / rationale / commitSha / refs / status / supersedes / provenance.",
@@ -222,10 +242,17 @@ export default async function EvolutionPage({
   }
 
   const summary = summariseEvolutionRegistry();
-  const [adoption, playbackAdoption] = await Promise.all([
+  const [adoption, playbackAdoption, timelineEngagement] = await Promise.all([
     readTemporalAdoption(),
     readPlaybackAdoption(),
+    readTimelineEngagement(),
   ]);
+  const engagementRate = computeEngagementRate(timelineEngagement);
+  /* Full event list — passed to the slider unfiltered so the
+   * scrub axis always reflects the entire archive, not just the
+   * currently filtered subset. The page's "The memory" section
+   * still respects the category filter. */
+  const allEventsForSlider = getEvolutionEvents();
 
   return (
     <main id="main" className="relative min-h-screen bg-black">
@@ -273,9 +300,9 @@ export default async function EvolutionPage({
             </span>
             <span
               className="ml-auto px-2.5 py-1 rounded-full border font-mono uppercase tracking-[0.18em] text-[9px] border-[#00d2ff]/30 bg-[#00d2ff]/[0.04] text-[#00d2ff]/80"
-              title="Phase 7 foundation — temporal primitives, version-memory schema, evolution event registry, playback primitive. Timeline slider lands in Sub-PR 7.3."
+              title="Phase 7 — temporal primitives, version-memory schema, evolution event registry, playback primitive, timeline slider. Architecture-page integration lands in Sub-PR 7.4."
             >
-              Phase 7 · primitives
+              Phase 7 · slider
             </span>
           </div>
         </Reveal>
@@ -399,10 +426,34 @@ export default async function EvolutionPage({
           ) : null}
         </Reveal>
 
+        {/* SLIDER — Sub-PR 7.3 inserts the first consumer of the
+            7.2 playback controller here. Reads the unfiltered
+            registry so the scrub axis covers the entire archive
+            regardless of the current category filter. Renders
+            null when the registry is empty (defensive — the
+            seed registry is never empty). */}
+        <Reveal duration={0.7} className="mb-14">
+          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+            03 · Scrub the timeline
+          </h2>
+          <p className="text-secondary text-sm leading-relaxed mb-7 max-w-2xl">
+            The slider below is the cursor over the engineering
+            memory. Drag the thumb, click a tick, step with the
+            arrow keys, or press play to let the cursor advance
+            from the present back to genesis. The track is a
+            single WAI-ARIA slider — keyboard, mouse, and touch
+            all work; reduced-motion preserves the slider but
+            removes the easing.
+          </p>
+          <div className="border border-white/[0.06] rounded-xl bg-white/[0.02] p-5 md:p-6">
+            <TimelineSlider events={allEventsForSlider} />
+          </div>
+        </Reveal>
+
         {/* THE EVENTS */}
         <Reveal duration={0.7} className="mb-14">
           <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            03 · The memory
+            04 · The memory
           </h2>
           {events.length === 0 ? (
             <div className="font-mono text-[13px] text-tertiary border border-white/[0.06] rounded-xl p-6 bg-white/[0.02]">
@@ -435,7 +486,7 @@ export default async function EvolutionPage({
             operator. */}
         <Reveal duration={0.7} className="mb-14">
           <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            04 · Live adoption
+            05 · Live adoption
           </h2>
           <p className="text-secondary text-sm leading-relaxed mb-5 max-w-2xl">
             The temporal layer records three kinds of adoption
@@ -456,23 +507,19 @@ export default async function EvolutionPage({
               value={adoption.event_view ?? null}
             />
           </dl>
-          {/* Sub-PR 7.2 — the playback primitive ships with no
-              consumer in 7.2 (the slider lands in 7.3). The
-              counter row below is the chassis tile that surfaces
-              the new hash so the operator can verify the primitive
-              is wired without claiming behaviour the layer doesn't
-              yet have. Every value below stays at zero until a
-              future sub-PR mounts a consumer that fires through
-              /api/v5/temporal/playback. */}
+          {/* Playback verbs — Sub-PR 7.2 primitive's hash. The
+              7.3 slider above is the first consumer; every verb
+              the visitor performs lands in one of these five
+              fields. */}
           <p className="text-tertiary text-[13px] leading-relaxed mt-7 mb-4 max-w-2xl">
             <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/80 mr-2">
-              Playback (latent)
+              Playback verbs
             </span>
-            The Phase 7.2 playback primitive — seek, scrub, play,
-            pause, step — ships without a consumer. The slider that
-            fires these events lands in Sub-PR 7.3. The tiles below
-            are the chassis; every value stays at zero until the
-            consumer mounts.
+            Counters for the five primitive operations the slider
+            exposes — seek (click or keyboard jump), scrub
+            (drag), play (auto-advance), pause, step (single
+            frame). Every counter increments fire-and-forget; the
+            slider never blocks on the network.
           </p>
           <dl className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <AdoptionTile label="seek" value={playbackAdoption.seek ?? null} />
@@ -487,12 +534,43 @@ export default async function EvolutionPage({
             />
             <AdoptionTile label="step" value={playbackAdoption.step ?? null} />
           </dl>
+          {/* Timeline engagement — Sub-PR 7.3's session-deduped
+              lifecycle hash. `mounted` increments once per
+              session when the slider renders; `engaged` once on
+              first interaction. The ratio is the engagement_rate
+              the V5 doc names — surfaced separately so the
+              operator reads it as a derived metric. */}
+          <p className="text-tertiary text-[13px] leading-relaxed mt-7 mb-4 max-w-2xl">
+            <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/80 mr-2">
+              Timeline engagement
+            </span>
+            The slider&apos;s lifecycle hash. Each visitor session
+            increments <code className="font-mono text-[12px] text-primary">mounted</code>{" "}
+            at most once when the slider renders, and{" "}
+            <code className="font-mono text-[12px] text-primary">engaged</code>{" "}
+            at most once on the first scrub, seek, step, or play
+            interaction. The rate captures awareness vs use.
+          </p>
+          <dl className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <AdoptionTile
+              label="mounted"
+              value={timelineEngagement.mounted ?? null}
+            />
+            <AdoptionTile
+              label="engaged"
+              value={timelineEngagement.engaged ?? null}
+            />
+            <AdoptionRateTile
+              label="engagement_rate"
+              value={engagementRate}
+            />
+          </dl>
         </Reveal>
 
         {/* SOURCE FILES */}
         <Reveal duration={0.7} className="mb-14">
           <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            05 · Source files
+            06 · Source files
           </h2>
           <p className="text-secondary text-sm leading-relaxed mb-5 max-w-2xl">
             Every entry in the registry is grounded in code. Click
@@ -539,15 +617,16 @@ export default async function EvolutionPage({
               <span>Versioned + typed + provenanced</span>
             </p>
             <p className="text-tertiary text-[12px] leading-relaxed max-w-2xl">
-              Phase 7 opens with this foundation: the schema, the
-              registry, the adoption hook, the JSON feed, this
-              archive surface, and — as of Sub-PR 7.2 — the
-              deterministic playback primitive that subsequent
-              sub-PRs (the timeline slider in 7.3, the
-              architecture-page integration in 7.4) read through.
-              Until those consumers ship, the page is what it
-              claims to be: a quietly archival surface that reads
-              as engineering memory.
+              Phase 7 has reached its slider: Sub-PR 7.1 shipped
+              the schema + registry + archive surface, 7.2 added
+              the deterministic playback primitive, and 7.3 mounts
+              the first consumer — the WAI-ARIA slider above. The
+              architecture-page integration in Sub-PR 7.4 will
+              mount the same slider scoped to a single project&apos;s
+              event slice. The page remains what it claims to be:
+              a quietly archival surface that reads as engineering
+              memory, with a single calm instrument for navigating
+              it.
             </p>
           </div>
         </Reveal>
@@ -596,6 +675,32 @@ function AdoptionTile({
       </p>
       <p className="font-mono text-[20px] text-primary leading-none tabular-nums">
         {value === null ? "—" : value.toLocaleString("en-US")}
+      </p>
+    </div>
+  );
+}
+
+function AdoptionRateTile({
+  label,
+  value,
+}: {
+  label: string;
+  value: number | null;
+}) {
+  /* Same visual shape as AdoptionTile but renders a percentage
+   * with one decimal place. `null` = "no signal yet" (the rate
+   * is undefined when mounted === 0). */
+  const display =
+    value === null
+      ? "—"
+      : `${(value * 100).toFixed(value >= 0.995 ? 0 : 1)}%`;
+  return (
+    <div className="border border-white/[0.06] rounded-xl bg-[#00d2ff]/[0.04] p-4">
+      <p className="font-mono uppercase tracking-[0.18em] text-[9px] text-tertiary mb-1">
+        {label}
+      </p>
+      <p className="font-mono text-[20px] text-[#00d2ff]/90 leading-none tabular-nums">
+        {display}
       </p>
     </div>
   );
