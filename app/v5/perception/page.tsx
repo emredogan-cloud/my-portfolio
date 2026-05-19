@@ -6,6 +6,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { getSiteUrl } from "@/lib/site-url";
 import {
   ADOPTION_BUCKETS,
+  COGNITION_SIGNAL_BUCKETS,
   DWELL_TIME_BUCKETS,
   SCROLL_VELOCITY_BUCKETS,
   TAB_VISIBILITY_BUCKETS,
@@ -110,6 +111,13 @@ const CATEGORY_ROWS: readonly CategoryRow[] = [
     buckets: ["(from-slug>to-slug)"],
     detail:
       "Ordered pair of route slugs (e.g. home>about). Records the transition itself, not the visitor making it. Counts compose with one another into a Markov-shaped graph the operator can read; no individual visitor's path is reconstructible.",
+  },
+  {
+    category: "cognition-signal",
+    signal: "Inferred attention state at the moment of a navigation",
+    buckets: COGNITION_SIGNAL_BUCKETS,
+    detail:
+      "A three-state qualitative bucket derived from the per-session page counter — arrival on first navigation, exploring through 2-4 routes, engaged from 5 onward. The state never regresses within a session and is computed entirely client-side; only the bucket label reaches the endpoint.",
   },
   {
     category: "adoption",

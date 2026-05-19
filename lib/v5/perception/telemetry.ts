@@ -48,6 +48,12 @@ export const PERCEPTION_HASH_KEYS: Record<PerceptionCategory, string> = {
   "section-engagement": "v5:perception:section-engagement",
   "tab-visibility": "v5:perception:tab-visibility",
   "navigation-flow": "v5:perception:navigation-flow",
+  /* Sub-PR 6.2 — navigation observer's primary output. Maps to
+   * the V5 § 5.1 telemetry slot
+   * `v5:perception:navigation:cognition_signals`; the literal hash
+   * key keeps the 2-segment shape Sub-PR 6.1 established so the
+   * record / read pipeline doesn't fork. */
+  "cognition-signal": "v5:perception:cognition-signal",
   adoption: "v5:perception:adoption",
 } as const;
 

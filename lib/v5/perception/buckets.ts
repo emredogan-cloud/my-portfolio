@@ -47,6 +47,13 @@
  *   section-engagement  → which on-page section drew attention?
  *   tab-visibility      → how long was the tab backgrounded?
  *   navigation-flow     → which page-to-page transition fired?
+ *   cognition-signal    → which inferred attention state (arrival /
+ *                         exploring / engaged) the session is in
+ *                         at the moment of recording. Added in
+ *                         Sub-PR 6.2 as the navigation observer's
+ *                         primary output. Maps to V5 § 5.1's
+ *                         `v5:perception:navigation:cognition_signals`
+ *                         telemetry slot.
  *   adoption            → opt-in / revoke / deny events for the
  *                         perception layer itself (the only events
  *                         allowed to fire without prior consent —
@@ -58,6 +65,7 @@ export const PERCEPTION_CATEGORIES = [
   "section-engagement",
   "tab-visibility",
   "navigation-flow",
+  "cognition-signal",
   "adoption",
 ] as const;
 
@@ -127,6 +135,17 @@ export const ADOPTION_BUCKETS = [
 ] as const;
 export type AdoptionBucket = (typeof ADOPTION_BUCKETS)[number];
 
+/** cognition-signal buckets. Re-exported from
+ *  `lib/v5/navigation/cognition.ts` so the perception endpoint's
+ *  bucket validation has a single import surface, while the
+ *  navigation observer can import the same constant for its own
+ *  inference logic. Added in Sub-PR 6.2. */
+export {
+  COGNITION_SIGNAL_BUCKETS,
+  type CognitionSignalBucket,
+} from "@/lib/v5/navigation/cognition";
+import { COGNITION_SIGNAL_BUCKETS as COG_BUCKETS } from "@/lib/v5/navigation/cognition";
+
 /* section-engagement + navigation-flow buckets are dynamic — the
  * label is the section / path slug itself. The endpoint validates
  * these against a syntactic shape (kebab-case, max length) instead
@@ -164,6 +183,8 @@ export function isValidBucket(
       return (TAB_VISIBILITY_BUCKETS as readonly string[]).includes(value);
     case "adoption":
       return (ADOPTION_BUCKETS as readonly string[]).includes(value);
+    case "cognition-signal":
+      return (COG_BUCKETS as readonly string[]).includes(value);
     case "section-engagement":
     case "navigation-flow":
       return isValidDynamicBucket(value);

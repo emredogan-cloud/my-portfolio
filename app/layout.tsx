@@ -7,6 +7,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import LuminaChat from "@/components/chat/LuminaChat";
 import GlobalGrain from "@/components/layout/GlobalGrain";
+import CognitionAwareNavigationObserver from "@/components/v5/CognitionAwareNavigationObserver";
 import { getSiteUrl } from "@/lib/site-url";
 
 /* ── Geist — sole typography across the portfolio.
@@ -148,6 +149,14 @@ export default function RootLayout({
         {children}
         <Footer />
         <LuminaChat />
+        {/* V5 Phase 6 Sub-PR 6.2 — cognition-aware navigation observer.
+            Renders null. Fires perception events to
+            /api/v5/perception/event ONLY when the visitor has opted in
+            via the /v5/perception transparency page. Idle CPU is zero —
+            the observer's only work runs on usePathname() change, which
+            is a user action. Mounted globally because navigation
+            observation requires a single layout-level instance. */}
+        <CognitionAwareNavigationObserver />
         <Analytics />
       </body>
     </html>
