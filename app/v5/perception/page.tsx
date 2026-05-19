@@ -22,13 +22,15 @@ import { readPerceptionSnapshot } from "@/lib/v5/perception/telemetry";
 import OptInToggle from "@/app/v5/perception/_components/OptInToggle";
 
 /**
- * V5 Phase 6 Sub-PR 6.1 — public transparency page for perception.
+ * V5 Phase 6 — public transparency page for perception.
  *
- * V5 § 2.3 ("Public Transparency Disiplini" — sterner than V4)
- * mandates that every V5 surface ship with a public explanation
- * of HOW it works and WHY. The perception layer is a privacy-
- * sensitive ambient context system; that mandate is non-negotiable
- * here.
+ * Sub-PR 6.1 shipped the foundation version of this page
+ * (consent toggle + schema + privacy invariants + live
+ * snapshot). Sub-PR 6.5 expands it with the public algorithm
+ * description that V5 § 2.3 ("Public Transparency Disiplini")
+ * demands of every V5 surface — visitors should see not just
+ * WHAT is collected, but HOW the collection algorithm works,
+ * gate by gate.
  *
  * Voice (V5 doc explicit):
  *   - calm
@@ -38,8 +40,17 @@ import OptInToggle from "@/app/v5/perception/_components/OptInToggle";
  *   NOT legalistic, corporate, or manipulative.
  *
  * The page reads as an operator console for the perception
- * subsystem: schema first, then privacy invariants, then opt-in
- * mechanism, then a live aggregate snapshot, then source links.
+ * subsystem:
+ *   01 opt-in toggle (the only interactive surface)
+ *   02 closed schema — what categories + buckets exist
+ *   03 how it works — the algorithm, three gates, the flow
+ *   04 negative space — what is never collected
+ *   05 privacy invariants — the structural guarantees
+ *   06 retention & aggregation — the data lifecycle
+ *   07 live aggregate snapshot — the current state
+ *   08 why — the operating reason
+ *   09 related transparency — cross-link to /lumina/brain
+ *   10 source files — every claim grounded in code
  *
  * Caching: 1h ISR — the page is near-static (the only changing
  * piece is the aggregate snapshot, and it doesn't need to be
@@ -50,7 +61,7 @@ export const revalidate = 3600;
 
 const PAGE_TITLE = "Perception — ambient context layer | Emre Doğan";
 const PAGE_DESCRIPTION =
-  "Public transparency surface for the V5 perception layer. What this site quietly aggregates, what it never touches, how the opt-in works, and why this layer exists at all.";
+  "Public transparency surface for the V5 perception layer. The full algorithm, the closed schema, the three gates, the privacy invariants, the live aggregate snapshot, and the reason any of this exists.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,
@@ -188,7 +199,7 @@ const SOURCE_LINKS: readonly SourceLink[] = [
   {
     label: "Schema + buckets",
     path: "lib/v5/perception/buckets.ts",
-    note: "Category allow-list, bucket allow-lists, and the raw → bucket helpers Phase 6.2+ observers will call.",
+    note: "Category allow-list, bucket allow-lists, and the raw → bucket helpers observers call. Eight categories live here as of Sub-PR 6.4.",
   },
   {
     label: "Consent resolution",
@@ -198,7 +209,7 @@ const SOURCE_LINKS: readonly SourceLink[] = [
   {
     label: "KV record + read",
     path: "lib/v5/perception/telemetry.ts",
-    note: "HINCRBY one bucket; HGETALL all six categories. Graceful no-op when KV is unavailable.",
+    note: "HINCRBY one bucket; HGETALL all eight categories. Graceful no-op when KV is unavailable.",
   },
   {
     label: "Edge event endpoint",
@@ -206,9 +217,39 @@ const SOURCE_LINKS: readonly SourceLink[] = [
     note: "POST { category, bucket }. Edge runtime, three gates (env / allow-list / consent), always 204.",
   },
   {
+    label: "Cognition observer",
+    path: "components/v5/CognitionAwareNavigationObserver.tsx",
+    note: "Sub-PR 6.2. Mounted in the root layout. Watches usePathname() and fires cognition-signal + navigation-flow events on transitions, gated on consent.",
+  },
+  {
+    label: "Cognition inference",
+    path: "lib/v5/navigation/cognition.ts",
+    note: "Sub-PR 6.2. The three-state inference (arrival / exploring / engaged) derived from the per-session page counter.",
+  },
+  {
+    label: "Pacing provider",
+    path: "components/v5/PacingProvider.tsx",
+    note: "Sub-PR 6.3. React Context exposing the duration multiplier. Owns the visibility:hidden beacon that fires the pacing-transition event once per session via sendBeacon.",
+  },
+  {
+    label: "Pacing inference",
+    path: "lib/v5/pacing/inference.ts",
+    note: "Sub-PR 6.3. The cognition + reduced-motion → multiplier resolver. Spring physics is type-system banned.",
+  },
+  {
+    label: "Memory TTL",
+    path: "lib/v5/memory/ttl.ts",
+    note: "Sub-PR 6.4. Operator-configurable Lumina session memory TTL (14-30 day range; default 14 = V4 parity).",
+  },
+  {
+    label: "Memory adoption",
+    path: "lib/v5/memory/telemetry.ts",
+    note: "Sub-PR 6.4. The hit / miss / store / opt-out counters that drive the hit-rate tile visible on /lumina/brain.",
+  },
+  {
     label: "This page",
     path: "app/v5/perception/page.tsx",
-    note: "The transparency surface itself. The verbatim text below lives in this file; the snapshot at the bottom is read from KV at ISR time.",
+    note: "The transparency surface itself. The verbatim text above lives in this file; the snapshot in section 07 is read from KV at ISR time.",
   },
 ];
 
@@ -265,10 +306,10 @@ export default async function V5PerceptionPage() {
               Perception
             </span>
             <span
-              className="ml-auto px-2.5 py-1 rounded-full border font-mono uppercase tracking-[0.18em] text-[9px] border-white/10 bg-white/[0.02] text-tertiary"
-              title="Phase 6 — foundation surface. No observers ship in 6.1."
+              className="ml-auto px-2.5 py-1 rounded-full border font-mono uppercase tracking-[0.18em] text-[9px] border-[#00d2ff]/30 bg-[#00d2ff]/[0.04] text-[#00d2ff]/80"
+              title="Phase 6 foundation complete — observation window opens after Sub-PR 6.5."
             >
-              Phase 6 · foundation
+              Phase 6 · transparency
             </span>
           </div>
         </Reveal>
@@ -282,13 +323,14 @@ export default async function V5PerceptionPage() {
             </span>
           </h1>
           <p className="text-secondary max-w-2xl mt-7 text-base md:text-lg leading-relaxed">
-            This page describes what the site quietly aggregates when a
-            visitor opts in, what it never touches, and the contract
-            the opt-in mechanism enforces. The layer is opt-in
-            default-off, aggregate-only, and removable in one click.
-            Phase 6.1 ships the foundation; observers land in
-            subsequent sub-PRs and route every event through the
-            schema documented below.
+            This page describes the perception layer end-to-end:
+            the closed schema, the three gates between a visitor
+            action and a stored count, the privacy invariants the
+            architecture enforces, and the live aggregate the layer
+            is currently producing. Opt-in default-off, aggregate-
+            only, revocable in one click. Phase 6 lands its
+            observers across five sub-PRs; this page is the single
+            place every one of them is audit-able.
           </p>
         </Reveal>
 
@@ -358,10 +400,202 @@ export default async function V5PerceptionPage() {
           </ul>
         </Reveal>
 
+        {/* HOW IT WORKS — Sub-PR 6.5 expansion. The algorithm
+            described gate by gate. The visitor reads the
+            collection mechanics in the same depth the operator
+            does. */}
+        <Reveal duration={0.7} className="mb-14">
+          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+            03 · How it works
+          </h2>
+          <p className="text-secondary text-sm leading-relaxed mb-6 max-w-2xl">
+            Every recorded count passes through three gates in a
+            fixed order. The endpoint short-circuits at the first
+            gate that fails — a request that crosses none of them
+            still resolves with the same{" "}
+            <code className="font-mono text-[13px] text-primary">
+              204 No Content
+            </code>{" "}
+            as a request that crosses all three, so the
+            presence-or-absence of telemetry is never an attack
+            surface a network observer can probe.
+          </p>
+
+          {/* THE THREE GATES — ordered, named, each one
+              explained in operator-grade detail. */}
+          <ol className="space-y-4 mb-7 list-none">
+            <li className="border border-white/[0.06] rounded-xl bg-white/[0.02] p-5">
+              <div className="flex items-baseline justify-between gap-3 mb-2">
+                <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/80">
+                  Gate 1 · operator master switch
+                </span>
+                <code className="font-mono text-[11px] text-tertiary">
+                  process.env[{PERCEPTION_ENABLED_ENV}] === &quot;1&quot;
+                </code>
+              </div>
+              <p className="text-secondary text-[13px] leading-relaxed">
+                Cheapest check. Without this env set on the
+                deployment, the endpoint silently no-ops every
+                event before reading the body. The operator can
+                dark-launch the entire perception subsystem by
+                leaving the variable unset, which is the default
+                in production right now.
+              </p>
+            </li>
+            <li className="border border-white/[0.06] rounded-xl bg-white/[0.02] p-5">
+              <div className="flex items-baseline justify-between gap-3 mb-2">
+                <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/80">
+                  Gate 2 · closed schema
+                </span>
+                <code className="font-mono text-[11px] text-tertiary">
+                  isPerceptionCategory ∧ isValidBucket
+                </code>
+              </div>
+              <p className="text-secondary text-[13px] leading-relaxed">
+                The inbound{" "}
+                <code className="font-mono text-[12px] text-primary">
+                  category
+                </code>{" "}
+                must be one of the eight allow-listed values in
+                section 02. The inbound{" "}
+                <code className="font-mono text-[12px] text-primary">
+                  bucket
+                </code>{" "}
+                must be either a member of that category&apos;s closed
+                list (for fixed categories) or pass the kebab-case
+                shape check (for dynamic categories like
+                navigation-flow). Anything else drops at the door.
+              </p>
+            </li>
+            <li className="border border-white/[0.06] rounded-xl bg-white/[0.02] p-5">
+              <div className="flex items-baseline justify-between gap-3 mb-2">
+                <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/80">
+                  Gate 3 · visitor consent
+                </span>
+                <code className="font-mono text-[11px] text-tertiary">
+                  Cookie: {PERCEPTION_CONSENT_COOKIE}=granted
+                </code>
+              </div>
+              <p className="text-secondary text-[13px] leading-relaxed">
+                The endpoint reads the perception consent cookie
+                from the inbound{" "}
+                <code className="font-mono text-[12px] text-primary">
+                  Cookie
+                </code>{" "}
+                header. Without{" "}
+                <code className="font-mono text-[12px] text-primary">
+                  granted
+                </code>{" "}
+                the event drops — except for the{" "}
+                <code className="font-mono text-[12px] text-primary">
+                  adoption
+                </code>{" "}
+                category, which bypasses this gate because
+                recording the consent decision cannot itself
+                require prior consent. The bypass is the only
+                exception architecturally, and it&apos;s explicit
+                in the endpoint source.
+              </p>
+            </li>
+          </ol>
+
+          {/* THE FLOW — ASCII-style diagram of how a single
+              event traverses the system. */}
+          <h3 className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary mb-3">
+            The flow
+          </h3>
+          <div className="font-mono text-[12px] text-secondary border border-white/[0.06] rounded-xl bg-black/40 p-4 overflow-x-auto whitespace-pre leading-relaxed">
+{`opt-in toggled  ─►  cookie + localStorage written
+                     │
+                     ▼
+client observer  ──►  POST  { category, bucket }
+                     │
+                     ▼
+edge endpoint    ──►  gate 1: env switch on?
+                  ─►  gate 2: category + bucket valid?
+                  ─►  gate 3: consent cookie present? (or category = adoption)
+                     │
+                     ▼
+KV HINCRBY       ──►  v5:perception:<category>  →  { <bucket>: count + 1 }
+                     │
+                     ▼
+this page (ISR)  ──►  HGETALL × 8  →  section 07 below`}
+          </div>
+          <p className="text-secondary text-[13px] leading-relaxed mt-4 max-w-2xl">
+            Every byte that lands in storage is one of the closed
+            bucket labels documented in section 02. The HINCRBY
+            primitive is atomic and stateless — there is no
+            session reference, no timestamp, no identifier
+            anywhere on the persistence path.
+          </p>
+
+          {/* INFERENCE LAYERS — cognition and pacing don't add
+              new stored data; they compute over what's already
+              counted. Worth surfacing here. */}
+          <h3 className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary mb-3 mt-7">
+            Two inference layers above storage
+          </h3>
+          <dl className="divide-y divide-white/[0.06] border-t border-b border-white/[0.06]">
+            <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-2 md:gap-6 py-4">
+              <dt className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary">
+                Cognition signal
+              </dt>
+              <dd className="text-secondary text-sm leading-relaxed">
+                A per-session counter in sessionStorage advances
+                by one on every route mount the client observer
+                sees. The counter maps to one of three states —{" "}
+                <code className="font-mono text-[12px] text-primary">
+                  arrival
+                </code>{" "}
+                (1),{" "}
+                <code className="font-mono text-[12px] text-primary">
+                  exploring
+                </code>{" "}
+                (2-4),{" "}
+                <code className="font-mono text-[12px] text-primary">
+                  engaged
+                </code>{" "}
+                (5+) — and fires one cognition-signal event per
+                transition. The state never regresses within a
+                session.
+              </dd>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-2 md:gap-6 py-4">
+              <dt className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary">
+                Pacing multiplier
+              </dt>
+              <dd className="text-secondary text-sm leading-relaxed">
+                The cognition state plus the OS reduced-motion
+                preference resolve to one of four duration
+                multipliers —{" "}
+                <code className="font-mono text-[12px] text-primary">
+                  FULL
+                </code>{" "}
+                (1.0),{" "}
+                <code className="font-mono text-[12px] text-primary">
+                  MID
+                </code>{" "}
+                (0.85),{" "}
+                <code className="font-mono text-[12px] text-primary">
+                  SNAPPY
+                </code>{" "}
+                (0.65),{" "}
+                <code className="font-mono text-[12px] text-primary">
+                  STILL
+                </code>{" "}
+                (0.0). Reduced-motion is an unconditional
+                override. Animation consumers read the
+                multiplier through a React Context; the layer
+                ships no spring physics by type-system enforcement.
+              </dd>
+            </div>
+          </dl>
+        </Reveal>
+
         {/* WHAT IS NOT */}
         <Reveal duration={0.7} className="mb-14">
           <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            03 · What is never collected
+            04 · What is never collected
           </h2>
           <ul className="space-y-3 text-secondary text-sm leading-relaxed list-disc list-inside marker:text-tertiary">
             <li>
@@ -375,9 +609,17 @@ export default async function V5PerceptionPage() {
             <li>
               No identifier — anonymous or otherwise — minted by this
               layer. The Lumina session memory (separately documented
-              at /lumina/brain) is the only place visitor state
-              persists, and even that is anonymous + opt-out + 14-day
-              TTL.
+              at{" "}
+              <Link
+                href="/lumina/brain"
+                className="text-[#00d2ff]/80 hover:text-[#00d2ff] transition-colors"
+              >
+                /lumina/brain
+              </Link>
+              ) is the only place visitor state persists, and even
+              that is anonymous + opt-out + a 14-day TTL (operator-
+              configurable to 30 days; see the brain page for the
+              live value).
             </li>
             <li>
               No timestamp on individual events. The aggregate hash
@@ -394,7 +636,7 @@ export default async function V5PerceptionPage() {
         {/* PRIVACY INVARIANTS */}
         <Reveal duration={0.7} className="mb-14">
           <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            04 · Privacy invariants
+            05 · Privacy invariants
           </h2>
           <dl className="divide-y divide-white/[0.06] border-t border-b border-white/[0.06]">
             {PRIVACY_INVARIANTS.map((row) => (
@@ -416,7 +658,7 @@ export default async function V5PerceptionPage() {
         {/* RETENTION + AGGREGATION */}
         <Reveal duration={0.7} className="mb-14">
           <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            05 · Retention &amp; aggregation
+            06 · Retention &amp; aggregation
           </h2>
           <p className="text-secondary text-sm leading-relaxed mb-4 max-w-2xl">
             Aggregated counts live in six Vercel KV hashes — one per
@@ -447,7 +689,7 @@ export default async function V5PerceptionPage() {
         {/* SNAPSHOT */}
         <Reveal duration={0.7} className="mb-14">
           <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            06 · Live aggregate snapshot
+            07 · Live aggregate snapshot
           </h2>
           <p className="text-secondary text-sm leading-relaxed mb-5 max-w-2xl">
             Read from KV at this page&apos;s hourly ISR cadence. The
@@ -518,7 +760,7 @@ export default async function V5PerceptionPage() {
         {/* WHY */}
         <Reveal duration={0.7} className="mb-14">
           <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            07 · Why this exists
+            08 · Why this exists
           </h2>
           <p className="text-secondary text-sm leading-relaxed mb-4 max-w-2xl">
             Subsequent V5 phases — temporal architecture playback,
@@ -538,10 +780,73 @@ export default async function V5PerceptionPage() {
           </p>
         </Reveal>
 
+        {/* RELATED TRANSPARENCY — Sub-PR 6.5 addition. The
+            perception layer and the Lumina memory layer share
+            the same V5 transparency contract but live at
+            separate URLs because they target different audiences
+            (perception = ambient ecosystem context; memory =
+            chat-specific). Cross-link so a privacy-minded reader
+            of one finds the other. */}
+        <Reveal duration={0.7} className="mb-14">
+          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+            09 · Related transparency
+          </h2>
+          <p className="text-secondary text-sm leading-relaxed mb-5 max-w-2xl">
+            The perception layer is one of two V5 surfaces that
+            persist any visitor state. The other is the Lumina
+            session memory — the conversation history that the
+            chat embedded across this portfolio uses to maintain
+            context across turns. Each has its own transparency
+            page; together they describe every byte the platform
+            stores about a visit.
+          </p>
+          <ul className="divide-y divide-white/[0.06] border-t border-b border-white/[0.06]">
+            <li>
+              <Link
+                href="/lumina/brain"
+                className="block py-4 grid grid-cols-1 md:grid-cols-[180px_1fr] gap-2 md:gap-6 hover:bg-white/[0.02] -mx-2 px-2 transition-colors rounded"
+              >
+                <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary">
+                  /lumina/brain
+                </span>
+                <span>
+                  <span className="font-mono text-[13px] text-[#00d2ff]/90 block">
+                    Lumina&apos;s operating layer
+                  </span>
+                  <span className="text-secondary text-[13px] mt-1 block">
+                    System prompt, tool registry, memory contract,
+                    runtime topology, live memory adoption hit-rate.
+                  </span>
+                </span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/telemetry"
+                className="block py-4 grid grid-cols-1 md:grid-cols-[180px_1fr] gap-2 md:gap-6 hover:bg-white/[0.02] -mx-2 px-2 transition-colors rounded"
+              >
+                <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary">
+                  /telemetry
+                </span>
+                <span>
+                  <span className="font-mono text-[13px] text-[#00d2ff]/90 block">
+                    Platform telemetry dashboard
+                  </span>
+                  <span className="text-secondary text-[13px] mt-1 block">
+                    The aggregate dashboard for every measurable
+                    surface — Lumina latency, lab adoption, npm
+                    downloads, sponsor counts.
+                  </span>
+                </span>
+              </Link>
+            </li>
+          </ul>
+        </Reveal>
+
         {/* SOURCE LINKS */}
         <Reveal duration={0.7} className="mb-14">
           <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            08 · Source files
+            10 · Source files
           </h2>
           <p className="text-secondary text-sm leading-relaxed mb-5 max-w-2xl">
             Every claim above is grounded in code. Click any row to
@@ -575,19 +880,28 @@ export default async function V5PerceptionPage() {
 
         {/* FOOTER */}
         <Reveal duration={0.7}>
-          <div className="border-t border-white/[0.05] pt-6 mt-12">
+          <div className="border-t border-white/[0.05] pt-6 mt-12 space-y-3">
             <p className="font-mono uppercase tracking-[0.20em] text-[10px] text-quiet flex flex-wrap items-center gap-x-3 gap-y-1">
               <span
                 aria-hidden="true"
                 className="inline-block w-1 h-1 rounded-full bg-[#00d2ff]/70 align-middle"
               />
-              <span>V5 · Phase 6 · Foundation</span>
+              <span>V5 · Phase 6 · Sensory Awakening</span>
               <span className="text-faint">·</span>
               <span>Opt-in default-off</span>
               <span className="text-faint">·</span>
               <span>Aggregate-only</span>
               <span className="text-faint">·</span>
               <span>Revocable in one click</span>
+            </p>
+            <p className="text-tertiary text-[12px] leading-relaxed max-w-2xl">
+              Phase 6 closes with this page. Five sub-PRs landed
+              the foundation: perception endpoint + schema (6.1),
+              cognition observer (6.2), pacing engine (6.3),
+              memory layer extensions (6.4), and this transparency
+              page (6.5). A 60-90 day observation window now opens
+              before Phase 7 (Temporal Architecture) begins; no
+              further perception surface ships during that window.
             </p>
           </div>
         </Reveal>
