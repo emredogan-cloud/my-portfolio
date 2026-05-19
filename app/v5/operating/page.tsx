@@ -88,15 +88,31 @@ export async function generateMetadata(): Promise<Metadata> {
       robots: { index: false, follow: false },
     };
   }
+  const siteUrl = getSiteUrl();
+  const ogImageUrl = `${siteUrl}/api/og/operating`;
   return {
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
-    alternates: { canonical: `${getSiteUrl()}/v5/operating` },
+    alternates: { canonical: `${siteUrl}/v5/operating` },
     openGraph: {
       title: PAGE_TITLE,
       description: PAGE_DESCRIPTION,
-      url: `${getSiteUrl()}/v5/operating`,
+      url: `${siteUrl}/v5/operating`,
       type: "website",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 675,
+          alt: "Operational portrait — what shipped this week, what's running, what's planned, what corrections were recorded.",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: PAGE_TITLE,
+      description: PAGE_DESCRIPTION,
+      images: [ogImageUrl],
     },
     /* The page is operator-facing transparency; indexable
      * when the flag is on. */
