@@ -54,6 +54,13 @@
  *                         primary output. Maps to V5 § 5.1's
  *                         `v5:perception:navigation:cognition_signals`
  *                         telemetry slot.
+ *   pacing-transition   → how many navigations the session reached
+ *                         before backgrounding (first / few / many /
+ *                         deep). Added in Sub-PR 6.3 as the
+ *                         cinematic pacing engine's session-end
+ *                         signal. Maps to V5 § 5.1's
+ *                         `v5:pacing:transitions_per_session`
+ *                         telemetry slot.
  *   adoption            → opt-in / revoke / deny events for the
  *                         perception layer itself (the only events
  *                         allowed to fire without prior consent —
@@ -66,6 +73,7 @@ export const PERCEPTION_CATEGORIES = [
   "tab-visibility",
   "navigation-flow",
   "cognition-signal",
+  "pacing-transition",
   "adoption",
 ] as const;
 
@@ -146,6 +154,15 @@ export {
 } from "@/lib/v5/navigation/cognition";
 import { COGNITION_SIGNAL_BUCKETS as COG_BUCKETS } from "@/lib/v5/navigation/cognition";
 
+/** pacing-transition buckets. Re-exported from
+ *  `lib/v5/pacing/telemetry.ts` for the same single-import-
+ *  surface reason. Added in Sub-PR 6.3. */
+export {
+  PACING_TRANSITION_BUCKETS,
+  type PacingTransitionBucket,
+} from "@/lib/v5/pacing/telemetry";
+import { PACING_TRANSITION_BUCKETS as PACING_BUCKETS } from "@/lib/v5/pacing/telemetry";
+
 /* section-engagement + navigation-flow buckets are dynamic — the
  * label is the section / path slug itself. The endpoint validates
  * these against a syntactic shape (kebab-case, max length) instead
@@ -185,6 +202,8 @@ export function isValidBucket(
       return (ADOPTION_BUCKETS as readonly string[]).includes(value);
     case "cognition-signal":
       return (COG_BUCKETS as readonly string[]).includes(value);
+    case "pacing-transition":
+      return (PACING_BUCKETS as readonly string[]).includes(value);
     case "section-engagement":
     case "navigation-flow":
       return isValidDynamicBucket(value);

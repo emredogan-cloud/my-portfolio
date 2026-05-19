@@ -8,6 +8,7 @@ import Footer from "@/components/layout/Footer";
 import LuminaChat from "@/components/chat/LuminaChat";
 import GlobalGrain from "@/components/layout/GlobalGrain";
 import CognitionAwareNavigationObserver from "@/components/v5/CognitionAwareNavigationObserver";
+import PacingProvider from "@/components/v5/PacingProvider";
 import { getSiteUrl } from "@/lib/site-url";
 
 /* ── Geist — sole typography across the portfolio.
@@ -146,7 +147,15 @@ export default function RootLayout({
             affect layout; placing it before `{children}` mirrors the
             visual stack order (navbar above page content). */}
         <Navbar />
-        {children}
+        {/* V5 Phase 6 Sub-PR 6.3 — cinematic pacing provider.
+            Exposes the current pacing multiplier (and the cognition +
+            reduced-motion inputs that derive it) to any consumer that
+            calls usePacing(). No consumer reads from it in 6.3 — the
+            Reveal retrofit and Phase 7+ surfaces will wire it up later.
+            The Provider also owns the visibilitychange listener that
+            fires the once-per-session pacing-transition beacon when the
+            visitor has opted in. Rollback = unwrap this wrapper. */}
+        <PacingProvider>{children}</PacingProvider>
         <Footer />
         <LuminaChat />
         {/* V5 Phase 6 Sub-PR 6.2 — cognition-aware navigation observer.
