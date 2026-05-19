@@ -216,3 +216,89 @@ export function summariseTopologyRegistry(): TopologyRegistrySummary {
 export function getTopologyValidationFailure(): string | null {
   return REGISTRY.validationFailure;
 }
+
+/**
+ * Get the connected subgraph centred on a single node, bounded
+ * by maximum BFS depth. Phase 8.3 uses this to slice the full
+ * graph into a project-focused view: from `cloud-waste-hunter`,
+ * walk 2 hops out and include every connected node + every
+ * relationship whose endpoints are both inside the walk.
+ *
+ * Defaults
+ *   - `maxHops`: 2. One hop captures direct dependencies; two
+ *     hops surface kinship (sibling projects sharing an
+ *     architecture, phases that introduced upstream systems).
+ *   - Returns an empty subgraph for unknown ids.
+ *
+ * Determinism: BFS visits nodes in the registry's authored
+ * order, so the same input always returns the same slice.
+ *
+ * Phase 8 cognition note
+ *   The subgraph is the editorial slice a project-topology
+ *   page renders. The visitor sees the project at the centre
+ *   (visually + semantically) and the systems / phases /
+ *   architectures around it. Beyond 2 hops the graph becomes
+ *   "the whole ecosystem", which is its own surface
+ *   (`/api/v5/topology/graph` returns the full registry).
+ */
+export interface TopologySubgraph {
+  centerId: string;
+  nodes: readonly TopologyNode[];
+  relationships: readonly TopologyRelationship[];
+}
+
+export function getProjectSubgraph(
+  centerId: string,
+  maxHops = 2,
+): TopologySubgraph {
+  if (typeof centerId !== "string" || !centerId) {
+    return { centerId, nodes: [], relationships: [] };
+  }
+  if (!REGISTRY.nodesById.has(centerId)) {
+    return { centerId, nodes: [], relationships: [] };
+  }
+  if (!Number.isFinite(maxHops) || maxHops < 0) {
+    return { centerId, nodes: [], relationships: [] };
+  }
+
+  /* BFS bounded by maxHops. The frontier carries (id, depth)
+   * pairs. We track visited ids to avoid revisiting. */
+  const visited = new Set<string>([centerId]);
+  let frontier: string[] = [centerId];
+  for (let depth = 0; depth < maxHops; depth++) {
+    const next: string[] = [];
+    for (const id of frontier) {
+      const outgoing = REGISTRY.outgoingByFrom.get(id) ?? [];
+      for (const rel of outgoing) {
+        if (!visited.has(rel.to)) {
+          visited.add(rel.to);
+          next.push(rel.to);
+        }
+      }
+      const incoming = REGISTRY.incomingByTo.get(id) ?? [];
+      for (const rel of incoming) {
+        if (!visited.has(rel.from)) {
+          visited.add(rel.from);
+          next.push(rel.from);
+        }
+      }
+    }
+    if (next.length === 0) break;
+    frontier = next;
+  }
+
+  /* Materialise nodes in the registry's authored order so the
+   * downstream layout's id-sort produces a stable result. */
+  const nodes: TopologyNode[] = [];
+  for (const node of REGISTRY.graph.nodes) {
+    if (visited.has(node.id)) nodes.push(node);
+  }
+
+  /* Include only relationships whose BOTH endpoints are in
+   * the visited set. */
+  const relationships = REGISTRY.graph.relationships.filter(
+    (r) => visited.has(r.from) && visited.has(r.to),
+  );
+
+  return { centerId, nodes, relationships };
+}
