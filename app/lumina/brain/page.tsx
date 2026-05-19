@@ -7,6 +7,15 @@ import {
   readToolInvocationCounts,
   readToolErrorCounts,
 } from "@/lib/telemetry/metrics";
+import {
+  computeHitRate,
+  readMemoryAdoption,
+} from "@/lib/v5/memory/telemetry";
+import {
+  MAX_TTL_DAYS,
+  MIN_TTL_DAYS,
+  resolveTtlDays,
+} from "@/lib/v5/memory/ttl";
 
 /**
  * V4 Phase 4 — Sub-PR 4.1: Public Lumina transparency surface.
@@ -208,7 +217,22 @@ const SOURCE_LINKS: readonly SourceLink[] = [
   {
     label: "Memory layer",
     path: "lib/lumina/memory.ts",
-    note: "KV save/load, 14-day TTL, MAX_MESSAGES cap, VERBATIM_CONTEXT_MESSAGES = 8.",
+    note: "KV save/load, configurable 14-30 day TTL (V5 Sub-PR 6.4), MAX_MESSAGES cap, VERBATIM_CONTEXT_MESSAGES = 8.",
+  },
+  {
+    label: "Memory TTL (V5)",
+    path: "lib/v5/memory/ttl.ts",
+    note: "Operator-configurable TTL resolution via V5_MEMORY_TTL_DAYS env var; clamps to 14-30 day range, defaults to 14.",
+  },
+  {
+    label: "Memory pages index (V5)",
+    path: "lib/v5/memory/pages.ts",
+    note: "Per-session recently-visited page slugs in a sibling KV key. Foundation only — no observer in 6.4; Phase 10 ambient awareness will wire the producer.",
+  },
+  {
+    label: "Memory adoption telemetry (V5)",
+    path: "lib/v5/memory/telemetry.ts",
+    note: "Per-event counter (hit/miss/store/opt-out). Drives the hit-rate surfaced above; fire-and-forget at every loadSession/saveSession call.",
   },
   {
     label: "PII redaction",
@@ -232,16 +256,32 @@ const SOURCE_LINKS: readonly SourceLink[] = [
   },
 ];
 
+/* V5 Sub-PR 6.4: the memory layer extensions are surfaced here
+ * because /lumina/brain is the canonical transparency page for
+ * the chat memory contract. The TTL row is computed at ISR
+ * time so changes to the env override show up on the next
+ * regeneration. */
+const RESOLVED_TTL_DAYS = resolveTtlDays();
+const TTL_VALUE =
+  RESOLVED_TTL_DAYS === MIN_TTL_DAYS
+    ? `${MIN_TTL_DAYS} days (refreshes on every save; operator can extend up to ${MAX_TTL_DAYS} days via V5_MEMORY_TTL_DAYS)`
+    : `${RESOLVED_TTL_DAYS} days (operator-configured via V5_MEMORY_TTL_DAYS; range ${MIN_TTL_DAYS}-${MAX_TTL_DAYS} days; refreshes on every save)`;
+
 const MEMORY_PROPS: readonly { label: string; value: string }[] = [
   { label: "Persistence", value: "anonymous sessionId minted client-side, kept in localStorage" },
-  { label: "TTL", value: "14 days (refreshes on every save)" },
+  { label: "TTL", value: TTL_VALUE },
   { label: "Verbatim context cap", value: "last 8 turns sent to the model" },
   { label: "Older turns", value: "Haiku-generated 2-3 sentence recap, cached in a sibling KV key" },
   { label: "Storage cap", value: "100 messages per session (oldest dropped)" },
   {
     label: "Redaction",
     value:
-      "emails, Turkish/international phones, AWS access keys, IPv4 addresses, Turkish national IDs (TC Kimlik, checksum-validated), and common API-key prefixes (sk-, ghp_, xoxb-, AIza…) — applied on write",
+      "emails, Turkish/international phones, AWS access keys, IPv6 + IPv4 addresses, Turkish national IDs (TC Kimlik, checksum-validated), and common API-key prefixes (sk-, ghp_, xoxb-, AIza…) — applied on write",
+  },
+  {
+    label: "Pages index (V5)",
+    value:
+      "optional per-session list of recently-visited page slugs in a sibling KV key (lumina:session:<id>:pages, max 20 entries, same TTL). Foundation only in Sub-PR 6.4 — no observer mounted; Phase 10 ambient awareness will read this without ever mentioning it",
   },
   { label: "Opt-out", value: "Database icon in the chat header — when off, no KV reads or writes for the duration; preference persists across visits" },
   { label: "Forget control", value: "eraser icon in the chat header — deletes both KV buckets server-side" },
@@ -261,11 +301,22 @@ const TOPOLOGY_ROWS: readonly { surface: string; runtime: string; depends: strin
 export default async function LuminaBrainPage() {
   /* Per-tool counters (Sub-PR 4.3). Both reads are KV hashes; a
    * KV-less environment returns empty objects and the section
-   * below shows the "no data yet" placeholder. */
-  const [invocations, errors] = await Promise.all([
+   * below shows the "no data yet" placeholder.
+   *
+   * Sub-PR 6.4 adds the memory adoption hash to the parallel
+   * batch — same posture, returns {} when KV is unavailable
+   * or the layer hasn't recorded any hits yet. */
+  const [invocations, errors, memoryAdoption] = await Promise.all([
     readToolInvocationCounts(),
     readToolErrorCounts(),
+    readMemoryAdoption(),
   ]);
+  const memoryHits = memoryAdoption.hit ?? 0;
+  const memoryMisses = memoryAdoption.miss ?? 0;
+  const memoryStores = memoryAdoption.store ?? 0;
+  const memoryHitRate = computeHitRate(memoryAdoption);
+  const hasMemoryAdoptionData =
+    memoryHits + memoryMisses + memoryStores > 0;
   const usageRows = TOOLS.map((t) => ({
     name: t.name,
     group: t.group,
@@ -405,6 +456,63 @@ export default async function LuminaBrainPage() {
               </div>
             ))}
           </dl>
+
+          {/* V5 Sub-PR 6.4 — live memory adoption snapshot. Fires
+              from loadSession/saveSession in lib/lumina/memory.ts on
+              every KV round-trip. The hit-rate = hit / (hit + miss);
+              null when there's no signal yet. */}
+          <div className="mt-6">
+            <h3 className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary mb-3">
+              Live adoption
+            </h3>
+            {hasMemoryAdoptionData ? (
+              <dl className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
+                <div className="flex flex-col gap-0.5 rounded px-2 py-1.5 bg-white/[0.02] border border-white/[0.04]">
+                  <dt className="font-mono uppercase tracking-[0.16em] text-[9px] text-tertiary">
+                    hits
+                  </dt>
+                  <dd className="font-mono text-[12px] text-[#00d2ff]/90">
+                    {memoryHits.toLocaleString("en-US")}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-0.5 rounded px-2 py-1.5 bg-white/[0.02] border border-white/[0.04]">
+                  <dt className="font-mono uppercase tracking-[0.16em] text-[9px] text-tertiary">
+                    misses
+                  </dt>
+                  <dd className="font-mono text-[12px] text-primary">
+                    {memoryMisses.toLocaleString("en-US")}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-0.5 rounded px-2 py-1.5 bg-white/[0.02] border border-white/[0.04]">
+                  <dt className="font-mono uppercase tracking-[0.16em] text-[9px] text-tertiary">
+                    stores
+                  </dt>
+                  <dd className="font-mono text-[12px] text-primary">
+                    {memoryStores.toLocaleString("en-US")}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-0.5 rounded px-2 py-1.5 bg-[#00d2ff]/[0.04] border border-[#00d2ff]/20">
+                  <dt className="font-mono uppercase tracking-[0.16em] text-[9px] text-tertiary">
+                    hit-rate
+                  </dt>
+                  <dd className="font-mono text-[12px] text-[#00d2ff]/90">
+                    {memoryHitRate === null
+                      ? "—"
+                      : `${Math.round(memoryHitRate * 100)}%`}
+                  </dd>
+                </div>
+              </dl>
+            ) : (
+              <p className="font-mono text-[12.5px] text-tertiary border border-white/[0.06] rounded-xl bg-white/[0.02] p-4">
+                <span className="text-[#00d2ff]/80">$</span>{" "}
+                memory.adoption.snapshot
+                <span className="block text-secondary mt-1">
+                  No adoption data yet — counters fire on the next
+                  chat turn with KV available.
+                </span>
+              </p>
+            )}
+          </div>
         </Reveal>
 
         {/* RUNTIME TOPOLOGY */}

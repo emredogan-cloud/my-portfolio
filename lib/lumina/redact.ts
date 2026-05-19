@@ -27,6 +27,10 @@ import type { UIMessage } from "ai";
  *  - Turkish mobile numbers (with or without country code / prefix)
  *  - International phone numbers (+CC followed by 6-14 digits)
  *  - AWS access key IDs (the AKIA / ASIA prefix variants)
+ *  - IPv6 addresses (Sub-PR 6.4 — V5 extension; full-form,
+ *    compressed `::`, and IPv4-mapped variants). Runs BEFORE
+ *    the IPv4 pattern so mixed forms like `::ffff:1.2.3.4`
+ *    match the IPv6 token cleanly.
  *  - IPv4 addresses (Sub-PR 4.4 — operator chats sometimes paste
  *    server IPs that shouldn't sit in KV)
  *  - Turkish national IDs / TC Kimlik (Sub-PR 4.4 — 11 digits,
@@ -90,6 +94,28 @@ const PATTERNS: Array<{ name: string; pattern: RegExp; token: string }> = [
      * to stay forgiving. */
     pattern: /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/g,
     token: "[aws-key]",
+  },
+  {
+    name: "ipv6",
+    /* V5 Sub-PR 6.4 extension. IPv6 addresses come in three
+     * common shapes:
+     *   - Full form: eight 1-4 hex groups separated by colons
+     *     (`2001:0db8:0000:0000:0000:0000:0000:0001`)
+     *   - Compressed: any run of zero groups collapsed to `::`
+     *     once (`2001:db8::1`, `::1`, `fe80::abc`)
+     *   - IPv4-mapped: `::ffff:192.168.1.1`
+     *
+     * The pattern below accepts all three. Anchored with a
+     * non-hex / non-colon assertion on each side to avoid
+     * chewing into hex blobs (UUIDs, SHA hashes) that happen
+     * to contain colon-separated runs.
+     *
+     * Placed BEFORE the IPv4 pattern in the PATTERNS array so
+     * `::ffff:1.2.3.4` matches as [ipv6] before the trailing
+     * dotted octets get caught as [ipv4]. */
+    pattern:
+      /(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}|(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{1,4}:){1,7}:|(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{1,4}:){1,6}:[0-9A-Fa-f]{1,4}|(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{1,4}:){1,5}(?::[0-9A-Fa-f]{1,4}){1,2}|(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{1,4}:){1,4}(?::[0-9A-Fa-f]{1,4}){1,3}|(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{1,4}:){1,3}(?::[0-9A-Fa-f]{1,4}){1,4}|(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{1,4}:){1,2}(?::[0-9A-Fa-f]{1,4}){1,5}|(?<![0-9A-Fa-f:])[0-9A-Fa-f]{1,4}:(?:(?::[0-9A-Fa-f]{1,4}){1,6})|(?<![0-9A-Fa-f:]):(?:(?::[0-9A-Fa-f]{1,4}){1,7}|:)|(?<![0-9A-Fa-f:])::(?:ffff(?::0{1,4})?:)?(?:\d{1,3}\.){3}\d{1,3}/g,
+    token: "[ipv6]",
   },
   {
     name: "ipv4",
