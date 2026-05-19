@@ -37,7 +37,8 @@ interface VisitPingProps {
     | "playground"
     | "v5-perception"
     | "evolution"
-    | "topology";
+    | "topology"
+    | "operating";
 }
 
 const STORAGE_PREFIX = "v4:telemetry:ping:";

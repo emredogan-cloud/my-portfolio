@@ -173,6 +173,12 @@ export const METRIC_KEYS = {
    *  v5:topology:graph hash's view field (also session-deduped
    *  per slug, mirroring the Phase 7.4 per-project pattern). */
   TOPOLOGY_PAGE_VISITS: "v5:telemetry:topology-page:visits",
+  /** Cumulative visit count for /v5/operating — the operational
+   *  twin surface shipped in V5 Phase 9 Sub-PR 9.2. Symmetric with
+   *  the other V5 page-visit scalars (perception, evolution,
+   *  topology). The per-section inspection signal lives separately
+   *  at v5:operating:adoption (Phase 9.1). */
+  OPERATING_PAGE_VISITS: "v5:telemetry:operating-page:visits",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];
