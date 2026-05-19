@@ -356,6 +356,66 @@ export const EVOLUTION_EVENTS: readonly EvolutionEvent[] = [
     provenance: "external",
   },
 
+  /* ── V3 — CWH Hero Topology Transplant ────────────────── */
+
+  {
+    id: "cwh-hero-topology-transplant",
+    date: "2026-05-16",
+    title: "CWH topology engine transplanted onto the homepage",
+    category: "topology",
+    version: "V3 Phase 4",
+    system: "cloud-waste-hunter",
+    status: "current",
+    summary:
+      "The Three.js + @xyflow/react topology that originally lived on /architecture/cloud-waste-hunter was migrated onto the homepage as the hero constellation. The same scene, with the project-side camera philosophy adapted to a spatial-freedom variant that reacts to scroll. Identical chunk reused across both surfaces — the global bundle didn't grow.",
+    rationale:
+      "The CWH topology was the strongest single visual artifact the portfolio had. Moving it to the homepage made the engineering case the FIRST thing a visitor sees, ahead of any biographical / case-study prose. The decision required the topology to support two camera modes (constrained scroll-through on /architecture, free spatial on the home hero) which the same engine had to negotiate.",
+    commitSha: "c50f236",
+    refs: [
+      {
+        kind: "commit",
+        label: "Spatial-freedom variant",
+        sha: "e5fd975",
+      },
+      {
+        kind: "commit",
+        label: "ReactFlow migration",
+        sha: "50d6091",
+      },
+    ],
+    provenance: "synthesis",
+  },
+
+  /* ── V3 — CWH Pro Monetization ────────────────────────── */
+
+  {
+    id: "cwh-pro-monetization",
+    date: "2026-05-15",
+    title: "Cloud Waste Hunter Pro — pricing + live metrics shipped",
+    category: "release",
+    version: "V3 Phase 3",
+    system: "cloud-waste-hunter",
+    status: "current",
+    summary:
+      "Cloud Waste Hunter moved from project case study to monetized SaaS surface: a pricing page, a Lemon Squeezy checkout flow, a live-metrics endpoint that surfaces real production numbers, and the embedded CWH Pro CTA that appears on both /projects/aws-waste-hunter and /architecture/cloud-waste-hunter. The portfolio became its own conversion funnel.",
+    rationale:
+      "Demonstrating that a single-engineer SaaS can run a production billing flow inside the portfolio itself — instead of linking out to a separate marketing site — is the V3 signal that V4's OSS launch + V5's adaptive recruiter intelligence would each build on. The portfolio became a conversion surface in its own right.",
+    commitSha: "d9cd1b6",
+    refs: [
+      {
+        kind: "commit",
+        label: "CWH Pro CTA native polish",
+        sha: "a232044",
+      },
+      {
+        kind: "report",
+        label: "Project case study",
+        path: "data/projects.ts",
+      },
+    ],
+    provenance: "commit",
+  },
+
   /* ── V3 — Phase 2 (3D Topology) ────────────────────────── */
 
   {

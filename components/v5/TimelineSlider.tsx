@@ -20,6 +20,9 @@ import type { TimelineEngagementKind } from "@/lib/v5/temporal/timeline-telemetr
 
 /**
  * V5 Phase 7 Sub-PR 7.3 — timeline slider.
+ * V5 Phase 7 Sub-PR 7.4 — extended with optional `context` prop
+ * so each architecture page can attribute its engagement signal
+ * to the project slug it represents.
  *
  * The first consumer of the Phase 7.2 playback primitive. A
  * horizontal slider that lets the visitor scrub through the
@@ -43,13 +46,28 @@ import type { TimelineEngagementKind } from "@/lib/v5/temporal/timeline-telemetr
  *       server snapshot, subscribing to `matchMedia` on the
  *       client.
  *
- * Engagement telemetry
- *   `fireEngagement(kind)` is session-deduped via sessionStorage
- *   inside the helper itself. The component fires:
+ * Engagement telemetry (post-7.4 dispatch)
+ *   `fireEngagement(kind, context?)` orchestrates up to TWO
+ *   independent fires:
+ *     - Global fire (no context) — session-deduped on the
+ *       global slot. Fires once per session regardless of how
+ *       many sliders mount.
+ *     - Per-context fire (when `context` is set) — session-
+ *       deduped on the per-(kind, context) slot. Fires once
+ *       per session per slug.
+ *   The two fires are independent network calls; each respects
+ *   its own dedupe state. A visitor who lands on
+ *   /architecture/cloud-waste-hunter contributes ONE global
+ *   `mounted` (capped at one per session) AND ONE per-project
+ *   `engaged` on first interaction (capped at one per session
+ *   per slug).
+ *
+ *   The component fires:
  *     - `mounted` once on first commit (a useEffect with no deps)
  *     - `engaged` on EVERY interaction telemetry event — the
  *       helper's sessionStorage gate keeps only the first one
- *       actually networking. No in-component ref needed.
+ *       per slot actually networking. No in-component ref
+ *       needed.
  *
  * Playback telemetry
  *   `firePlaybackEvent(kind)` posts the controller's verb to
@@ -82,6 +100,13 @@ interface TimelineSliderProps {
   events: readonly EvolutionEvent[];
   initialEventId?: string;
   className?: string;
+  /** Optional architecture-page slug. When set, engagement
+   *  events fire to both the global timeline hash AND the
+   *  per-project architecture-page hash, each session-deduped
+   *  on its own slot. Sub-PR 7.4 adds this for
+   *  /architecture/<slug> integration. Slug must be kebab-case
+   *  (the endpoint validates server-side as well). */
+  context?: string;
 }
 
 const PLAYBACK_ENDPOINT = "/api/v5/temporal/playback";
@@ -101,12 +126,17 @@ function firePlaybackEvent(kind: PlaybackEventKind): void {
   });
 }
 
-function fireEngagement(kind: TimelineEngagementKind): void {
+/* The two engagement fires share this primitive — one POST per
+ * call, each with its own sessionStorage slot. Calling sites
+ * orchestrate the two-fire pattern explicitly. */
+function fireEngagementOnce(
+  slotKey: string,
+  payload: Record<string, string>,
+): void {
   if (typeof window === "undefined") return;
-  const slot = `${TIMELINE_STORAGE_PREFIX}${kind}`;
   try {
-    if (window.sessionStorage.getItem(slot) === "1") return;
-    window.sessionStorage.setItem(slot, "1");
+    if (window.sessionStorage.getItem(slotKey) === "1") return;
+    window.sessionStorage.setItem(slotKey, "1");
   } catch {
     /* sessionStorage blocked → fall through, fire anyway. One
      * extra count per reload in private mode is acceptable
@@ -115,11 +145,37 @@ function fireEngagement(kind: TimelineEngagementKind): void {
   void fetch(TIMELINE_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ kind }),
+    body: JSON.stringify(payload),
     keepalive: true,
   }).catch(() => {
     /* swallow */
   });
+}
+
+function fireEngagement(
+  kind: TimelineEngagementKind,
+  context?: string,
+): void {
+  /* Always attempt the global fire — the slot dedupes it down
+   * to one network call per session per kind across every
+   * slider on the site. */
+  fireEngagementOnce(`${TIMELINE_STORAGE_PREFIX}${kind}`, { kind });
+
+  /* When a context (architecture page slug) is provided, ALSO
+   * attempt the per-context fire — independent slot, independent
+   * dedupe. Only `engaged` carries a per-project counter (see
+   * the endpoint dispatch); `mounted` with context still fires
+   * the per-context slot for symmetric session-tracking but the
+   * endpoint will silently drop it (it ignores context for
+   * mounted). The cost is one extra HTTP call per session per
+   * (kind, slug) — acceptable for the operator-grade signal it
+   * unlocks. */
+  if (typeof context === "string" && context && kind === "engaged") {
+    fireEngagementOnce(`${TIMELINE_STORAGE_PREFIX}${kind}:${context}`, {
+      kind,
+      context,
+    });
+  }
 }
 
 /* ── External-store wiring for the reduced-motion preference ─
@@ -162,6 +218,7 @@ export default function TimelineSlider({
   events,
   initialEventId,
   className,
+  context,
 }: TimelineSliderProps) {
   const trackRef = useRef<HTMLDivElement | null>(null);
 
@@ -185,23 +242,29 @@ export default function TimelineSlider({
   const [scrubbing, setScrubbing] = useState(false);
 
   /* Stable telemetry adapter — captures no refs, only function
-   * references. Reads / writes go through `firePlaybackEvent` +
-   * `fireEngagement` which handle their own sessionStorage
-   * gating. Safe to pass through useMemo without lint trouble. */
-  const handleControllerTelemetry = useCallback((kind: PlaybackEventKind) => {
-    firePlaybackEvent(kind);
-    if (
-      kind === "seek" ||
-      kind === "scrub" ||
-      kind === "play" ||
-      kind === "step"
-    ) {
-      /* `fireEngagement` is itself session-deduped — the first
-       * call posts to /api/v5/temporal/timeline, every later
-       * call no-ops. No in-component ref required. */
-      fireEngagement("engaged");
-    }
-  }, []);
+   * references + the (string|undefined) context prop. Reads /
+   * writes go through `firePlaybackEvent` + `fireEngagement`
+   * which handle their own sessionStorage gating. Safe to pass
+   * through useMemo without lint trouble. */
+  const handleControllerTelemetry = useCallback(
+    (kind: PlaybackEventKind) => {
+      firePlaybackEvent(kind);
+      if (
+        kind === "seek" ||
+        kind === "scrub" ||
+        kind === "play" ||
+        kind === "step"
+      ) {
+        /* `fireEngagement` is itself session-deduped — the
+         * first call per slot posts to
+         * /api/v5/temporal/timeline; every later call no-ops.
+         * When `context` is set, fires the per-project slot in
+         * addition to the global one. */
+        fireEngagement("engaged", context);
+      }
+    },
+    [context],
+  );
 
   /* Controller construction. Recreates when:
    *   - events array reference changes (parent re-passed a new
@@ -228,11 +291,16 @@ export default function TimelineSlider({
   }, [controller]);
 
   /* Fire `mounted` once on first commit. fireEngagement's
-   * sessionStorage gate keeps this to one network call per
-   * session even if the component remounts. */
+   * sessionStorage gate keeps the global slot to one network
+   * call per session even if the component remounts. The per-
+   * context slot is independent — different architecture pages
+   * each get their own once-per-session mount fire (though the
+   * endpoint drops the per-context mounted variant; the slot
+   * still records the attempt for client-side telemetry
+   * symmetry). */
   useEffect(() => {
-    fireEngagement("mounted");
-  }, []);
+    fireEngagement("mounted", context);
+  }, [context]);
 
   /* Pointer handling helpers — declared inside the render so
    * they close over the latest controller reference. */
