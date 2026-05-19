@@ -10,6 +10,7 @@ import {
   getEvolutionEventsByCategory,
   summariseEvolutionRegistry,
 } from "@/lib/v5/temporal/registry";
+import { readPlaybackAdoption } from "@/lib/v5/temporal/playback-telemetry";
 import {
   type EvolutionEvent,
   type EvolutionEventCategory,
@@ -137,6 +138,21 @@ const SOURCE_LINKS: readonly SourceLink[] = [
     note: "Aggregate-only KV hash at v5:temporal:adoption. Three event kinds (view / category_view / event_view). Graceful no-op when KV is unavailable.",
   },
   {
+    label: "Frame math (7.2)",
+    path: "lib/v5/temporal/frames.ts",
+    note: "Pure interpolation helpers — TemporalFrame, TemporalCursor, buildTemporalFrames, interpolateCursor. Deterministic; no DOM, no Date.now() in the math layer.",
+  },
+  {
+    label: "Playback controller (7.2)",
+    path: "lib/v5/temporal/playback.ts",
+    note: "createTemporalPlayback factory. seek / scrubTo / nextFrame / prevFrame / play / pause / destroy. Reduced-motion snap, RAF injectable for SSR + tests, idle CPU 0% when scrubber inactive.",
+  },
+  {
+    label: "Playback adoption (7.2)",
+    path: "lib/v5/temporal/playback-telemetry.ts",
+    note: "Aggregate-only KV hash at v5:topology:playback. Five event kinds (seek / scrub / play / pause / step). Graceful no-op when KV is unavailable.",
+  },
+  {
     label: "Event data",
     path: "data/temporal/events.ts",
     note: "The canonical hand-curated registry. Append-only by convention. Each entry carries id / date / category / summary plus optional version / system / rationale / commitSha / refs / status / supersedes / provenance.",
@@ -206,7 +222,10 @@ export default async function EvolutionPage({
   }
 
   const summary = summariseEvolutionRegistry();
-  const adoption = await readTemporalAdoption();
+  const [adoption, playbackAdoption] = await Promise.all([
+    readTemporalAdoption(),
+    readPlaybackAdoption(),
+  ]);
 
   return (
     <main id="main" className="relative min-h-screen bg-black">
@@ -254,9 +273,9 @@ export default async function EvolutionPage({
             </span>
             <span
               className="ml-auto px-2.5 py-1 rounded-full border font-mono uppercase tracking-[0.18em] text-[9px] border-[#00d2ff]/30 bg-[#00d2ff]/[0.04] text-[#00d2ff]/80"
-              title="Phase 7 foundation — temporal primitives, version-memory schema, evolution event registry. Playback lands in Sub-PR 7.2+."
+              title="Phase 7 foundation — temporal primitives, version-memory schema, evolution event registry, playback primitive. Timeline slider lands in Sub-PR 7.3."
             >
-              Phase 7 · foundation
+              Phase 7 · primitives
             </span>
           </div>
         </Reveal>
@@ -437,6 +456,37 @@ export default async function EvolutionPage({
               value={adoption.event_view ?? null}
             />
           </dl>
+          {/* Sub-PR 7.2 — the playback primitive ships with no
+              consumer in 7.2 (the slider lands in 7.3). The
+              counter row below is the chassis tile that surfaces
+              the new hash so the operator can verify the primitive
+              is wired without claiming behaviour the layer doesn't
+              yet have. Every value below stays at zero until a
+              future sub-PR mounts a consumer that fires through
+              /api/v5/temporal/playback. */}
+          <p className="text-tertiary text-[13px] leading-relaxed mt-7 mb-4 max-w-2xl">
+            <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/80 mr-2">
+              Playback (latent)
+            </span>
+            The Phase 7.2 playback primitive — seek, scrub, play,
+            pause, step — ships without a consumer. The slider that
+            fires these events lands in Sub-PR 7.3. The tiles below
+            are the chassis; every value stays at zero until the
+            consumer mounts.
+          </p>
+          <dl className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <AdoptionTile label="seek" value={playbackAdoption.seek ?? null} />
+            <AdoptionTile
+              label="scrub"
+              value={playbackAdoption.scrub ?? null}
+            />
+            <AdoptionTile label="play" value={playbackAdoption.play ?? null} />
+            <AdoptionTile
+              label="pause"
+              value={playbackAdoption.pause ?? null}
+            />
+            <AdoptionTile label="step" value={playbackAdoption.step ?? null} />
+          </dl>
         </Reveal>
 
         {/* SOURCE FILES */}
@@ -491,11 +541,13 @@ export default async function EvolutionPage({
             <p className="text-tertiary text-[12px] leading-relaxed max-w-2xl">
               Phase 7 opens with this foundation: the schema, the
               registry, the adoption hook, the JSON feed, this
-              archive surface. Subsequent sub-PRs land the timeline
-              scrubber + architecture playback on top of these
-              primitives. Until then, the page is what it claims to
-              be — a quietly archival surface that reads as
-              engineering memory.
+              archive surface, and — as of Sub-PR 7.2 — the
+              deterministic playback primitive that subsequent
+              sub-PRs (the timeline slider in 7.3, the
+              architecture-page integration in 7.4) read through.
+              Until those consumers ship, the page is what it
+              claims to be: a quietly archival surface that reads
+              as engineering memory.
             </p>
           </div>
         </Reveal>
