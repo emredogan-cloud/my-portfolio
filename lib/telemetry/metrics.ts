@@ -164,6 +164,15 @@ export const METRIC_KEYS = {
    *  the V4 dashboard reads through the same primitive every other
    *  V4 visit surface uses. */
   EVOLUTION_PAGE_VISITS: "v5:telemetry:evolution-page:visits",
+  /** Cumulative visit count for /v5/topology/<slug> — the public
+   *  engineering-cognition surface shipped in V5 Phase 8 Sub-PR
+   *  8.3. The V4-style scalar that the /telemetry dashboard can
+   *  read; the per-interaction hash lives separately at
+   *  v5:topology:graph (Phase 8.1). The counter aggregates across
+   *  all topology slugs — the per-slug breakdown lives in the
+   *  v5:topology:graph hash's view field (also session-deduped
+   *  per slug, mirroring the Phase 7.4 per-project pattern). */
+  TOPOLOGY_PAGE_VISITS: "v5:telemetry:topology-page:visits",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];

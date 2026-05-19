@@ -62,6 +62,13 @@ const SURFACE_TO_KEY: Record<string, MetricKey> = {
    * /telemetry and /changelog. Surface-specific filter +
    * deep-link signal lives separately at v5:temporal:adoption. */
   evolution: METRIC_KEYS.EVOLUTION_PAGE_VISITS,
+  /* V5 Phase 8 Sub-PR 8.3 — public engineering-cognition
+   * surface. /v5/topology/<slug> renders the project subgraph
+   * via the Phase 8.2 renderer chassis. The scalar visit
+   * counter sits alongside the Phase 8.1 v5:topology:graph
+   * hash; the two carry different signals (V4-style cumulative
+   * vs V5 event-kind aggregate). */
+  topology: METRIC_KEYS.TOPOLOGY_PAGE_VISITS,
 };
 
 interface VisitPayload {
