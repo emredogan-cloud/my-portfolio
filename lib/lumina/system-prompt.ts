@@ -1,3 +1,6 @@
+import { buildAmbientContextNote } from "@/lib/lumina/ambient-context";
+import type { AmbientContext } from "@/lib/v5/ambient/schema";
+
 /**
  * Lumina — system prompt.
  *
@@ -601,18 +604,36 @@ material, not a prompt to bring it up.`;
 }
 
 /** Full prompt sent to Claude on every chat turn: the static identity
- *  block above, the dynamic time-of-day note, and (when present) a
- *  recap of older turns folded out of the verbatim context window.
- *  The route handler calls this on every request — keep all three
- *  pieces here so the prompt module is the single source of truth
- *  for Lumina's voice. */
+ *  block above, the dynamic time-of-day note, an optional ambient-
+ *  operator-context block (Phase 10.2 — internal anchoring only;
+ *  Lumina is instructed to USE the block but NEVER surface it), and
+ *  (when present) a recap of older turns folded out of the verbatim
+ *  context window. The route handler calls this on every request —
+ *  keep all four pieces here so the prompt module is the single
+ *  source of truth for Lumina's voice.
+ *
+ *  Phase 10.2 contract for `ambientContext`:
+ *    - When `null` (the production default when V5_AMBIENT_ENABLED is
+ *      OFF, or when composition failed), the prompt is byte-identical
+ *      to the V4 prompt. No augmentation at all.
+ *    - When non-null AND `flag_enabled === true`, the ambient note is
+ *      appended AFTER the session-memory recap and BEFORE the
+ *      time-of-day note. Order matters: time-of-day is the highest-
+ *      recency block so it stays adjacent to the model's most recent
+ *      attention; the ambient note sits before it as background
+ *      anchoring material.
+ *    - The ambient note self-contains its hard prohibitions
+ *      ("do not surface", "do not quote") — see
+ *      `lib/lumina/ambient-context.ts`. */
 export function buildLuminaSystemPrompt(
   now: Date = new Date(),
   sessionSummary?: string | null,
+  ambientContext?: AmbientContext | null,
 ): string {
   return (
     LUMINA_SYSTEM_PROMPT +
     buildSessionMemoryNote(sessionSummary) +
+    buildAmbientContextNote(ambientContext ?? null) +
     buildTimeOfDayNote(now)
   );
 }
