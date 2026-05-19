@@ -51,6 +51,11 @@ const SURFACE_TO_KEY: Record<string, MetricKey> = {
    * traffic is itself a signal about whether experiments earn
    * their slot. */
   playground: METRIC_KEYS.PLAYGROUND_VISITS,
+  /* V5 Phase 6 Sub-PR 6.1 — public transparency page for the
+   * perception layer. The page documents the opt-in contract;
+   * the visit counter is the only signal it collects (consent
+   * is what unlocks any v5:perception:* writes). */
+  "v5-perception": METRIC_KEYS.V5_PERCEPTION_PAGE_VISITS,
 };
 
 interface VisitPayload {

@@ -147,6 +147,14 @@ export const METRIC_KEYS = {
    *  with no enabled experiments — the counter mostly stays at
    *  zero until 5.2+ wires real surfaces and flips flags. */
   PLAYGROUND_VISITS: "v4:telemetry:playground:visits",
+  /** Cumulative visit count for /v5/perception — the public
+   *  transparency surface for V5 Phase 6's perception layer.
+   *  Same self-referential pattern as TELEMETRY_VISITS and
+   *  LUMINA_BRAIN_VISITS — the page documents what visitors
+   *  can opt into, and the visit count is itself the only
+   *  signal collected on that page (consent precedes any
+   *  perception event recording). */
+  V5_PERCEPTION_PAGE_VISITS: "v5:telemetry:perception-page:visits",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];

@@ -34,7 +34,8 @@ interface VisitPingProps {
     | "changelog"
     | "lumina-brain"
     | "lumina-failures"
-    | "playground";
+    | "playground"
+    | "v5-perception";
 }
 
 const STORAGE_PREFIX = "v4:telemetry:ping:";
