@@ -16,6 +16,12 @@ import { kv } from "@vercel/kv";
  *     section_experiments_inspected : focused on running experiments.
  *     section_planned_inspected     : focused on planned-next.
  *     section_failures_inspected    : focused on recent failures.
+ *     og_rendered               : the /api/og/operating route
+ *                                 composed + returned a PNG
+ *                                 (Phase 9.4). Fires server-side;
+ *                                 every social-card scrape +
+ *                                 every share-preview rebuild
+ *                                 bumps this counter.
  *   }
  *
  * Why these six kinds
@@ -49,6 +55,7 @@ export const OPERATING_ADOPTION_EVENTS = [
   "section_experiments_inspected",
   "section_planned_inspected",
   "section_failures_inspected",
+  "og_rendered",
 ] as const;
 
 export type OperatingAdoptionEvent =

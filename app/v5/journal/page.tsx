@@ -56,15 +56,36 @@ export async function generateMetadata(): Promise<Metadata> {
       robots: { index: false, follow: false },
     };
   }
+  const siteUrl = getSiteUrl();
+  /* Phase 9.4 — share previews of the journal index also use
+   * the operational portrait card. The portrait reflects the
+   * twin's CURRENT state; each week's detail page keeps the
+   * site-wide default OG (cleaner separation: portrait card
+   * = the now; frozen entries = their own archived data). */
+  const ogImageUrl = `${siteUrl}/api/og/operating`;
   return {
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
-    alternates: { canonical: `${getSiteUrl()}/v5/journal` },
+    alternates: { canonical: `${siteUrl}/v5/journal` },
     openGraph: {
       title: PAGE_TITLE,
       description: PAGE_DESCRIPTION,
-      url: `${getSiteUrl()}/v5/journal`,
+      url: `${siteUrl}/v5/journal`,
       type: "website",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 675,
+          alt: "Engineering journal index — weekly digests of the operational twin.",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: PAGE_TITLE,
+      description: PAGE_DESCRIPTION,
+      images: [ogImageUrl],
     },
     robots: { index: true, follow: true },
   };
