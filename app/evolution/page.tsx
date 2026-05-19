@@ -173,6 +173,16 @@ const SOURCE_LINKS: readonly SourceLink[] = [
     note: "Aggregate-only KV hash at v5:topology:timeline. Two event kinds (mounted / engaged). The engagement_rate the V5 doc names is computed downstream as engaged / mounted.",
   },
   {
+    label: "Architecture engagement (7.4)",
+    path: "lib/v5/temporal/architecture-engagement.ts",
+    note: "Aggregate-only KV hash at v5:topology:architecture-page. One field per project slug, incremented when the slider on /architecture/<slug> is engaged. Session-deduped client-side per (kind, slug).",
+  },
+  {
+    label: "Architecture page section (7.4)",
+    path: "app/architecture/_components/ArchitectureTimelineSection.tsx",
+    note: "Server-rendered wrapper for the per-architecture slider. Conditional on events.length >= 2 (V4 behavior preserved when registry coverage is insufficient). Hidden below 768px viewport.",
+  },
+  {
     label: "Event data",
     path: "data/temporal/events.ts",
     note: "The canonical hand-curated registry. Append-only by convention. Each entry carries id / date / category / summary plus optional version / system / rationale / commitSha / refs / status / supersedes / provenance.",
@@ -300,9 +310,9 @@ export default async function EvolutionPage({
             </span>
             <span
               className="ml-auto px-2.5 py-1 rounded-full border font-mono uppercase tracking-[0.18em] text-[9px] border-[#00d2ff]/30 bg-[#00d2ff]/[0.04] text-[#00d2ff]/80"
-              title="Phase 7 — temporal primitives, version-memory schema, evolution event registry, playback primitive, timeline slider. Architecture-page integration lands in Sub-PR 7.4."
+              title="Phase 7 complete (foundation → playback → slider → architecture integration). Observation window opens before Phase 8 (cinematic topology)."
             >
-              Phase 7 · slider
+              Phase 7 · complete
             </span>
           </div>
         </Reveal>
@@ -617,16 +627,21 @@ export default async function EvolutionPage({
               <span>Versioned + typed + provenanced</span>
             </p>
             <p className="text-tertiary text-[12px] leading-relaxed max-w-2xl">
-              Phase 7 has reached its slider: Sub-PR 7.1 shipped
-              the schema + registry + archive surface, 7.2 added
-              the deterministic playback primitive, and 7.3 mounts
-              the first consumer — the WAI-ARIA slider above. The
-              architecture-page integration in Sub-PR 7.4 will
-              mount the same slider scoped to a single project&apos;s
-              event slice. The page remains what it claims to be:
-              a quietly archival surface that reads as engineering
-              memory, with a single calm instrument for navigating
-              it.
+              Phase 7 closes here. Four sub-PRs landed the temporal
+              architecture: 7.1 the schema + registry + archive
+              surface, 7.2 the deterministic playback primitive,
+              7.3 the WAI-ARIA slider above, and 7.4 the per-
+              project mount on{" "}
+              <Link
+                href="/architecture"
+                className="text-[#00d2ff]/80 hover:text-[#00d2ff] underline underline-offset-2 decoration-white/15 hover:decoration-[#00d2ff]/50 transition-colors"
+              >
+                /architecture
+              </Link>{" "}
+              pages (hidden below 768px viewport, opt-in by
+              registry coverage). The observation window now
+              opens before Phase 8 (cinematic topology); no
+              further temporal surface ships during that window.
             </p>
           </div>
         </Reveal>

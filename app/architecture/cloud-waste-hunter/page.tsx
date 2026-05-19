@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import ScrollStory from "../_components/ScrollStory";
+import ArchitectureTimelineSection from "../_components/ArchitectureTimelineSection";
 import { MILESTONES } from "./_components/milestones";
 import { ILLUSTRATION_BY_ID } from "./_components/Illustrations";
 import CwhProCta from "@/components/cwh/CwhProCta";
+import { getEvolutionEventsBySystem } from "@/lib/v5/temporal/registry";
+
+const PROJECT_SLUG = "cloud-waste-hunter";
 
 export const metadata: Metadata = {
   title: "Cloud Waste Hunter — Architecture",
@@ -18,8 +22,18 @@ export const metadata: Metadata = {
  * One project, eight milestones. Composes the project-agnostic
  * ScrollStory engine with this project's milestones data and SVG
  * illustration dispatch map.
+ *
+ * V5 Phase 7 Sub-PR 7.4 — inserts the optional timeline section
+ * between the header and the ScrollStory. The section is opt-in
+ * by viewport (visible only above 768px) and by registry coverage
+ * (renders only when the project has at least two events). V4
+ * behavior is preserved when either gate closes.
  */
 export default function CWHArchitecturePage() {
+  /* Registry slice for this project. Pure in-memory read; no
+   * I/O, no KV. The page stays fully static. */
+  const projectEvents = getEvolutionEventsBySystem(PROJECT_SLUG);
+
   return (
     <main id="main" className="relative min-h-screen bg-black overflow-hidden">
       <div className="relative z-10 max-w-5xl mx-auto px-6 pt-36 pb-32">
@@ -47,6 +61,13 @@ export default function CWHArchitecturePage() {
             sales diagram.
           </p>
         </header>
+
+        {/* V5 Phase 7.4 — timeline scrubber (desktop only;
+            renders null when projectEvents.length < 2). */}
+        <ArchitectureTimelineSection
+          slug={PROJECT_SLUG}
+          events={projectEvents}
+        />
 
         <ScrollStory
           milestones={MILESTONES}
