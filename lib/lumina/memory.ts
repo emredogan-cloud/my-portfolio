@@ -1,9 +1,13 @@
 import { kv } from "@vercel/kv";
 import type { UIMessage } from "ai";
 import { redactMessages } from "./redact";
+import { resolveTtlSeconds } from "@/lib/v5/memory/ttl";
+import { recordMemoryEvent } from "@/lib/v5/memory/telemetry";
 
 /**
- * Lumina conversation memory — KV-backed, per-session, 14-day TTL.
+ * Lumina conversation memory — KV-backed, per-session,
+ * configurable 14-30 day TTL (Sub-PR 6.4; defaults to V4's 14
+ * when the env override is unset).
  *
  * Contract:
  *   - Session IDs are anonymous UUIDs minted client-side and persisted
@@ -34,8 +38,11 @@ import { redactMessages } from "./redact";
  *   ever needs cross-session semantic recall.
  */
 
-/* V4 § 4.4 Sub-PR 4.1 spec: 14-day session TTL. */
-const TTL_SECONDS = 60 * 60 * 24 * 14;
+/* V4 § 4.4 Sub-PR 4.1 spec: 14-day session TTL.
+ * V5 Sub-PR 6.4: TTL is now configurable 14-30 days via the
+ * `V5_MEMORY_TTL_DAYS` env var, resolved at write-time via
+ * `lib/v5/memory/ttl.ts`. Default stays at 14 days when the
+ * env is unset, preserving V4 behavior bit-for-bit. */
 const KEY_PREFIX = "lumina:session:";
 const SUMMARY_KEY_PREFIX = "lumina:summary:";
 // Hard cap on stored thread size — prevents an adversarial visitor
@@ -84,7 +91,14 @@ export function isValidSessionId(value: unknown): value is string {
 }
 
 /** Return the persisted thread for this session, or null if KV is
- *  unavailable / has never seen this id / errors during read. */
+ *  unavailable / has never seen this id / errors during read.
+ *
+ *  V5 Sub-PR 6.4: fires a fire-and-forget memory-adoption
+ *  counter on each successful KV round-trip — `hit` when a
+ *  stored thread is returned, `miss` when nothing is found.
+ *  KV-unavailable / invalid-id paths skip telemetry (no
+ *  meaningful signal there). The counters drive the hit-rate
+ *  surfaced on /lumina/brain. */
 export async function loadSession(
   sessionId: string,
 ): Promise<UIMessage[] | null> {
@@ -92,17 +106,27 @@ export async function loadSession(
   if (!isValidSessionId(sessionId)) return null;
   try {
     const stored = await kv.get<UIMessage[]>(sessionKey(sessionId));
-    if (!Array.isArray(stored)) return null;
+    if (!Array.isArray(stored)) {
+      void recordMemoryEvent("miss");
+      return null;
+    }
+    void recordMemoryEvent("hit");
     return stored;
   } catch {
     return null;
   }
 }
 
-/** Persist the thread and refresh the 14-day TTL. Truncates to
- *  MAX_MESSAGES (keeping the most recent), then redacts PII out of
- *  every text part before write. No-op when KV is unavailable or
- *  the session-id shape is wrong. */
+/** Persist the thread and refresh the (configurable) TTL.
+ *  Truncates to MAX_MESSAGES (keeping the most recent), then
+ *  redacts PII out of every text part before write. No-op when
+ *  KV is unavailable or the session-id shape is wrong.
+ *
+ *  V5 Sub-PR 6.4:
+ *    - TTL resolved per-call via `resolveTtlSeconds()` — defaults
+ *      to 14 days, operator can extend to 30 via the env override.
+ *    - Fires a fire-and-forget `store` memory-adoption counter
+ *      on every successful write. */
 export async function saveSession(
   sessionId: string,
   messages: UIMessage[],
@@ -118,7 +142,10 @@ export async function saveSession(
   const redacted = redactMessages(trimmed);
 
   try {
-    await kv.set(sessionKey(sessionId), redacted, { ex: TTL_SECONDS });
+    await kv.set(sessionKey(sessionId), redacted, {
+      ex: resolveTtlSeconds(),
+    });
+    void recordMemoryEvent("store");
   } catch {
     /* swallow — memory is decorative, not critical to chat */
   }
@@ -146,11 +173,19 @@ export async function loadSummary(
   }
 }
 
-/** Delete both KV buckets (thread + summary) for the given session.
- *  Called by /api/chat/forget when the visitor clicks the Forget-Me
- *  control in the chat header. Always silent on errors — the
- *  client-side state reset must succeed regardless of KV reachability,
- *  and KV records expire naturally within 14 days anyway. */
+/** Delete both KV buckets (thread + summary) for the given
+ *  session. Called by /api/chat/forget when the visitor clicks
+ *  the Forget-Me control in the chat header. Always silent on
+ *  errors — the client-side state reset must succeed regardless
+ *  of KV reachability, and KV records expire naturally within
+ *  the configured TTL (14-30 days) anyway.
+ *
+ *  Sub-PR 6.4 note: the V5 pages-index sibling key
+ *  (`lumina:session:<id>:pages`) is NOT deleted here. The
+ *  separate `forgetSessionPages` helper in
+ *  `lib/v5/memory/pages.ts` handles that branch so the V4 forget
+ *  flow stays backward-compatible. Phase 10's Forget-Me wiring
+ *  will call both. */
 export async function forgetSession(sessionId: string): Promise<void> {
   if (!hasKv) return;
   if (!isValidSessionId(sessionId)) return;
@@ -164,7 +199,10 @@ export async function forgetSession(sessionId: string): Promise<void> {
 }
 
 /** Persist a freshly-generated session summary. Caps the body at
- *  2000 chars so a runaway model response can't bloat KV. */
+ *  2000 chars so a runaway model response can't bloat KV.
+ *
+ *  V5 Sub-PR 6.4: TTL resolved per-call so summary expiry stays
+ *  in lockstep with the session bucket. */
 export async function saveSummary(
   sessionId: string,
   summary: string,
@@ -181,7 +219,9 @@ export async function saveSummary(
     generatedAt: Date.now(),
   };
   try {
-    await kv.set(summaryKey(sessionId), payload, { ex: TTL_SECONDS });
+    await kv.set(summaryKey(sessionId), payload, {
+      ex: resolveTtlSeconds(),
+    });
   } catch {
     /* swallow — summary is opportunistic, not critical to chat */
   }
