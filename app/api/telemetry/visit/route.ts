@@ -69,6 +69,11 @@ const SURFACE_TO_KEY: Record<string, MetricKey> = {
    * hash; the two carry different signals (V4-style cumulative
    * vs V5 event-kind aggregate). */
   topology: METRIC_KEYS.TOPOLOGY_PAGE_VISITS,
+  /* V5 Phase 9 Sub-PR 9.2 — operational twin surface.
+   * /v5/operating renders the composed snapshot from Phase 9.1's
+   * data layer. Scalar visit counter; the per-section inspection
+   * hash lives at v5:operating:adoption (Phase 9.1). */
+  operating: METRIC_KEYS.OPERATING_PAGE_VISITS,
 };
 
 interface VisitPayload {
