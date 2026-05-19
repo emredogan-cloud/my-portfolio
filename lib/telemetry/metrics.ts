@@ -155,6 +155,15 @@ export const METRIC_KEYS = {
    *  signal collected on that page (consent precedes any
    *  perception event recording). */
   V5_PERCEPTION_PAGE_VISITS: "v5:telemetry:perception-page:visits",
+  /** Cumulative visit count for /evolution — the public engineering
+   *  memory archive shipped in V5 Phase 7 Sub-PR 7.1. Same self-
+   *  referential pattern as LUMINA_BRAIN_VISITS and
+   *  V5_PERCEPTION_PAGE_VISITS. The temporal layer's filter +
+   *  deep-link interactions live on a separate aggregate hash
+   *  (`v5:temporal:adoption`); this scalar is the raw visit count
+   *  the V4 dashboard reads through the same primitive every other
+   *  V4 visit surface uses. */
+  EVOLUTION_PAGE_VISITS: "v5:telemetry:evolution-page:visits",
 } as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];

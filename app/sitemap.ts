@@ -19,6 +19,7 @@ const STATIC_ROUTES = [
   "/pro",
   "/telemetry",
   "/changelog",
+  "/evolution",
   "/lab",
   "/lab/iam-translator",
   "/lab/prompt-rescuer",
