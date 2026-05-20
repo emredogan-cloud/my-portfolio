@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import type { Milestone, IllustrationsById } from "./types";
+import PhoneFrame from "./PhoneFrame";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -27,7 +28,23 @@ const EASE = [0.22, 1, 0.36, 1] as const;
  *
  * Reduced motion: useReducedMotion disables the eased background
  * transition + the per-milestone fade-up. Content remains legible.
+ *
+ * V6 Sub-PR 14.3 — `variant` prop introduces three project-specific
+ * tonal variations of the same engine. Spec validation #1 requires
+ * the existing CWH page render byte-identical when no variant is
+ * passed. The runtime gate below makes that explicit: when the
+ * V6_ARCH_VARIANTS flag is OFF or the variant prop is absent or
+ * equals 'wide-text', the layout collapses to the V5 default
+ * (text col-span-7 / illustration col-span-5, default bordered
+ * card wrapper). 'wide-illustration' inverts the column ratio for
+ * VCA; 'phone-frame' wraps the illustration in a phone-shaped
+ * mockup for FormAI.
  */
+
+export type ScrollStoryVariant =
+  | "wide-text"
+  | "wide-illustration"
+  | "phone-frame";
 
 interface ScrollStoryProps {
   /** Ordered list of milestones to render. */
@@ -36,16 +53,33 @@ interface ScrollStoryProps {
    *  entries are tolerated; the engine just renders no illustration
    *  for that step. */
   illustrationsById: IllustrationsById;
+  /**
+   * V6 14.3 — per-project tonal variation. When the V6_ARCH_VARIANTS
+   * flag is off, this prop is ignored and the engine renders the
+   * `wide-text` default (V5 byte-identical layout). When the flag is
+   * on, each project's variant is honoured.
+   */
+  variant?: ScrollStoryVariant;
 }
 
 export default function ScrollStory({
   milestones,
   illustrationsById,
+  variant,
 }: ScrollStoryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const milestoneRefs = useRef<(HTMLLIElement | null)[]>([]);
   const ratiosRef = useRef<Map<number, number>>(new Map());
   const prefersReducedMotion = useReducedMotion();
+
+  /* Spec validation #1 — when the flag is off OR no variant is
+     passed, the engine MUST render byte-identical to the V5 CWH
+     page. The runtime gate collapses every input to 'wide-text'
+     under those conditions. */
+  const flagOn = process.env.NEXT_PUBLIC_V6_ARCH_VARIANTS === "1";
+  const effectiveVariant: ScrollStoryVariant = flagOn
+    ? variant ?? "wide-text"
+    : "wide-text";
 
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
@@ -121,6 +155,7 @@ export default function ScrollStory({
               milestoneRefs.current[i] = el;
             }}
             reducedMotion={!!prefersReducedMotion}
+            variant={effectiveVariant}
           />
         ))}
       </ol>
@@ -187,6 +222,7 @@ interface MilestoneSectionProps {
   index: number;
   registerRef: (el: HTMLLIElement | null) => void;
   reducedMotion: boolean;
+  variant: ScrollStoryVariant;
 }
 
 function MilestoneSection({
@@ -195,7 +231,23 @@ function MilestoneSection({
   index,
   registerRef,
   reducedMotion,
+  variant,
 }: MilestoneSectionProps) {
+  /* V6 14.3 — variant-driven column ratio.
+       wide-text          → text 7 / ill 5 (CWH default, V5 byte-identical)
+       wide-illustration  → text 5 / ill 7 (VCA — agents benefit from larger art)
+       phone-frame        → text 7 / ill 5 (FormAI — same ratio, phone wrapper)
+     The phone-frame variant keeps the wide-text ratio AND wraps the
+     illustration in <PhoneFrame> to reinforce the "edge ML on mobile"
+     framing of FormAI's architecture. */
+  const isWideIllustration = variant === "wide-illustration";
+  const isPhoneFrame = variant === "phone-frame";
+
+  const textColSpan = isWideIllustration ? "md:col-span-5" : "md:col-span-7";
+  const illustrationColSpan = isWideIllustration
+    ? "md:col-span-7"
+    : "md:col-span-5";
+
   return (
     <li
       ref={registerRef}
@@ -210,7 +262,7 @@ function MilestoneSection({
         transition={{ duration: 0.9, ease: EASE }}
         className="grid grid-cols-1 md:grid-cols-12 items-center gap-8 md:gap-14 w-full"
       >
-        <div className="md:col-span-7 space-y-4 sm:space-y-5">
+        <div className={`${textColSpan} space-y-4 sm:space-y-5`}>
           <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/80">
             {milestone.accent}
           </p>
@@ -221,11 +273,23 @@ function MilestoneSection({
             {milestone.body}
           </p>
         </div>
-        <div className="md:col-span-5">
+        <div className={illustrationColSpan}>
           {Illustration ? (
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3 sm:p-5">
-              <Illustration className="w-full h-auto max-w-[320px] sm:max-w-[360px] mx-auto" />
-            </div>
+            isPhoneFrame ? (
+              <PhoneFrame>
+                <Illustration className="w-full h-auto max-w-full" />
+              </PhoneFrame>
+            ) : (
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3 sm:p-5">
+                <Illustration
+                  className={
+                    isWideIllustration
+                      ? "w-full h-auto max-w-[480px] sm:max-w-[520px] mx-auto"
+                      : "w-full h-auto max-w-[320px] sm:max-w-[360px] mx-auto"
+                  }
+                />
+              </div>
+            )
           ) : null}
         </div>
       </motion.div>

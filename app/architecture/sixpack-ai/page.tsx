@@ -68,9 +68,18 @@ export default function SixPackArchitecturePage() {
           events={projectEvents}
         />
 
+        {/* V6 14.3 — FormAI's "edge ML on mobile" framing is
+            reinforced by wrapping each milestone illustration in a
+            phone-shaped mockup. The engine swaps the default
+            bordered card wrapper for <PhoneFrame> when
+            `variant="phone-frame"` AND the V6_ARCH_VARIANTS flag is
+            on. With the flag off the engine renders the V5
+            byte-identical bordered card. Phone-frame is reduced-
+            motion safe by construction (no parallax). */}
         <ScrollStory
           milestones={MILESTONES}
           illustrationsById={ILLUSTRATION_BY_ID}
+          variant="phone-frame"
         />
       </div>
     </main>

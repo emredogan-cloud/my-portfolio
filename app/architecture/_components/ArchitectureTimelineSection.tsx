@@ -1,4 +1,5 @@
 import TimelineSlider from "@/components/v5/TimelineSlider";
+import TimelineLadder from "@/components/v5/TimelineLadder";
 import type { EvolutionEvent } from "@/lib/v5/temporal/schema";
 
 /**
@@ -69,13 +70,34 @@ export default function ArchitectureTimelineSection({
    * registry coverage. */
   if (events.length < MIN_EVENTS_FOR_SLIDER) return null;
 
+  /* V6 14.4 — mobile timeline ladder gate.
+   *
+   * Pre-14.4 the entire section was hidden below 768 px (`hidden
+   * md:block`). Audit § 6.3 flagged this as a BLOCKER: the most
+   * distinctive temporal interaction in the codebase was mobile-
+   * invisible, and recruiters frequently view from phones.
+   *
+   * When V6_TIMELINE_LADDER is on, the section becomes always-
+   * visible. Inside the section, the slider stays desktop-only
+   * (its drag-to-scrub UX doesn't translate to one-thumb scroll);
+   * the ladder takes its place on mobile with the same data
+   * shape, the same engagement telemetry, and an inline tap-to-
+   * expand interaction appropriate to the viewport.
+   *
+   * Flag off → section behaves verbatim per V5 (mobile-hidden);
+   * the new <TimelineLadder> tree is dead code but tree-shaken
+   * out of the production bundle since the conditional below
+   * evaluates statically at build time. */
+  const ladderEnabled =
+    process.env.NEXT_PUBLIC_V6_TIMELINE_LADDER === "1";
+
   return (
     <section
-      /* `hidden md:block` satisfies V5 § 5.2 7.4: "Timeline
-       * slider opt-in (visible on viewport > 768px)". Tailwind's
-       * `md:` breakpoint is exactly 768px. Mobile visitors get
-       * the V4 page experience verbatim. */
-      className="hidden md:block mt-16 mb-12 max-w-3xl"
+      className={
+        ladderEnabled
+          ? "mt-16 mb-12 max-w-3xl"
+          : "hidden md:block mt-16 mb-12 max-w-3xl"
+      }
       aria-label={`Timeline scrubber for ${slug}`}
     >
       <div className="border-t border-white/[0.06] pt-8">
@@ -86,13 +108,27 @@ export default function ArchitectureTimelineSection({
           This system&apos;s evolution
         </h2>
         <p className="text-tertiary text-[14px] leading-relaxed mb-7 max-w-2xl">
-          A scrubbable cursor over the architectural events the
-          registry remembers about this project. Drag the thumb,
-          step with arrows, or hit play to advance the cursor
-          back through time. The architecture below remains the
-          latest snapshot regardless of cursor position — this
-          surface is companion, not replacement. The full
-          archive lives at{" "}
+          {ladderEnabled ? (
+            <>
+              The architectural events the registry remembers about
+              this project. On desktop, drag the scrubber, step with
+              arrows, or hit play to advance the cursor back through
+              time. On mobile, tap each marker to read its rationale.
+              The architecture below remains the latest snapshot
+              regardless of cursor position — this surface is
+              companion, not replacement.
+            </>
+          ) : (
+            <>
+              A scrubbable cursor over the architectural events the
+              registry remembers about this project. Drag the thumb,
+              step with arrows, or hit play to advance the cursor
+              back through time. The architecture below remains the
+              latest snapshot regardless of cursor position — this
+              surface is companion, not replacement.
+            </>
+          )}{" "}
+          The full archive lives at{" "}
           <a
             href={`/evolution?system=${slug}`}
             className="text-[#00d2ff]/80 hover:text-[#00d2ff] underline underline-offset-2 decoration-white/15 hover:decoration-[#00d2ff]/50 transition-colors"
@@ -101,9 +137,33 @@ export default function ArchitectureTimelineSection({
           </a>
           .
         </p>
-        <div className="border border-white/[0.06] rounded-xl bg-white/[0.02] p-5 md:p-6">
+
+        {/* Desktop slider — preserved verbatim from V5.
+            When the ladder flag is off, the legacy `hidden md:block`
+            section wraps the slider; it remains the only timeline
+            surface and stays desktop-only. When the ladder flag is
+            on, the slider keeps its desktop-only gate at the inner
+            block level (`hidden md:block`); the ladder takes the
+            mobile slot via the complementary `md:hidden`. */}
+        <div
+          className={
+            ladderEnabled
+              ? "hidden md:block border border-white/[0.06] rounded-xl bg-white/[0.02] p-5 md:p-6"
+              : "border border-white/[0.06] rounded-xl bg-white/[0.02] p-5 md:p-6"
+          }
+        >
           <TimelineSlider events={events} context={slug} />
         </div>
+
+        {/* Mobile ladder — only rendered when the ladder flag is on.
+            Sits in the complementary md:hidden slot so the section
+            is filled on every viewport without duplicating the
+            engagement signal in the DOM. */}
+        {ladderEnabled ? (
+          <div className="md:hidden border border-white/[0.06] rounded-xl bg-white/[0.02] p-4">
+            <TimelineLadder events={events} context={slug} />
+          </div>
+        ) : null}
       </div>
     </section>
   );
