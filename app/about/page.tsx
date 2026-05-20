@@ -183,6 +183,15 @@ const FEATURED = [
 ] as const;
 
 export default function AboutPage() {
+  if (process.env.NEXT_PUBLIC_V6_ABOUT_RESTRUCTURE === "1") {
+    return <V6AboutPage />;
+  }
+  return <LegacyAboutPage />;
+}
+
+/* ── Legacy /about (V5 baseline, rollback path) ───────────────── */
+
+function LegacyAboutPage() {
   /* V6 11.5 — margin tick. Server-side env read; the className is
      emitted only when V6_MARGIN_TICK=1, otherwise the about page
      renders its V5-style hairline-rule decor only. */
@@ -823,6 +832,546 @@ export default function AboutPage() {
             {/* End-transmission signature — a single quiet mono line
                 under a hairline rule. The page's last vertical beat
                 before the global footer takes over. Static. */}
+            <div className="mt-20 pt-6 border-t border-white/[0.05] flex items-center gap-3 font-mono uppercase tracking-[0.22em] text-[10px] text-faint">
+              <span
+                aria-hidden="true"
+                className="w-1 h-1 rounded-full bg-[#00d2ff]/50"
+              />
+              <span>End transmission</span>
+              <span className="text-faint">·</span>
+              <span>ED.</span>
+              <span className="text-faint">·</span>
+              <span>2026</span>
+            </div>
+          </Reveal>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+/* ── V6 /about (Sub-PR 13.3 reordered + lead rewrite) ──────────
+ *
+ * Spec § Sub-PR 13.3 explicit section order:
+ *   1.  HERO (rewritten lead paragraph per 13.3a — bakery first)
+ *   2.  CLOSING TRANSMISSION SIGNATURE (cyan-tick'd pulse pill +
+ *       dt/dl FIELD/BUILD/READING/STANCE — moved up)
+ *   3.  CINEMATIC PAUSE
+ *   4.  OPERATING PHILOSOPHY (asymmetric 1+3 tiles)
+ *   5.  IN FLIGHT (live builds, was section 11)
+ *   6.  RECEIPTS (GitHub heatmap)
+ *   7.  PRINCIPLES (4 numbered tiles)
+ *   8.  SPECIALIZATIONS (compressed — no card surface, single
+ *       paragraph + chip line per spec)
+ *   9.  CURRENTLY (dt/dl rows)
+ *   10. ATMOSPHERIC BREATH ("What keeps the noise low")
+ *   11. CLOSING H2 + CTAs ("Building tools / engineers actually use"
+ *       + 2 CTAs + end-transmission signature)
+ *
+ * Removed: "Outside The Terminal" (Training / Motorcycle /
+ *   Reading / Codex). Sub-PR 13.5 will host the content at /pulse;
+ *   the LegacyAboutPage above retains the section for rollback.
+ *
+ * Hero lead paragraph rewritten per 13.3a — identity vector
+ * (bakery shifts) arrives first; expertise list arrives second.
+ *
+ * Audit refs: §§ 4.1, 4.4, 4.6.
+ * Spec ref:   § Sub-PR 13.3. */
+
+function V6AboutPage() {
+  const tickEnabled = isMarginTickEnabled();
+
+  return (
+    <main id="main" className="relative min-h-screen bg-black">
+      <PageAtmosphere
+        variant="editorial"
+        legacy={{
+          primary: {
+            color: "rgba(0,210,255,0.07)",
+            position: "top-right",
+            size: "lg",
+          },
+          secondary: {
+            color: "rgba(168,132,44,0.05)",
+            position: "bottom-left",
+            size: "md",
+          },
+        }}
+      />
+
+      <div className="relative z-10 max-w-5xl mx-auto px-6 pt-36 pb-32">
+
+        {/* ───────── 1. HERO (rewritten lead per 13.3a) ─────────
+            Identity vector first: the bakery sentence opens the
+            page. Expertise list arrives second. Same content as
+            V5, inverted order. */}
+        <Reveal mode="mount" duration={0.8} className="mb-24 md:mb-28">
+          <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+            About
+          </span>
+          <h1 className="text-5xl md:text-7xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5">
+            <span className="block">Built slowly.</span>
+            <span className="block text-tertiary">On purpose.</span>
+          </h1>
+          <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
+            The work began behind 01:30 bakery shifts and finished
+            after school days. Two years on, the discipline is what
+            remains — the rest is production AWS infrastructure,
+            AI-native tooling, and full-stack systems, designed on
+            time horizons measured in years from a small desk in
+            Adana.
+          </p>
+        </Reveal>
+
+        {/* ───────── 2. CLOSING TRANSMISSION SIGNATURE ─────────
+            Moved up from V5's Closing Transmission. The strongest
+            single block (operator's coordinates of practice +
+            live build context) arrives early on the page so a
+            recruiter / senior engineer reads the position before
+            the long-form principles list. */}
+        <section className="mb-28 md:mb-32">
+          <Reveal duration={0.7}>
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              Signature
+            </span>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-8">
+              Coordinates of practice.
+            </h2>
+
+            {/* Pulse pill — with V6 13.3 cyan margin tick to its
+                left. The pill content (Build window · open ·
+                Adana · GMT+3) is unchanged from V5; the tick is
+                the new affordance per spec ("the cyan-tick'd
+                pulse pill"). */}
+            <div className="flex items-baseline gap-3">
+              <span aria-hidden="true" className="margin-tick mt-1 shrink-0" />
+              <p className="inline-flex items-center gap-2.5 rounded-full border border-white/[0.08] bg-white/[0.02] px-3.5 py-1.5 font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary">
+                <span
+                  aria-hidden="true"
+                  className="w-1.5 h-1.5 rounded-full bg-[#00d2ff]/80"
+                />
+                <span>Build window · open</span>
+                <span className="text-faint">·</span>
+                <span>Adana</span>
+                <span className="text-faint">·</span>
+                <span>GMT+3</span>
+              </p>
+            </div>
+
+            {/* Transmission read-out — preserved from V5. Four
+                hand-curated fields, thin cyan rule on the left
+                (retoned from V5's white/06 to keep the signature
+                block visually unified with the pulse pill above). */}
+            <dl className="mt-10 max-w-md border-l border-[#00d2ff]/[0.20] pl-5 space-y-2.5">
+              {[
+                { k: "Field", v: "Adana · GMT+3" },
+                { k: "Build", v: "Cloud Waste Hunter v2" },
+                { k: "Reading", v: "Kleppmann · DDIA" },
+                { k: "Stance", v: "Long arcs · daily practice" },
+              ].map((row) => (
+                <div
+                  key={row.k}
+                  className="grid grid-cols-[80px_1fr] gap-4 items-baseline"
+                >
+                  <dt className="font-mono uppercase tracking-[0.18em] text-[10px] text-quiet">
+                    {row.k}
+                  </dt>
+                  <dd className="text-tertiary text-[13.5px] leading-relaxed">
+                    {row.v}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </Reveal>
+        </section>
+
+        {/* ───────── 3. CINEMATIC PAUSE ─────────
+            Preserved from V5, including the 11.5 margin-tick
+            second motif anchored to the left of the italic
+            paragraph. */}
+        <Reveal duration={0.8} margin="-50px" className="mb-28 md:mb-32">
+          <div className="flex items-start gap-5 max-w-3xl">
+            {tickEnabled ? (
+              <span aria-hidden="true" className="margin-tick mt-4" />
+            ) : null}
+            <p className="text-2xl md:text-3xl lg:text-[2.1rem] font-medium tracking-[-0.02em] leading-[1.4] text-tertiary italic">
+              The system that builds the system matters more than the
+              system that ships this quarter.
+            </p>
+          </div>
+          <span
+            aria-hidden="true"
+            className="block mt-10 h-px w-24 bg-gradient-to-r from-[#00d2ff]/40 via-white/10 to-transparent"
+          />
+        </Reveal>
+
+        {/* ───────── 4. OPERATING PHILOSOPHY ─────────
+            Preserved from V5 — asymmetric 1+3 tile layout. */}
+        <section className="mb-28 md:mb-32">
+          <Reveal duration={0.7}>
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              Monk Mode
+            </span>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-4">
+              The discipline is the design.
+            </h2>
+            <p className="text-tertiary text-sm md:text-base max-w-xl leading-[1.85] mb-12">
+              Less a regimen than a rhythm. Calm repetition; same desk,
+              same chair, same first hour. What gets shipped is the
+              residue of what gets done quietly, day after day.
+            </p>
+          </Reveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+            {PHILOSOPHY.map((p, i) => (
+              <Reveal
+                key={p.eyebrow}
+                duration={0.6}
+                delay={i * 0.07}
+                y={14}
+                margin="-60px"
+                className={
+                  i === 0
+                    ? "lg:row-span-2 lg:col-span-1"
+                    : "lg:col-span-2 lg:max-w-full"
+                }
+              >
+                <div
+                  className={`relative rounded-2xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-7 h-full transition-colors duration-500 hover:border-white/[0.10] hover:bg-white/[0.025] ${
+                    i === 0 ? "flex flex-col justify-between min-h-[240px]" : ""
+                  }`}
+                >
+                  <span className="font-mono uppercase tracking-[0.20em] text-[10px] text-[#00d2ff]/80 block mb-3">
+                    {p.eyebrow}
+                  </span>
+                  <p className="text-secondary text-[15px] leading-[1.75]">
+                    {p.body}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+
+        {/* ───────── 5. IN FLIGHT (live builds) ─────────
+            Promoted from V5's section 11 — the visitor sees the
+            actual work earlier in the read. */}
+        <section className="mb-28">
+          <Reveal duration={0.7}>
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              In flight
+            </span>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-12">
+              Live builds.
+            </h2>
+            <div className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
+              {FEATURED.map((p, i) => (
+                <Reveal
+                  key={p.id}
+                  duration={0.5}
+                  delay={i * 0.08}
+                  y={10}
+                  margin="-40px"
+                >
+                  <Link
+                    href={`/projects/${p.id}`}
+                    className="group flex items-center justify-between gap-6 py-6 hover:bg-white/[0.02] transition-colors duration-300 -mx-4 px-4 rounded-lg"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-3 mb-1 flex-wrap">
+                        <h3 className="text-primary font-medium text-lg">
+                          {p.title}
+                        </h3>
+                        <span className="text-tertiary text-xs font-mono">
+                          {p.role}
+                        </span>
+                      </div>
+                      <p className="text-tertiary text-sm leading-relaxed">
+                        {p.blurb}
+                      </p>
+                    </div>
+                    <ArrowRight
+                      className="w-4 h-4 text-quiet group-hover:text-primary transition-all duration-300 group-hover:translate-x-1 flex-shrink-0"
+                      style={{ transform: "rotate(-45deg)" }}
+                    />
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
+          </Reveal>
+        </section>
+
+        {/* ───────── 6. RECEIPTS (GitHub heatmap) ─────────
+            Preserved from V5 — emotional consistency frame with
+            cyan halo + seasonal rhythm caption. */}
+        <section className="relative mb-28">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-32 w-[110%] h-[380px] rounded-full blur-[150px]"
+            style={{
+              background:
+                "radial-gradient(ellipse, rgba(0,210,255,0.05) 0%, transparent 70%)",
+            }}
+          />
+          <Reveal duration={0.7}>
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              Receipts
+            </span>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-4">
+              Consistency over intensity.
+            </h2>
+            <p className="text-tertiary text-sm md:text-base leading-[1.85] max-w-2xl mb-10">
+              Two years of mostly-daily commits. Some days are full
+              ship-days; some are a single PR. Not every cyan square is
+              a win — most are just showing up to the same desk and
+              writing the next file.
+            </p>
+            <div className="relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 md:p-8 overflow-x-auto">
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 rounded-2xl"
+                style={{
+                  boxShadow: "inset 0 0 80px rgba(0,210,255,0.04)",
+                }}
+              />
+              <div className="relative">
+                <GithubActivity />
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 font-mono uppercase tracking-[0.20em] text-[10px] text-quiet">
+              <span className="inline-flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="w-1 h-1 rounded-full bg-[#00d2ff]/60"
+                />
+                <span>Adana</span>
+              </span>
+              <span className="hidden sm:inline text-faint">·</span>
+              <span>Two winters &nbsp;&middot;&nbsp; two summers</span>
+              <span className="hidden sm:inline text-faint">·</span>
+              <span>GMT+3</span>
+            </div>
+          </Reveal>
+        </section>
+
+        {/* ───────── 7. PRINCIPLES ─────────
+            Preserved from V5 — atmospheric depth pass, 4 numbered
+            tiles on a wide ambient cyan stage. */}
+        <section className="relative mb-28">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-32 w-[120%] h-[420px] rounded-full blur-[140px]"
+            style={{
+              background:
+                "radial-gradient(ellipse, rgba(0,210,255,0.06) 0%, transparent 70%)",
+            }}
+          />
+          <Reveal duration={0.7}>
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              Principles
+            </span>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-12">
+              How the work gets made.
+            </h2>
+          </Reveal>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {PRINCIPLES.map((p, i) => (
+              <Reveal
+                key={p.label}
+                duration={0.6}
+                delay={i * 0.08}
+                y={14}
+                margin="-60px"
+              >
+                <div className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 md:p-8 transition-all duration-500 hover:border-white/[0.10] hover:bg-white/[0.04] overflow-hidden">
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-x-7 top-0 h-px bg-[#00d2ff]/20 opacity-30 group-hover:opacity-90 transition-opacity duration-500"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 rounded-2xl opacity-60 transition-opacity duration-500 group-hover:opacity-100"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 0% 0%, rgba(255,255,255,0.05), transparent 55%)",
+                    }}
+                  />
+                  <div className="relative">
+                    <span className="font-mono text-[#00d2ff]/70 text-base block mb-3 transition-all duration-500 group-hover:text-[#00d2ff] group-hover:text-lg">
+                      {p.label}
+                    </span>
+                    <h3 className="text-primary font-medium text-xl tracking-tight mb-3">
+                      {p.title}
+                    </h3>
+                    <p className="text-tertiary text-sm leading-[1.85]">
+                      {p.body}
+                    </p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+
+        {/* ───────── 8. SPECIALIZATIONS (compressed) ─────────
+            V6 13.3 compression: drop the per-spec edge-lit-card,
+            render as a 3-col grid with title (col 1) + body +
+            chip line (col 2 / 2 cols span). Single-row chip line.
+            Saves ~200px vertical sprawl. */}
+        <section className="mb-28">
+          <Reveal duration={0.7}>
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              Specializations
+            </span>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-10">
+              Where the time goes.
+            </h2>
+          </Reveal>
+          <div className="divide-y divide-white/[0.05] border-y border-white/[0.05]">
+            {SPECIALIZATIONS.map((s, i) => (
+              <Reveal
+                key={s.title}
+                duration={0.6}
+                delay={i * 0.08}
+                y={12}
+                margin="-40px"
+              >
+                <article className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-4 md:gap-10 py-7">
+                  <h3 className="text-primary font-medium text-base md:text-lg leading-tight">
+                    {s.title}
+                  </h3>
+                  <div className="space-y-3">
+                    <p className="text-tertiary text-[14.5px] leading-[1.8]">
+                      {s.body}
+                    </p>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 items-baseline">
+                      {s.keywords.map((k, ki) => (
+                        <span
+                          key={k}
+                          className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary"
+                        >
+                          {k}
+                          {ki < s.keywords.length - 1 ? (
+                            <span aria-hidden="true" className="text-faint ml-3">·</span>
+                          ) : null}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </article>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+
+        {/* ───────── 9. CURRENTLY ─────────
+            Preserved from V5 — small intentional footer block of
+            hand-curated state. */}
+        <section className="mb-28">
+          <Reveal duration={0.7}>
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              Currently
+            </span>
+            <h2 className="text-3xl md:text-4xl font-medium tracking-[-0.03em] text-primary mt-5 mb-10">
+              On the bench, this week.
+            </h2>
+          </Reveal>
+          <dl className="divide-y divide-white/[0.05] border-y border-white/[0.05]">
+            {CURRENTLY.map((row, i) => (
+              <Reveal
+                key={row.label}
+                duration={0.5}
+                delay={i * 0.06}
+                y={8}
+                margin="-40px"
+              >
+                <div className="grid grid-cols-[110px_1fr] md:grid-cols-[170px_1fr] gap-5 md:gap-10 items-baseline py-5">
+                  <dt className="font-mono uppercase tracking-[0.20em] text-[10px] text-[#00d2ff]/70">
+                    {row.label}
+                  </dt>
+                  <dd className="text-secondary text-[15px] md:text-base leading-relaxed">
+                    {row.body}
+                  </dd>
+                </div>
+              </Reveal>
+            ))}
+          </dl>
+        </section>
+
+        {/* ───────── 10. ATMOSPHERIC BREATH ─────────
+            Preserved from V5 — bridges Currently to the page's
+            emotional close. Margin tick from 11.5 anchored to the
+            left of the eyebrow. */}
+        <section className="mb-28 md:mb-32">
+          <Reveal duration={0.8} margin="-80px">
+            <div className="flex items-start gap-5 max-w-3xl">
+              {tickEnabled ? (
+                <span
+                  aria-hidden="true"
+                  className="margin-tick mt-1.5"
+                />
+              ) : null}
+              <div>
+                <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+                  What keeps the noise low
+                </span>
+                <p className="mt-7 text-2xl md:text-3xl lg:text-[2.1rem] font-medium tracking-[-0.02em] leading-[1.4] text-primary/85">
+                  A walk before the keyboard sees a problem. Long
+                  stretches with no input. The day&apos;s most useful
+                  sentence is usually the one written down at the end
+                  of one of those walks — solitude isn&apos;t the
+                  goal, it&apos;s the operating condition.
+                </p>
+              </div>
+            </div>
+            <span
+              aria-hidden="true"
+              className="block mt-12 h-px w-24 bg-gradient-to-r from-[#00d2ff]/40 via-white/10 to-transparent"
+            />
+          </Reveal>
+        </section>
+
+        {/* ───────── 11. CLOSING H2 + CTAs ─────────
+            Remainder of V5's Closing Transmission, with the
+            signature block (pulse pill + dt/dl) moved up to
+            section 2. The H2 + paragraph + CTAs + end-signature
+            line stay here as the page's emotional close. */}
+        <section className="relative">
+          <Reveal duration={0.8}>
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+              Closing transmission
+            </span>
+            <h2 className="text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5 mb-8">
+              <span className="block">Building tools</span>
+              <span className="block text-tertiary">engineers actually use.</span>
+            </h2>
+            <p className="text-secondary max-w-2xl text-base md:text-lg leading-relaxed">
+              Smaller systems, sharper edges, fewer dashboards.
+              Infrastructure that engineering teams can hold in one
+              head. Operator time is the scarcest resource in the
+              stack; the work here is built around protecting it.
+            </p>
+
+            <div className="mt-12 flex flex-wrap gap-4">
+              <Link
+                href="/contact"
+                className="group inline-flex items-center gap-2 rounded-full pl-5 pr-1 py-1 bg-primary hover:gap-3 transition-all duration-300"
+              >
+                <span className="text-black font-medium text-sm">
+                  Get in touch
+                </span>
+                <div className="bg-black rounded-full w-9 h-9 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                  <ArrowRight className="w-4 h-4 text-primary" />
+                </div>
+              </Link>
+              <Link
+                href="/projects"
+                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 ${secondaryButton()} text-sm font-medium text-primary/80 hover:text-primary transition-colors`}
+              >
+                See the work
+              </Link>
+            </div>
+
             <div className="mt-20 pt-6 border-t border-white/[0.05] flex items-center gap-3 font-mono uppercase tracking-[0.22em] text-[10px] text-faint">
               <span
                 aria-hidden="true"
