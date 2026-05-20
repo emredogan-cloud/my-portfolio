@@ -5,7 +5,9 @@ import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import { cardSurface, secondaryButton } from "@/lib/v6/glass";
 import { isMarginTickEnabled } from "@/lib/v6/marginTick";
+import Pill from "@/components/ui/Pill";
 import GithubActivity from "./_components/GithubActivity";
+import PhilosophyTiles from "./_components/PhilosophyTiles";
 
 export const metadata: Metadata = {
   title: "About — Emre Doğan",
@@ -881,6 +883,15 @@ function LegacyAboutPage() {
 function V6AboutPage() {
   const tickEnabled = isMarginTickEnabled();
 
+  /* V6 13.4 — section-level spatial variation. Default OFF; when
+     enabled, the Operating Philosophy / Principles / Specializations
+     sections each adopt a distinct asymmetric layout so the
+     asymmetric move earns its identity through repetition (audit
+     § 4.3). When disabled, V6AboutPage renders the 13.3 uniform-
+     grid composition for these sections. */
+  const spatialVarEnabled =
+    process.env.NEXT_PUBLIC_V6_ABOUT_SPATIAL_VAR === "1";
+
   return (
     <main id="main" className="relative min-h-screen bg-black">
       <PageAtmosphere
@@ -1006,7 +1017,11 @@ function V6AboutPage() {
         </Reveal>
 
         {/* ───────── 4. OPERATING PHILOSOPHY ─────────
-            Preserved from V5 — asymmetric 1+3 tile layout. */}
+            Preserved from V5 — asymmetric 1+3 tile layout.
+            V6 13.4: extracted into <PhilosophyTiles /> for clarity
+            per spec ("extract for clarity"). The 1 tall left + 3
+            right composition is identical to V5/13.3; only the
+            file organisation changed. */}
         <section className="mb-28 md:mb-32">
           <Reveal duration={0.7}>
             <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
@@ -1022,35 +1037,7 @@ function V6AboutPage() {
             </p>
           </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
-            {PHILOSOPHY.map((p, i) => (
-              <Reveal
-                key={p.eyebrow}
-                duration={0.6}
-                delay={i * 0.07}
-                y={14}
-                margin="-60px"
-                className={
-                  i === 0
-                    ? "lg:row-span-2 lg:col-span-1"
-                    : "lg:col-span-2 lg:max-w-full"
-                }
-              >
-                <div
-                  className={`relative rounded-2xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-7 h-full transition-colors duration-500 hover:border-white/[0.10] hover:bg-white/[0.025] ${
-                    i === 0 ? "flex flex-col justify-between min-h-[240px]" : ""
-                  }`}
-                >
-                  <span className="font-mono uppercase tracking-[0.20em] text-[10px] text-[#00d2ff]/80 block mb-3">
-                    {p.eyebrow}
-                  </span>
-                  <p className="text-secondary text-[15px] leading-[1.75]">
-                    {p.body}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <PhilosophyTiles philosophy={PHILOSOPHY} />
         </section>
 
         {/* ───────── 5. IN FLIGHT (live builds) ─────────
@@ -1174,50 +1161,77 @@ function V6AboutPage() {
               How the work gets made.
             </h2>
           </Reveal>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {PRINCIPLES.map((p, i) => (
-              <Reveal
-                key={p.label}
-                duration={0.6}
-                delay={i * 0.08}
-                y={14}
-                margin="-60px"
-              >
-                <div className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 md:p-8 transition-all duration-500 hover:border-white/[0.10] hover:bg-white/[0.04] overflow-hidden">
-                  <span
-                    aria-hidden="true"
-                    className="absolute inset-x-7 top-0 h-px bg-[#00d2ff]/20 opacity-30 group-hover:opacity-90 transition-opacity duration-500"
-                  />
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 rounded-2xl opacity-60 transition-opacity duration-500 group-hover:opacity-100"
-                    style={{
-                      background:
-                        "radial-gradient(circle at 0% 0%, rgba(255,255,255,0.05), transparent 55%)",
-                    }}
-                  />
-                  <div className="relative">
-                    <span className="font-mono text-[#00d2ff]/70 text-base block mb-3 transition-all duration-500 group-hover:text-[#00d2ff] group-hover:text-lg">
-                      {p.label}
-                    </span>
-                    <h3 className="text-primary font-medium text-xl tracking-tight mb-3">
-                      {p.title}
-                    </h3>
-                    <p className="text-tertiary text-sm leading-[1.85]">
-                      {p.body}
-                    </p>
+          {/* V6 13.4 spatial variation: 2+2 with mid-row gap, where
+              Principle 03 (Cost-aware engineering) sits in a wider
+              container — the most load-bearing principle, the
+              layout reflects. The 12-col grid renders row 1 as 6+6
+              (01 + 02) and row 2 as 7+5 (03 wider + 04 narrower).
+              When the flag is off, the V6 layout falls back to
+              the 13.3 uniform 2×2 grid. */}
+          <div
+            className={
+              spatialVarEnabled
+                ? "grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-x-5 md:gap-y-12"
+                : "grid grid-cols-1 md:grid-cols-2 gap-5"
+            }
+          >
+            {PRINCIPLES.map((p, i) => {
+              const spatialColSpan = spatialVarEnabled
+                ? i === 2
+                  ? "md:col-span-7"
+                  : i === 3
+                    ? "md:col-span-5"
+                    : "md:col-span-6"
+                : "";
+              return (
+                <Reveal
+                  key={p.label}
+                  duration={0.6}
+                  delay={i * 0.08}
+                  y={14}
+                  margin="-60px"
+                  className={spatialColSpan}
+                >
+                  <div className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 md:p-8 h-full transition-all duration-500 hover:border-white/[0.10] hover:bg-white/[0.04] overflow-hidden">
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-x-7 top-0 h-px bg-[#00d2ff]/20 opacity-30 group-hover:opacity-90 transition-opacity duration-500"
+                    />
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 rounded-2xl opacity-60 transition-opacity duration-500 group-hover:opacity-100"
+                      style={{
+                        background:
+                          "radial-gradient(circle at 0% 0%, rgba(255,255,255,0.05), transparent 55%)",
+                      }}
+                    />
+                    <div className="relative">
+                      <span className="font-mono text-[#00d2ff]/70 text-base block mb-3 transition-all duration-500 group-hover:text-[#00d2ff] group-hover:text-lg">
+                        {p.label}
+                      </span>
+                      <h3 className="text-primary font-medium text-xl tracking-tight mb-3">
+                        {p.title}
+                      </h3>
+                      <p className="text-tertiary text-sm leading-[1.85]">
+                        {p.body}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </Reveal>
-            ))}
+                </Reveal>
+              );
+            })}
           </div>
         </section>
 
-        {/* ───────── 8. SPECIALIZATIONS (compressed) ─────────
-            V6 13.3 compression: drop the per-spec edge-lit-card,
-            render as a 3-col grid with title (col 1) + body +
-            chip line (col 2 / 2 cols span). Single-row chip line.
-            Saves ~200px vertical sprawl. */}
+        {/* ───────── 8. SPECIALIZATIONS ─────────
+            V6 13.3 introduced the compressed divider-line list.
+            V6 13.4 spatial variation (when enabled): three columns
+            sharing a baseline grid on md+; only the FIRST column
+            carries chip-style keywords (Pill kind="meta"); the
+            other two carry inline mono `·`-separated lines. Forces
+            visible variation between the three specs without losing
+            the data shape. When the spatial flag is off, the V6
+            layout falls back to 13.3's divider-line list. */}
         <section className="mb-28">
           <Reveal duration={0.7}>
             <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
@@ -1227,41 +1241,92 @@ function V6AboutPage() {
               Where the time goes.
             </h2>
           </Reveal>
-          <div className="divide-y divide-white/[0.05] border-y border-white/[0.05]">
-            {SPECIALIZATIONS.map((s, i) => (
-              <Reveal
-                key={s.title}
-                duration={0.6}
-                delay={i * 0.08}
-                y={12}
-                margin="-40px"
-              >
-                <article className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-4 md:gap-10 py-7">
-                  <h3 className="text-primary font-medium text-base md:text-lg leading-tight">
-                    {s.title}
-                  </h3>
-                  <div className="space-y-3">
-                    <p className="text-tertiary text-[14.5px] leading-[1.8]">
-                      {s.body}
-                    </p>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 items-baseline">
-                      {s.keywords.map((k, ki) => (
-                        <span
-                          key={k}
-                          className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary"
-                        >
-                          {k}
-                          {ki < s.keywords.length - 1 ? (
-                            <span aria-hidden="true" className="text-faint ml-3">·</span>
-                          ) : null}
-                        </span>
-                      ))}
+          {spatialVarEnabled ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 items-stretch">
+              {SPECIALIZATIONS.map((s, i) => {
+                const useChips = i === 0;
+                return (
+                  <Reveal
+                    key={s.title}
+                    duration={0.6}
+                    delay={i * 0.08}
+                    y={12}
+                    margin="-40px"
+                  >
+                    <article className="h-full flex flex-col gap-4 border-t border-white/[0.06] pt-6">
+                      <h3 className="text-primary font-medium text-base md:text-lg leading-tight">
+                        {s.title}
+                      </h3>
+                      <p className="text-tertiary text-[14px] leading-[1.8] flex-grow">
+                        {s.body}
+                      </p>
+                      {useChips ? (
+                        <div className="flex flex-wrap gap-1.5 items-baseline">
+                          {s.keywords.map((k) => (
+                            <Pill key={k} kind="meta">
+                              {k}
+                            </Pill>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary leading-relaxed">
+                          {s.keywords.map((k, ki) => (
+                            <span key={k}>
+                              {k}
+                              {ki < s.keywords.length - 1 ? (
+                                <span
+                                  aria-hidden="true"
+                                  className="text-faint mx-2"
+                                >
+                                  ·
+                                </span>
+                              ) : null}
+                            </span>
+                          ))}
+                        </p>
+                      )}
+                    </article>
+                  </Reveal>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="divide-y divide-white/[0.05] border-y border-white/[0.05]">
+              {SPECIALIZATIONS.map((s, i) => (
+                <Reveal
+                  key={s.title}
+                  duration={0.6}
+                  delay={i * 0.08}
+                  y={12}
+                  margin="-40px"
+                >
+                  <article className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-4 md:gap-10 py-7">
+                    <h3 className="text-primary font-medium text-base md:text-lg leading-tight">
+                      {s.title}
+                    </h3>
+                    <div className="space-y-3">
+                      <p className="text-tertiary text-[14.5px] leading-[1.8]">
+                        {s.body}
+                      </p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 items-baseline">
+                        {s.keywords.map((k, ki) => (
+                          <span
+                            key={k}
+                            className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary"
+                          >
+                            {k}
+                            {ki < s.keywords.length - 1 ? (
+                              <span aria-hidden="true" className="text-faint ml-3">·</span>
+                            ) : null}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </article>
-              </Reveal>
-            ))}
-          </div>
+                  </article>
+                </Reveal>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* ───────── 9. CURRENTLY ─────────
