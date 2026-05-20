@@ -30,18 +30,23 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import type { LucideIcon } from "lucide-react";
 
 interface Tech {
   name: string;
   role: string;
 }
 
+/* V6 14.5 hotfix — `iconNode` is the PRE-RENDERED icon element, not
+   the component reference. Passing a LucideIcon component (a
+   forwardRef object) across the Server→Client boundary fails RSC
+   serialization at prerender time. Pre-rendering the icon as JSX on
+   the server side lets the Client Component receive a plain
+   ReactNode it can drop into the layout. */
 export interface StackAccordionCategory {
   id: string;
   index: string;
   title: string;
-  icon: LucideIcon;
+  iconNode: ReactNode;
   items: readonly Tech[];
 }
 
@@ -125,7 +130,6 @@ interface RowProps {
 }
 
 function AccordionRow({ category, expanded, onToggle }: RowProps) {
-  const Icon = category.icon;
   const itemCount = category.items.length;
   const bodyId = `stack-accordion-body-${category.id}`;
 
@@ -141,11 +145,7 @@ function AccordionRow({ category, expanded, onToggle }: RowProps) {
         <span className="font-mono uppercase tracking-[0.22em] text-[10px] text-[#00d2ff]/80 shrink-0 w-6">
           {category.index}
         </span>
-        <Icon
-          className="w-4 h-4 text-[#00d2ff]/65 shrink-0"
-          strokeWidth={1.75}
-          aria-hidden="true"
-        />
+        {category.iconNode}
         <span className="text-primary text-[15px] font-medium leading-tight flex-1 pr-2">
           {category.title}
         </span>
