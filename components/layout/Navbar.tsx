@@ -127,6 +127,44 @@ const V6_SECONDARY_LINKS = [
 const RESUME_URL =
   "https://www.linkedin.com/in/emre-do%C4%9Fan-657a99388/";
 
+/* ── V6 12.3 — Brand mark glyph ──────────────────────────────────
+ *
+ * A small low-stroke glyph that mirrors the HeroTopology center
+ * node: a cyan-filled core surrounded by a single quiescent ring.
+ * Replaces the "ED." monogram on the V6 layout. The legacy navbar
+ * keeps the monogram (rollback path).
+ *
+ * 24 px diameter (w-6 h-6). The wordmark sits adjacent on md+ and
+ * is hidden below md — the glyph alone reads as the mark on
+ * mobile. The wrapping Link extends the click area to ≥ 44 × 44
+ * via -m-2.5 / p-2.5 without shifting the visual position.
+ *
+ * Pure SVG, no animation surface, reduced-motion safe by
+ * construction.
+ * ────────────────────────────────────────────────────────────── */
+function BrandMark() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="w-6 h-6 shrink-0"
+      aria-hidden="true"
+    >
+      {/* Quiescent ring — low-stroke, low opacity, restrained. */}
+      <circle
+        cx="12"
+        cy="12"
+        r="8.5"
+        fill="none"
+        stroke="#00d2ff"
+        strokeOpacity="0.30"
+        strokeWidth="1"
+      />
+      {/* Cyan-cored center — the HeroTopology center-node echo. */}
+      <circle cx="12" cy="12" r="3.5" fill="#00d2ff" />
+    </svg>
+  );
+}
+
 /* ── Route-matching helper ───────────────────────────────────── */
 
 function matchesAny(
@@ -320,11 +358,21 @@ function V6Navbar() {
       transition={{ duration: 0.8, ease: EASE }}
     >
       <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between gap-8">
+        {/* V6 12.3 — brand mark: glyph + wordmark.
+            The "ED." monogram is retired here on the V6 layout.
+            Default per spec: glyph + wordmark adjacent. Wordmark
+            hidden below md. The wrapping Link extends the click
+            area to ≥ 44 × 44 via -m-2.5 + p-2.5 without shifting
+            the visual position. */}
         <Link
           href="/"
-          className="text-primary font-semibold tracking-tight shrink-0"
+          aria-label="Emre Doğan — Home"
+          className="-m-2.5 inline-flex items-center gap-2.5 p-2.5 shrink-0"
         >
-          ED.
+          <BrandMark />
+          <span className="hidden md:inline text-sm font-medium tracking-tight text-primary">
+            Emre Doğan
+          </span>
         </Link>
 
         {/* PRIMARY ROW — Work / Lab / Notes / Codex / Operate ▾ */}
