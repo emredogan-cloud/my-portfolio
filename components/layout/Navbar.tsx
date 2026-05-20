@@ -236,7 +236,7 @@ function LegacyNavbar() {
 
   return (
     <motion.nav
-      className="fixed top-0 inset-x-0 z-40 h-16 border-b border-white/5 bg-[#0c0c0c]/70 backdrop-blur-md"
+      className="fixed top-0 inset-x-0 z-40 h-16 border-b border-white/5 bg-[#0c0c0c]/85 backdrop-blur-sm"
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: EASE }}
@@ -396,7 +396,7 @@ function V6Navbar() {
 
   return (
     <motion.nav
-      className="fixed top-0 inset-x-0 z-40 h-16 border-b border-white/5 bg-[#0c0c0c]/70 backdrop-blur-md"
+      className="fixed top-0 inset-x-0 z-40 h-16 border-b border-white/5 bg-[#0c0c0c]/85 backdrop-blur-sm"
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: EASE }}
