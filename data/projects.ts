@@ -1,3 +1,40 @@
+/* ──────────────────────────────────────────────────────────────
+ *  data/projects.ts — V5 baseline + V6 14.2 bespoke fields
+ *
+ *  The five projects' canonical record. V5's core shape (id, title,
+ *  descriptions, techStack, urls, images, status) is preserved
+ *  byte-identical. V6 Sub-PR 14.2 adds three optional bespoke
+ *  fields the new /projects/[slug] composition consumes when the
+ *  V6_PROJECT_DETAIL flag is on:
+ *
+ *    - pullQuote        — single line for the hero margin-tick.
+ *    - stackByCategory  — categorised tech-stack layout.
+ *    - overviewSections — Q&A-structured overview prose with
+ *                         margin labels ("Why" / "How" /
+ *                         "Trade-offs").
+ *
+ *  All three are optional. The V6 detail layout falls back to the
+ *  V5 flat chip list + flowing paragraph loop when a field is
+ *  absent. The legacy detail layout (flag off) reads only the V5
+ *  core shape — the new fields are invisible. Spec validation:
+ *  "Tech-stack categories work without backfill in data file
+ *  (graceful fallback to flat chips)."
+ * ────────────────────────────────────────────────────────────── */
+
+export interface ProjectStackCategory {
+  /** Category label rendered as the column header. */
+  category: string;
+  /** Tech items belonging to this category. */
+  items: readonly string[];
+}
+
+export interface ProjectOverviewSection {
+  /** One-word margin label — "Why" / "How" / "Trade-offs" / etc. */
+  label: string;
+  /** Paragraph body. Plain prose. */
+  body: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -8,6 +45,22 @@ export interface Project {
   githubUrl?: string;
   images: string[];
   status: "shipped" | "building" | "planning";
+  /** V6 14.2 — optional single-line founder quote for the hero margin-tick. */
+  pullQuote?: string;
+  /**
+   * V6 14.2 — optional categorised tech stack. When present the detail page
+   * renders a 2-col category layout (Frontend / Backend / Data / AI / Identity
+   * etc.). When absent the page falls back to the flat techStack chip list.
+   */
+  stackByCategory?: readonly ProjectStackCategory[];
+  /**
+   * V6 14.2 — optional Q&A-structured overview. Each entry renders with a
+   * one-word mono margin label adjacent to a paragraph body, so the prose
+   * reads as a structured "Why / How / Trade-offs" walkthrough rather than
+   * a flowing-text Markdown loop. When absent the page falls back to the
+   * V5 detailedDescription paragraph loop.
+   */
+  overviewSections?: readonly ProjectOverviewSection[];
 }
 
 export const projectsData: Project[] = [
@@ -46,6 +99,53 @@ Monetisation runs through Lemon Squeezy with three tiers — Free (single accoun
       "/projects/aws-waste-hunter/ui.png",
     ],
     status: "shipped",
+    pullQuote:
+      "The scanner finds the waste; the model explains the fix; the customer ships the Terraform that closes the loop.",
+    stackByCategory: [
+      {
+        category: "Frontend",
+        items: ["React 19", "TypeScript"],
+      },
+      {
+        category: "Backend",
+        items: [
+          "Python",
+          "FastAPI",
+          "AWS Lambda",
+          "API Gateway",
+        ],
+      },
+      {
+        category: "Data",
+        items: ["DynamoDB", "AWS Glue", "Amazon Athena"],
+      },
+      {
+        category: "AI",
+        items: ["AWS Bedrock", "Claude 3.5 Haiku"],
+      },
+      {
+        category: "Identity & Billing",
+        items: ["AWS Cognito", "Lemon Squeezy"],
+      },
+      {
+        category: "Infrastructure",
+        items: ["Terraform"],
+      },
+    ],
+    overviewSections: [
+      {
+        label: "Why",
+        body: "Engineering teams know waste exists in their AWS bill. Console-clicked dashboards surface line-items but not the why, and remediation requires reading IAM docs, untangling Terraform, and writing CLI snippets. CWH closes the loop — find it, explain it, fix it — in one workflow.",
+      },
+      {
+        label: "How",
+        body: "Cross-account scans run over STS AssumeRole, inspecting EC2 / EBS / RDS / NAT / Elastic IPs / load balancers / snapshots in parallel via a 32-wide ThreadPoolExecutor. Cost attribution queries CUR 2.0 directly through Glue + Athena, so figures tie to real billing line items. Each finding is enriched with Claude 3.5 Haiku on Bedrock — the model writes the explanation AND the remediation Terraform.",
+      },
+      {
+        label: "Trade-offs",
+        body: "Bedrock-streamed remediation is slower and pricier than a local heuristic; for the buyer's mental model (\"I trust the AI explanation\"), it's the right call. CUR 2.0 over Athena costs more than estimation; the difference is paid for by the precision recruiters and finance leads expect. The self-invoke Lambda pattern bypasses API Gateway's 30-s timeout but adds two more cold-start surfaces — accepted for keeping scans single-region serverless.",
+      },
+    ],
   },
   {
     id: "vibing-coder-ai",
@@ -79,6 +179,44 @@ The project is in active development. Auth (Clerk), persistence (DynamoDB), and 
       "/projects/vibing-coder-ai/icon.svg",
     ],
     status: "building",
+    pullQuote:
+      "Casual ideas in, senior-engineer briefs out. The master prompt is the product.",
+    stackByCategory: [
+      {
+        category: "Frontend",
+        items: ["Next.js 16", "TypeScript", "Tailwind v4"],
+      },
+      {
+        category: "Backend",
+        items: ["Node.js 20", "AWS Lambda", "API Gateway"],
+      },
+      {
+        category: "Data",
+        items: ["DynamoDB"],
+      },
+      {
+        category: "AI",
+        items: ["Anthropic Claude API"],
+      },
+      {
+        category: "Infrastructure",
+        items: ["Terraform"],
+      },
+    ],
+    overviewSections: [
+      {
+        label: "Why",
+        body: "AI agents fail more from vague prompts than from weak models. Developers ship Cursor-or-Claude-Code requests like \"build me an auth flow\" and watch the agent hallucinate scope. VibingCoderAI is a strict translator — vague ideas in, structurally complete senior-engineer-grade briefs out.",
+      },
+      {
+        label: "How",
+        body: "A master system prompt enforces structural completeness — accessibility requirements, explicit error-handling, out-of-scope boundaries. The brief is copy-pasteable Markdown that Claude Code, Cursor, GitHub Copilot, or Windsurf can execute without re-interpretation. Next.js 16 App Router frontend on Vercel calls an AWS Lambda backend over public HTTPS; the Lambda runs the Anthropic Claude API behind Terraform-provisioned API Gateway + DynamoDB.",
+      },
+      {
+        label: "Trade-offs",
+        body: "The master prompt is opinionated — it forces structure that some developers find overkill for prototypes. Accepted: the target user is a senior engineer wanting prompt rigour, not a hobbyist seeking conversational flexibility. Lambda over HTTPS rather than direct browser-to-Claude was the more boring choice — and the right one for adding auth + billing later.",
+      },
+    ],
   },
   {
     id: "sixpack-ai",
@@ -112,6 +250,44 @@ The app store optimisation system is a separate React + Vite toolchain that gene
       "/projects/sixpack-ai/screenshot-4.jpg",
     ],
     status: "building",
+    pullQuote:
+      "The model is on the device. The cloud is for billing, not for breath.",
+    stackByCategory: [
+      {
+        category: "Mobile",
+        items: ["Flutter 3.22", "Dart", "flutter_riverpod", "go_router"],
+      },
+      {
+        category: "On-Device AI",
+        items: ["Google ML Kit"],
+      },
+      {
+        category: "Backend",
+        items: ["Supabase"],
+      },
+      {
+        category: "Identity & Billing",
+        items: ["RevenueCat"],
+      },
+      {
+        category: "Observability",
+        items: ["Sentry", "PostHog"],
+      },
+    ],
+    overviewSections: [
+      {
+        label: "Why",
+        body: "Form-coaching apps that round-trip pose data to the cloud burn battery, leak privacy, and rely on connectivity. The best cloud architecture is sometimes knowing when not to use the cloud — pose detection runs on the device's NPU, the user's video never leaves the phone, and the experience works on a plane.",
+      },
+      {
+        label: "How",
+        body: "Google ML Kit tracks 33 body landmarks at 30 fps through the device camera. Joint-angle math evaluates rep quality against reference biomechanics; incorrect form triggers corrective audio cues via flutter_tts. Supabase + RevenueCat carry the parts that genuinely need a server (auth, subscription state, store integration). Riverpod 3.3 manages app state. The home-screen widget + iOS Live Activity surface workout status without opening the app.",
+      },
+      {
+        label: "Trade-offs",
+        body: "On-device ML caps the model size. Joint-angle heuristics are coarser than server-side pose-grading; for the rep-counting + form-cue use case, they're sufficient. The store-listing optimisation toolchain is a separate React + Vite codebase — would have been cleaner integrated, but the build cycles for app store screenshots are completely different from the Flutter dev loop.",
+      },
+    ],
   },
   {
     id: "pawdoc",
@@ -134,6 +310,36 @@ The product roadmap covers a symptom checker (MVP), integration with telemedicin
     ],
     images: [],
     status: "planning",
+    pullQuote:
+      "\"Monitor at home\" or \"go to the clinic now.\" The triage framework is the moat — the AI is the surface.",
+    stackByCategory: [
+      {
+        category: "Mobile",
+        items: ["React Native", "TypeScript"],
+      },
+      {
+        category: "Backend",
+        items: ["Node.js"],
+      },
+      {
+        category: "AI",
+        items: ["Computer Vision", "Multimodal AI"],
+      },
+    ],
+    overviewSections: [
+      {
+        label: "Why",
+        body: "Pet owners search symptoms at midnight, find Reddit threads of varying quality, and either panic-drive to an ER or wait too long. The willingness to pay for a calm, structured, evidence-grounded triage opinion is high — and the addressable market (170M US pet households, 72% treating pets as family) is real.",
+      },
+      {
+        label: "How",
+        body: "Multimodal AI reads photos + symptom descriptions and scores them against a structured veterinary triage framework. The output is a prioritised action recommendation — \"monitor at home\" / \"book a routine appointment\" / \"go to an emergency clinic now\" — explained in terms of observable signs, not speculation. Three user archetypes — First-Time Pet Owner (anxious), Busy Professional (decision-driven), Budget-Conscious Owner (cost-aware) — shape the prompt and the response framing.",
+      },
+      {
+        label: "Trade-offs",
+        body: "Liability is the central trade-off. The triage framework defaults conservative — the cost of a false-negative (\"monitor at home\" when the pet needs the ER) dwarfs the cost of a false-positive. Real telemedicine integration (Phase 2) requires veterinary licensing infrastructure we don't yet have. The roadmap is intentionally staged: ship the symptom checker first, validate willingness to pay, then layer the regulated surfaces.",
+      },
+    ],
   },
   {
     id: "aevum",
@@ -156,6 +362,36 @@ The primary persona is a 52-year-old professional providing approximately 24 hou
     ],
     images: [],
     status: "planning",
+    pullQuote:
+      "One briefing, every morning, across medications, appointments, insurance, and family hand-off.",
+    stackByCategory: [
+      {
+        category: "Mobile",
+        items: ["React Native", "TypeScript"],
+      },
+      {
+        category: "Backend",
+        items: ["Node.js", "Healthcare APIs"],
+      },
+      {
+        category: "AI",
+        items: ["AI Briefings"],
+      },
+    ],
+    overviewSections: [
+      {
+        label: "Why",
+        body: "Caregivers describe their state as \"fragmented dread\" — the cognitive overhead of juggling a parent's medications, appointments, insurance claims, and safety across five disconnected systems. The target persona is the 52-year-old professional spending 24 hours / week unpaid + $7,200 / year out-of-pocket on parental care. Time recovery is the value proposition, not feature density.",
+      },
+      {
+        label: "How",
+        body: "A unified dashboard aggregates medication adherence, appointment coordination, insurance claim status, and family role-based access into a single AI-generated daily briefing: \"Mum's BP was high yesterday; her cardiology appointment is in 3 days; her Medicare Part D renewal deadline is next week.\" Proactive alerts surface issues before they become crises. Role-based access lets siblings share caregiving without information gaps.",
+      },
+      {
+        label: "Trade-offs",
+        body: "Healthcare API integration is heavyweight — insurance providers, pharmacy chains, and care-network systems each carry their own auth, rate limits, and compliance burden. Shipping the MVP without full integrations means starting as a structured journal that becomes a system-of-record as integrations layer in. The $15–$25 price point assumes high-WTP caregiver segments; the platform must prove it before pricing-down for broader reach.",
+      },
+    ],
   },
 ];
 
