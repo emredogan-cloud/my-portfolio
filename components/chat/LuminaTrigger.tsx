@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { Sparkles } from "lucide-react";
 import { tapHaptic } from "@/lib/haptic";
 
@@ -14,8 +14,29 @@ interface Props {
 /**
  * Lumina activation trigger — a dormant AI core, not a support button.
  * Persistent mount; opacity-driven visibility cross-fades with the window.
+ *
+ * V6 Sub-PR 15.3 — retires the Sparkles icon (audit § 16.1 — universal
+ * AI cliché of the era). When NEXT_PUBLIC_V6_LUMINA_TRIGGER is on, the
+ * inner content becomes a miniature of the LuminaAvatar: a 16 px
+ * cyan-radial core + 1 px cyan ring outline, with the outer breath
+ * pulse (3.8 s period, identical params to the avatar's breathing
+ * loop). Opening Lumina is then the act of *enlarging the trigger
+ * into the avatar* — the two surfaces share an identity, not a
+ * relationship of "button → window."
+ *
+ * Reduced motion: outer breath disabled; the cyan core glyph remains
+ * static. The center still reads as a present, dormant AI core.
+ *
+ * Hit target: button retains `p-4` (16 px) padding; center is 16 px;
+ * total is ~48 × 48 px — comfortably above the 44 × 44 minimum.
+ *
+ * Rollback: flag off → the Sparkles icon returns verbatim (lucide
+ * import preserved for the off-path; will retire when V6 stabilises).
  */
 export function LuminaTrigger({ isOpen, onClick }: Props) {
+  const prefersReducedMotion = useReducedMotion();
+  const v6 = process.env.NEXT_PUBLIC_V6_LUMINA_TRIGGER === "1";
+
   const handleClick = () => {
     tapHaptic();
     onClick();
@@ -53,13 +74,55 @@ export function LuminaTrigger({ isOpen, onClick }: Props) {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
-      <motion.span
-        className="inline-flex"
-        animate={{ opacity: [1, 0.55, 1] }}
-        transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <Sparkles className="w-5 h-5 text-primary" aria-hidden="true" />
-      </motion.span>
+      {v6 ? (
+        /* V6 — miniature of the LuminaAvatar.
+             Inner: 16 px cyan-radial core with 1 px cyan ring.
+             Outer: breath pulse, 3.8 s period, identical params
+             to the avatar's breathing loop. Reduced motion
+             disables the outer pulse only; the inner core stays
+             present and recognisable. */
+        <span
+          className="relative inline-block w-4 h-4"
+          aria-hidden="true"
+        >
+          {prefersReducedMotion ? null : (
+            <motion.span
+              className="absolute -inset-3 rounded-full pointer-events-none"
+              animate={{
+                opacity: [0.30, 0.55, 0.30],
+                scale: [1, 1.15, 1],
+              }}
+              transition={{
+                duration: 3.8,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(0,210,255,0.22) 0%, transparent 65%)",
+              }}
+            />
+          )}
+          <span
+            className="absolute inset-0 rounded-full"
+            style={{
+              border: "1px solid rgba(0,210,255,0.55)",
+              background:
+                "radial-gradient(circle at 30% 28%, rgba(0,210,255,0.55), rgba(11,37,81,0.75) 55%, rgba(5,5,5,0.95))",
+              boxShadow:
+                "0 0 8px rgba(0,210,255,0.32), inset 0 1px 0 rgba(255,255,255,0.18)",
+            }}
+          />
+        </span>
+      ) : (
+        <motion.span
+          className="inline-flex"
+          animate={{ opacity: [1, 0.55, 1] }}
+          transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <Sparkles className="w-5 h-5 text-primary" aria-hidden="true" />
+        </motion.span>
+      )}
     </motion.button>
   );
 }
