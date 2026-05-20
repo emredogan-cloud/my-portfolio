@@ -3,6 +3,7 @@ import { z } from "zod";
 import { kv } from "@vercel/kv";
 import { projectsData, type Project } from "@/data/projects";
 import { notesData, type Note } from "@/data/notes";
+import { codexBooks, getCodexBookBySlug, type CodexBook } from "@/data/codex";
 import {
   readMetric,
   METRIC_KEYS,
@@ -112,6 +113,56 @@ function summarizeNote(n: Note) {
   };
 }
 
+/* Trim the codex book record to a model-friendly shape: keep every
+ * field a visitor might ask about (synopsis, themes, factions,
+ * characters, arcs, topology centerLabel, engineering note, live-reader
+ * URL) but drop the full topology nodes/edges array — the visual graph
+ * is the page's job, not Lumina's voice. The model that needs to talk
+ * about the constellation can reference `topology.centerLabel` and the
+ * factions/characters above (which are the named nodes in plain prose
+ * form). */
+function summarizeCodexBook(b: CodexBook) {
+  return {
+    slug: b.slug,
+    title: b.title,
+    subtitle: b.subtitle,
+    sigil: b.sigil,
+    inWorldYear: b.inWorldYear,
+    shippedYear: b.shippedYear,
+    language: b.language,
+    deployUrl: b.deployUrl,
+    detailPath: `/codex/${b.slug}`,
+    tagline: b.tagline,
+    synopsis: b.synopsis,
+    epigraph: b.epigraph,
+    themes: b.themes,
+    atmospheres: b.atmospheres,
+    timeline: b.timeline,
+    factionsLabel: b.factionsLabel,
+    factions: b.factions.map((f) => ({
+      id: f.id,
+      name: f.name,
+      sigil: f.sigil ?? null,
+      oneLine: f.oneLine,
+    })),
+    charactersLabel: b.charactersLabel,
+    characters: b.characters.map((c) => ({
+      id: c.id,
+      name: c.name,
+      role: c.role,
+      blurb: c.blurb,
+    })),
+    arcsLabel: b.arcsLabel,
+    arcs: b.arcs.map((a) => ({
+      id: a.id,
+      name: a.name,
+      beats: a.beats,
+    })),
+    topologyCenter: b.topology.centerLabel,
+    engineeringNote: b.engineeringNote,
+  };
+}
+
 /**
  * Telemetry wrapper applied to every tool's execute body. Sub-PR 4.3
  * (Eval + Telemetry Expansion).
@@ -197,6 +248,54 @@ const STATIC_TOOLS = {
         return { error: "not-found", projectId };
       }
       return summarizeProject(project);
+    }),
+  }),
+
+  /**
+   * Return the full record for one codex book by slug. The codex is
+   * the portfolio's narrative-archive surface — four self-contained
+   * digital editions, each shipped as a zero-dependency single-page
+   * reader at their own deploy URL. The slug matches /codex/{slug}.
+   *
+   * Call when the visitor asks about a specific book by title or
+   * slug — "tell me about Tuzun Hafızası", "what's in Codex
+   * Mythologica", "what is Solgun Kitabe about", "explain Mendîran".
+   * The site map block in the system prompt lists all four books
+   * with their taglines so the model can match a free-text mention
+   * to the correct slug.
+   *
+   * Returns the full editorial record: title, subtitle, sigil,
+   * in-world year, language, deploy URL, /codex/<slug> detail
+   * path, tagline, synopsis, epigraph, themes, atmospheres,
+   * timeline, factions, characters, arcs, narrative-topology
+   * center label, and engineering note. The visual topology
+   * (node/edge graph) is the codex page's job, not Lumina's
+   * voice — call out the center label and the named figures
+   * instead.
+   */
+  getCodexBookDetails: tool({
+    description:
+      "Return the full editorial record for one codex book by slug. The slug matches the URL at /codex/<slug>. Valid slugs are 'tuzun-hafizasi', 'mendiran-vakayinamesi', 'codex-mythologica', and 'solgun-kitabe'. Use this when the visitor asks about a specific book by title or slug — 'tell me about Tuzun Hafızası', 'what is Codex Mythologica', 'what is Solgun Kitabe about', 'explain Mendîran'. Returns title, subtitle, sigil, in-world year, language, deploy URL (the live reader), the /codex detail path, tagline, full synopsis (~3 paragraphs), epigraph, themes, atmospheres, timeline, factions, principal characters, arcs, the narrative-topology center label, and the engineering note describing how the reader was built. Quote the synopsis sparingly — pull out the relevant 2-3 sentences and weave them into your own voice; do NOT paste the entire synopsis. The factions and characters arrays carry the book's named figures in plain prose. The live-reader URL opens in a new tab; mention it casually when the visitor wants to actually read the book.",
+    inputSchema: z
+      .object({
+        slug: z
+          .string()
+          .min(1)
+          .describe(
+            "The codex book slug. Must match a slug returned by the site map: 'tuzun-hafizasi', 'mendiran-vakayinamesi', 'codex-mythologica', or 'solgun-kitabe'.",
+          ),
+      })
+      .strict(),
+    execute: withTelemetry("getCodexBookDetails", async ({ slug }) => {
+      const book = getCodexBookBySlug(slug);
+      if (!book) {
+        return {
+          error: "not-found",
+          slug,
+          availableSlugs: codexBooks.map((b) => b.slug),
+        };
+      }
+      return summarizeCodexBook(book);
     }),
   }),
 
