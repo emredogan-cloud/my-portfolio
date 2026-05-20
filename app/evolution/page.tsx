@@ -439,7 +439,20 @@ export default async function EvolutionPage({
             all work; reduced-motion preserves the slider but
             removes the easing.
           </p>
-          <div className="border border-white/[0.06] rounded-xl bg-white/[0.02] p-5 md:p-6">
+          {/* V6 Sub-PR 15.2 signature: when NEXT_PUBLIC_V6_OPERATOR_EVOLUTION
+              is on, the slider container gains larger padding +
+              softer atmospheric tint, making the slider read as the
+              page's most prominent surface (which it is — the
+              scrubbable cursor over architectural memory). The
+              slider's internal thumb size is set by its own CSS;
+              the surrounding container does the visual lifting. */}
+          <div
+            className={
+              process.env.NEXT_PUBLIC_V6_OPERATOR_EVOLUTION === "1"
+                ? "border border-white/[0.08] rounded-2xl bg-gradient-to-br from-white/[0.03] to-[#00d2ff]/[0.02] p-8 md:p-12 shadow-[0_24px_60px_-28px_rgba(0,210,255,0.18)]"
+                : "border border-white/[0.06] rounded-xl bg-white/[0.02] p-5 md:p-6"
+            }
+          >
             <TimelineSlider events={allEventsForSlider} />
           </div>
         </Reveal>
@@ -707,14 +720,26 @@ function AdoptionRateTile({
 
 function EvolutionEventCard({ event }: { event: EvolutionEvent }) {
   const isSuperseded = event.status === "superseded";
+  /* V6 Sub-PR 15.2 — each event card gains a margin-tick from Phase
+     11.5 vocabulary: a short cyan hairline at the top-left of the
+     card. Subtly anchors the card to the editorial language used
+     across V6 (about Principles, work entries, etc.) without
+     changing the card's outer rectangle. */
+  const v6 = process.env.NEXT_PUBLIC_V6_OPERATOR_EVOLUTION === "1";
   return (
     <article
-      className={`border rounded-xl p-5 md:p-6 transition-colors ${
+      className={`relative border rounded-xl p-5 md:p-6 transition-colors ${
         isSuperseded
           ? "border-white/[0.04] bg-white/[0.01]"
           : "border-white/[0.06] bg-white/[0.02]"
       }`}
     >
+      {v6 ? (
+        <span
+          aria-hidden="true"
+          className="absolute top-0 left-6 w-10 h-px bg-[#00d2ff]/40"
+        />
+      ) : null}
       <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-3">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/80">

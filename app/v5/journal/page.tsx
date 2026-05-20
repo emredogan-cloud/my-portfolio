@@ -94,6 +94,22 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const REPO_BASE = "https://github.com/emredogan-cloud/my-portfolio/blob/main";
 
+/* V6 Sub-PR 15.2 — split the templated narrative into a lead
+   sentence + remaining sentences. The V6 layout renders the lead
+   at display size and the rest as small body. Falls back gracefully
+   when the narrative is a single sentence (rest = ""). */
+function splitJournalNarrative(narrative: string): {
+  lead: string;
+  rest: string;
+} {
+  /* Find the first sentence boundary — a period/question/exclamation
+     mark followed by a space and an uppercase letter. The fallback
+     case (no boundary found) treats the whole string as the lead. */
+  const match = narrative.match(/^(.+?[.?!])\s+(?=[A-Z"])([\s\S]*)$/);
+  if (match === null) return { lead: narrative.trim(), rest: "" };
+  return { lead: match[1].trim(), rest: match[2].trim() };
+}
+
 export default async function JournalIndexPage() {
   if (!isJournalEnabled()) {
     notFound();
@@ -182,61 +198,126 @@ export default async function JournalIndexPage() {
               </p>
             </div>
           ) : (
+            /* V6 Sub-PR 15.2 signature: each weekly entry's first
+               narrative sentence renders in display-size type (the
+               "magazine spread" the spec asks for); the metrics row
+               collapses to a single mono summary beneath. Family DNA
+               preserved (edge-lit card + mono week id + cyan accent);
+               only the typographic hierarchy inside the card flips. */
             <ul className="space-y-4">
-              {entries.map((entry) => (
-                <li
-                  key={entry.week_id}
-                  className="border border-white/[0.06] rounded-xl bg-white/[0.02] p-5 hover:bg-white/[0.03] transition-colors"
-                >
-                  <Link
-                    href={`/v5/journal/${entry.week_id}`}
-                    className="block"
+              {entries.map((entry) => {
+                const { lead, rest } = splitJournalNarrative(entry.narrative);
+                const v6 =
+                  process.env.NEXT_PUBLIC_V6_OPERATOR_JOURNAL === "1";
+                return (
+                  <li
+                    key={entry.week_id}
+                    className="border border-white/[0.06] rounded-xl bg-white/[0.02] p-5 hover:bg-white/[0.03] transition-colors"
                   >
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-3">
-                      <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/80">
-                        {entry.week_id}
-                      </span>
-                      <time
-                        dateTime={entry.week_start}
-                        className="font-mono text-[11px] text-tertiary tabular-nums"
-                      >
-                        {entry.week_start} → {entry.week_end}
-                      </time>
-                    </div>
-                    <p className="text-secondary text-[14px] leading-relaxed mb-3">
-                      {entry.narrative}
-                    </p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-tertiary text-[11px]">
-                      <span>
-                        <span className="font-mono text-primary tabular-nums">
-                          {entry.weekly_summary.total_commits}
-                        </span>{" "}
-                        commits
-                      </span>
-                      <span>
-                        <span className="font-mono text-primary tabular-nums">
-                          {entry.infra_status_summary.active}
-                        </span>{" "}
-                        active
-                      </span>
-                      <span>
-                        <span className="font-mono text-primary tabular-nums">
-                          {entry.experiments_active.length}
-                        </span>{" "}
-                        experiments
-                      </span>
-                      {entry.recent_failures_added.length > 0 ? (
-                        <span>
-                          <span className="font-mono text-primary tabular-nums">
-                            {entry.recent_failures_added.length}
-                          </span>{" "}
-                          correction{entry.recent_failures_added.length === 1 ? "" : "s"}
+                    <Link
+                      href={`/v5/journal/${entry.week_id}`}
+                      className="block"
+                    >
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-3">
+                        <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/80">
+                          {entry.week_id}
                         </span>
-                      ) : null}
-                    </div>
-                  </Link>
-                </li>
-              ))}
+                        <time
+                          dateTime={entry.week_start}
+                          className="font-mono text-[11px] text-tertiary tabular-nums"
+                        >
+                          {entry.week_start} → {entry.week_end}
+                        </time>
+                      </div>
+                      {v6 ? (
+                        <>
+                          <p className="text-primary text-xl md:text-2xl font-medium tracking-[-0.02em] leading-snug mb-2">
+                            {lead}
+                          </p>
+                          {rest ? (
+                            <p className="text-tertiary text-[13px] leading-relaxed mb-3 max-w-3xl">
+                              {rest}
+                            </p>
+                          ) : null}
+                          <p className="font-mono uppercase tracking-[0.20em] text-[10px] text-quiet flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <span>
+                              <span className="text-[#00d2ff]/85 tabular-nums">
+                                {entry.weekly_summary.total_commits}
+                              </span>{" "}
+                              commits
+                            </span>
+                            <span className="text-faint">·</span>
+                            <span>
+                              <span className="text-[#00d2ff]/85 tabular-nums">
+                                {entry.infra_status_summary.active}
+                              </span>{" "}
+                              active
+                            </span>
+                            <span className="text-faint">·</span>
+                            <span>
+                              <span className="text-[#00d2ff]/85 tabular-nums">
+                                {entry.experiments_active.length}
+                              </span>{" "}
+                              experiments
+                            </span>
+                            {entry.recent_failures_added.length > 0 ? (
+                              <>
+                                <span className="text-faint">·</span>
+                                <span>
+                                  <span className="text-[#00d2ff]/85 tabular-nums">
+                                    {entry.recent_failures_added.length}
+                                  </span>{" "}
+                                  correction
+                                  {entry.recent_failures_added.length === 1
+                                    ? ""
+                                    : "s"}
+                                </span>
+                              </>
+                            ) : null}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-secondary text-[14px] leading-relaxed mb-3">
+                            {entry.narrative}
+                          </p>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-tertiary text-[11px]">
+                            <span>
+                              <span className="font-mono text-primary tabular-nums">
+                                {entry.weekly_summary.total_commits}
+                              </span>{" "}
+                              commits
+                            </span>
+                            <span>
+                              <span className="font-mono text-primary tabular-nums">
+                                {entry.infra_status_summary.active}
+                              </span>{" "}
+                              active
+                            </span>
+                            <span>
+                              <span className="font-mono text-primary tabular-nums">
+                                {entry.experiments_active.length}
+                              </span>{" "}
+                              experiments
+                            </span>
+                            {entry.recent_failures_added.length > 0 ? (
+                              <span>
+                                <span className="font-mono text-primary tabular-nums">
+                                  {entry.recent_failures_added.length}
+                                </span>{" "}
+                                correction
+                                {entry.recent_failures_added.length === 1
+                                  ? ""
+                                  : "s"}
+                              </span>
+                            ) : null}
+                          </div>
+                        </>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Reveal>

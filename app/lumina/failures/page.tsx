@@ -54,6 +54,20 @@ const CATEGORY_LABEL: Record<FailureCategory, string> = {
 const REPO_BASE =
   "https://github.com/emredogan-cloud/my-portfolio/commit";
 
+/* V6 Sub-PR 15.2 — single cell inside the 2×2 narrative grid.
+   Preserves the cyan mono eyebrow vocabulary of the V5 vertical
+   layout (same DNA); only the layout changes. */
+function FailureCell({ label, body }: { label: string; body: string }) {
+  return (
+    <div className="relative pl-4 border-l border-[#00d2ff]/20">
+      <h3 className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/70 mb-2">
+        {label}
+      </h3>
+      <p>{body}</p>
+    </div>
+  );
+}
+
 export default function LuminaFailuresPage() {
   const entries = LUMINA_FAILURES;
   const empty = entries.length === 0;
@@ -102,13 +116,84 @@ export default function LuminaFailuresPage() {
           </p>
         </Reveal>
 
-        {/* ENTRIES */}
+        {/* ENTRIES
+            V6 Sub-PR 15.2 — "failure mode theater". When
+            NEXT_PUBLIC_V6_OPERATOR_FAILURES is on, each entry renders
+            as a four-cell narrative card (What / Why / Fix / Delta)
+            in a 2×2 grid on md+. The cells preserve the mono cyan
+            eyebrows of the V5 vertical layout — same DNA, new
+            composition. The "Delta" cell carries the commit SHA link
+            (the artifact of the change) plus a quiet "fix landed
+            here" note; when no commit exists it reads "delta TBD".
+            Legacy vertical layout preserved below for rollback. */}
         {empty ? (
           <Reveal duration={0.7}>
             <p className="text-secondary text-sm italic">
               No corrections logged yet. New entries will land here as
               the engineering loop ships them.
             </p>
+          </Reveal>
+        ) : process.env.NEXT_PUBLIC_V6_OPERATOR_FAILURES === "1" ? (
+          <Reveal duration={0.7} className="mb-14">
+            <ul className="space-y-14">
+              {entries.map((e, idx) => (
+                <li key={e.id}>
+                  <article className="border-t border-white/[0.06] pt-6">
+                    {/* Header row — date, category pill, ordinal */}
+                    <header className="flex items-center gap-3 mb-4 flex-wrap">
+                      <span className="font-mono text-[11px] text-tertiary tracking-[0.10em]">
+                        {e.date}
+                      </span>
+                      <span
+                        className="px-2 py-0.5 rounded-full border border-white/[0.08] bg-white/[0.02] font-mono uppercase tracking-[0.16em] text-[9px] text-tertiary"
+                      >
+                        {CATEGORY_LABEL[e.category]}
+                      </span>
+                      <span className="ml-auto font-mono text-[10px] text-faint">
+                        #{(entries.length - idx).toString().padStart(2, "0")}
+                      </span>
+                    </header>
+
+                    <h2 className="text-xl md:text-2xl font-medium text-primary tracking-[-0.01em] leading-snug mb-6">
+                      {e.title}
+                    </h2>
+
+                    {/* Four-cell narrative grid — 2×2 on md+, 1-col on mobile. */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-secondary text-[14.5px] leading-relaxed">
+                      <FailureCell label="What" body={e.what} />
+                      <FailureCell label="Why" body={e.why} />
+                      <FailureCell label="Fix" body={e.fix} />
+                      <div className="relative pl-4 border-l border-[#00d2ff]/20">
+                        <h3 className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/70 mb-2">
+                          Delta
+                        </h3>
+                        {e.commitSha ? (
+                          <>
+                            <p className="text-tertiary text-[13.5px] leading-relaxed mb-3">
+                              Correction landed in production under
+                              the commit below.
+                            </p>
+                            <Link
+                              href={`${REPO_BASE}/${e.commitSha}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 font-mono text-[12px] text-tertiary hover:text-[#00d2ff] transition-colors"
+                            >
+                              <span aria-hidden="true">↗</span>
+                              <span>{e.commitSha}</span>
+                            </Link>
+                          </>
+                        ) : (
+                          <p className="italic text-quiet text-[13.5px]">
+                            Delta TBD — commit pending.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                </li>
+              ))}
+            </ul>
           </Reveal>
         ) : (
           <Reveal duration={0.7} className="mb-14">

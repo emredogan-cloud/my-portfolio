@@ -481,11 +481,41 @@ export default async function V5PerceptionPage() {
           </ol>
 
           {/* THE FLOW — ASCII-style diagram of how a single
-              event traverses the system. */}
-          <h3 className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary mb-3">
-            The flow
-          </h3>
-          <div className="font-mono text-[12px] text-secondary border border-white/[0.06] rounded-xl bg-black/40 p-4 overflow-x-auto whitespace-pre leading-relaxed">
+              event traverses the system.
+
+              V6 Sub-PR 15.2 signature: when NEXT_PUBLIC_V6_OPERATOR_PERCEPTION
+              is on, the ASCII flow diagram is promoted to a
+              first-class anchor element — cyan-tinted frame, larger
+              padding, a "FLOW" eyebrow at the elevated mono size
+              of a primary section indicator. Audit § 13.3 named this
+              block as having "more identity per pixel" than the
+              surrounding 9 sections; the V6 treatment lets the page
+              lean on that block as the visual centrepiece of "how
+              the system works." The DOM position stays inside
+              section 03 (no renumbering); only the visual weight
+              changes. */}
+          {process.env.NEXT_PUBLIC_V6_OPERATOR_PERCEPTION === "1" ? (
+            <div className="my-10 -mx-2 sm:-mx-4 md:-mx-6">
+              <div className="flex items-center gap-3 mb-4 px-2 sm:px-4 md:px-6">
+                <span
+                  aria-hidden="true"
+                  className="inline-block w-2 h-2 rounded-full bg-[#00d2ff]"
+                />
+                <span className="font-mono uppercase tracking-[0.22em] text-[11px] text-[#00d2ff]/85">
+                  Flow · the operating loop
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="flex-1 h-px bg-gradient-to-r from-[#00d2ff]/25 via-white/[0.05] to-transparent"
+                />
+              </div>
+              <div
+                className="font-mono text-[12.5px] text-secondary border border-[#00d2ff]/20 rounded-2xl bg-gradient-to-br from-black/60 to-[#00d2ff]/[0.025] p-6 md:p-8 overflow-x-auto whitespace-pre leading-[1.85]"
+                style={{
+                  boxShadow:
+                    "inset 0 0 0 1px rgba(255,255,255,0.02), 0 24px 60px -28px rgba(0,210,255,0.20)",
+                }}
+              >
 {`opt-in toggled  ─►  cookie + localStorage written
                      │
                      ▼
@@ -501,7 +531,32 @@ KV HINCRBY       ──►  v5:perception:<category>  →  { <bucket>: count + 1
                      │
                      ▼
 this page (ISR)  ──►  HGETALL × 8  →  section 07 below`}
-          </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <h3 className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary mb-3">
+                The flow
+              </h3>
+              <div className="font-mono text-[12px] text-secondary border border-white/[0.06] rounded-xl bg-black/40 p-4 overflow-x-auto whitespace-pre leading-relaxed">
+{`opt-in toggled  ─►  cookie + localStorage written
+                     │
+                     ▼
+client observer  ──►  POST  { category, bucket }
+                     │
+                     ▼
+edge endpoint    ──►  gate 1: env switch on?
+                  ─►  gate 2: category + bucket valid?
+                  ─►  gate 3: consent cookie present? (or category = adoption)
+                     │
+                     ▼
+KV HINCRBY       ──►  v5:perception:<category>  →  { <bucket>: count + 1 }
+                     │
+                     ▼
+this page (ISR)  ──►  HGETALL × 8  →  section 07 below`}
+              </div>
+            </>
+          )}
           <p className="text-secondary text-[13px] leading-relaxed mt-4 max-w-2xl">
             Every byte that lands in storage is one of the closed
             bucket labels documented in section 02. The HINCRBY
