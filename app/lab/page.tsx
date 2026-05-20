@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/ui/Reveal";
+import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import { LAB_EXPERIMENTS } from "@/lib/lab/registry";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -60,27 +61,10 @@ const STATUS_PILL = {
 export default function LabIndexPage() {
   return (
     <main id="main" className="relative min-h-screen bg-black">
-      {/* Ambient atmosphere — same vocabulary as /telemetry,
-          /changelog, /about. */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        aria-hidden="true"
-      >
-        <div
-          className="absolute top-[-200px] right-[-200px] w-[700px] h-[700px] rounded-full blur-[180px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(0,210,255,0.07) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[-200px] left-[-100px] w-[600px] h-[600px] rounded-full blur-[160px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(0,210,255,0.04) 0%, transparent 70%)",
-          }}
-        />
-      </div>
+      {/* Ambient atmosphere — V6 11.1 typed variant.
+          Lab: cyan blob top-left + a single horizontal 240×1px cyan rule
+          bisecting the viewport. */}
+      <PageAtmosphere variant="lab" />
 
       <div className="relative z-10 max-w-3xl mx-auto px-6 pt-36 pb-32">
         {/* HERO */}

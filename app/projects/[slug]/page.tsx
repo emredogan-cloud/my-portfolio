@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { projectsData } from "@/data/projects";
 import { Reveal } from "@/components/ui/Reveal";
+import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import { HoverScaleAnchor } from "./_components/HoverScaleAnchor";
 import { GalleryItem } from "./_components/GalleryItem";
 import ProductionMetrics from "./_components/ProductionMetrics";
@@ -77,26 +78,23 @@ export default async function ProjectDetailPage({
 
   return (
     <main id="main" className="min-h-screen bg-black">
-      {/* Ambient background */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        aria-hidden="true"
-      >
-        <div
-          className="absolute top-[-150px] right-[-150px] w-[700px] h-[700px] rounded-full blur-[180px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(14,165,233,0.12) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[-200px] left-[-100px] w-[600px] h-[600px] rounded-full blur-[160px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(147,51,234,0.10) 0%, transparent 70%)",
-          }}
-        />
-      </div>
+      {/* Ambient atmosphere — V6 11.1 typed variant.
+          Signal: cyan blob top-right + diagonal hairline cyan rule. */}
+      <PageAtmosphere
+        variant="signal"
+        legacy={{
+          primary: {
+            color: "rgba(14,165,233,0.12)",
+            position: "top-right",
+            size: "lg",
+          },
+          secondary: {
+            color: "rgba(147,51,234,0.10)",
+            position: "bottom-left",
+            size: "md",
+          },
+        }}
+      />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 pt-36 pb-32">
         {/* Back link */}

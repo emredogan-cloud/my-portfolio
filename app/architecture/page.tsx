@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import ArchitectureHubGrid, {
   type HubEntry,
 } from "./_components/ArchitectureHubGrid";
@@ -73,26 +74,23 @@ const ENTRIES: readonly HubEntry[] = [
 export default function ArchitectureHubPage() {
   return (
     <main id="main" className="relative min-h-screen bg-black overflow-hidden">
-      {/* Ambient atmosphere matching the project hub pages. */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        aria-hidden="true"
-      >
-        <div
-          className="absolute top-[-180px] right-[-180px] w-[760px] h-[760px] rounded-full blur-[200px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(0,210,255,0.14) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[-220px] left-[-120px] w-[640px] h-[640px] rounded-full blur-[180px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(11,37,81,0.20) 0%, transparent 70%)",
-          }}
-        />
-      </div>
+      {/* Ambient atmosphere — V6 11.1 typed variant.
+          Narrative: large cyan ellipse top-right (sigil omitted at hub). */}
+      <PageAtmosphere
+        variant="narrative"
+        legacy={{
+          primary: {
+            color: "rgba(0,210,255,0.14)",
+            position: "top-right",
+            size: "lg",
+          },
+          secondary: {
+            color: "rgba(11,37,81,0.20)",
+            position: "bottom-left",
+            size: "md",
+          },
+        }}
+      />
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 pt-36 pb-32">
         <header className="space-y-6 max-w-3xl">

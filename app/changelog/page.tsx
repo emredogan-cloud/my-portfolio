@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/ui/Reveal";
+import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import VisitPing from "@/components/telemetry/VisitPing";
 import {
   getRecentCommits,
@@ -146,27 +147,9 @@ export default async function ChangelogPage({
           /api/telemetry/visit POST on mount per tab session. */}
       <VisitPing surface="changelog" />
 
-      {/* Ambient cyan atmosphere — same vocabulary as /telemetry,
-          /about, /codex so the page reads as part of the site. */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        aria-hidden="true"
-      >
-        <div
-          className="absolute top-[-200px] right-[-200px] w-[700px] h-[700px] rounded-full blur-[180px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(0,210,255,0.07) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[-200px] left-[-100px] w-[600px] h-[600px] rounded-full blur-[160px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(0,210,255,0.04) 0%, transparent 70%)",
-          }}
-        />
-      </div>
+      {/* Ambient atmosphere — V6 11.1 typed variant.
+          Operator: quadrant-anchored cyan hairlines. */}
+      <PageAtmosphere variant="operator" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 pt-36 pb-32">
         {/* HERO — same posture as /telemetry. Two-line statement
