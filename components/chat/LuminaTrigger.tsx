@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Sparkles } from "lucide-react";
 import { tapHaptic } from "@/lib/haptic";
+import { LuminaMechanicalCore } from "./LuminaMechanicalCore";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -24,8 +26,20 @@ interface Props {
  * into the avatar* — the two surfaces share an identity, not a
  * relationship of "button → window."
  *
+ * V6 Mechanical evolution — gated independently by
+ * NEXT_PUBLIC_V6_LUMINA_MECHANICAL (requires the 15.3 flag to also
+ * be on). When on, the cyan core remains the identity, but a multi-
+ * layer mechanical ring system orbits it: an inner focus reticle, a
+ * slow-rotating segmented cyan ring, and the existing breath halo.
+ * The trigger gains four perceptible states (idle / hover / press /
+ * open / active) with restrained, GPU-only transitions. Implementation
+ * lives in `LuminaMechanicalCore.tsx` so the off-flag path here stays
+ * source-identical to the 15.3 baseline.
+ *
  * Reduced motion: outer breath disabled; the cyan core glyph remains
  * static. The center still reads as a present, dormant AI core.
+ * Mechanical mode additionally disables the ring rotation under
+ * reduced motion (static dashed ring renders instead).
  *
  * Hit target: button retains `p-4` (16 px) padding; center is 16 px;
  * total is ~48 × 48 px — comfortably above the 44 × 44 minimum.
@@ -36,16 +50,49 @@ interface Props {
 export function LuminaTrigger({ isOpen, onClick }: Props) {
   const prefersReducedMotion = useReducedMotion();
   const v6 = process.env.NEXT_PUBLIC_V6_LUMINA_TRIGGER === "1";
+  /* Mechanical evolution requires the 15.3 base to be on — it extends
+     the AvatarMiniature, it does not replace the V5 Sparkles surface. */
+  const v6Mechanical =
+    v6 && process.env.NEXT_PUBLIC_V6_LUMINA_MECHANICAL === "1";
+
+  /* Hover + press state is consumed only by LuminaMechanicalCore. The
+     hooks are declared unconditionally so React's hook-order rule is
+     preserved across flag changes; when mechanical mode is off, the
+     state defaults stay at false and the values are never read. */
+  const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   const handleClick = () => {
     tapHaptic();
     onClick();
   };
 
+  /* Pointer event handlers attach ONLY when mechanical mode is on, so
+     the V5 + Sub-PR 15.3 paths' DOM event surface stays byte-identical
+     to the pre-mechanical baseline (no new listeners on the off-path). */
+  const mechanicalHandlers = v6Mechanical
+    ? {
+        onMouseEnter: () => setIsHovered(true),
+        onMouseLeave: () => {
+          setIsHovered(false);
+          setIsPressed(false);
+        },
+        onPointerDown: () => setIsPressed(true),
+        onPointerUp: () => setIsPressed(false),
+        onPointerCancel: () => setIsPressed(false),
+        onFocus: () => setIsHovered(true),
+        onBlur: () => {
+          setIsHovered(false);
+          setIsPressed(false);
+        },
+      }
+    : {};
+
   return (
     <motion.button
       type="button"
       onClick={handleClick}
+      {...mechanicalHandlers}
       suppressHydrationWarning
       aria-label="Activate Lumina"
       aria-hidden={isOpen}
@@ -74,7 +121,19 @@ export function LuminaTrigger({ isOpen, onClick }: Props) {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
-      {v6 ? (
+      {v6Mechanical ? (
+        /* V6 Mechanical — evolves the 15.3 AvatarMiniature with a
+             multi-layer ring system. Identity (the 16 px cyan-radial
+             core + 1 px cyan ring) is preserved verbatim inside
+             LuminaMechanicalCore; the new layers (atmospheric halo,
+             segmented rotating ring, focus reticle) orbit it. State
+             machine: idle / hover / press / open. */
+        <LuminaMechanicalCore
+          isOpen={isOpen}
+          isHovered={isHovered}
+          isPressed={isPressed}
+        />
+      ) : v6 ? (
         /* V6 — miniature of the LuminaAvatar.
              Inner: 16 px cyan-radial core with 1 px cyan ring.
              Outer: breath pulse, 3.8 s period, identical params
