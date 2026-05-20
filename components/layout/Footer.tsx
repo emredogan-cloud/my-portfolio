@@ -21,15 +21,42 @@ function LinkedInIcon({ className }: { className?: string }) {
   );
 }
 
-/**
- * Premium minimal footer.
+/* ──────────────────────────────────────────────────────────────
+ *  Premium minimal footer.
  *
- * Server Component — no client state. Hover transitions are CSS-only.
- * Hosts the canonical social hub (GitHub + LinkedIn) and the CV
- * download. Migrated here from BentoSection during the Tier 2
- * rebalance so the home grid can stay purely project-focused.
- */
+ *  Two coexisting layouts (selected by V6 Sub-PR 12.5's env flag
+ *  `NEXT_PUBLIC_V6_FOOTER_RECOMPOSE`):
+ *
+ *  Legacy (V5, flag OFF — default):
+ *    8 elements in one row: signature, BuildBeacon,
+ *    LiveCustomerCounter, FooterCliPrompt, Notes link, GitHub
+ *    link, LinkedIn link, Download CV. Audit § 1.8 flagged this
+ *    as "a row of utilities that grew over time".
+ *
+ *  V6 (flag ON):
+ *    Three-row composed closing surface per V6 § 12.5 spec —
+ *      Row 1: edge-to-edge thin cyan rule at 12 % opacity
+ *      Row 2 (md+): signature + BuildBeacon (LEFT) ·
+ *                   Notes / GitHub / LinkedIn (RIGHT stacked)
+ *      Row 3: centered mono "EMRE DOĞAN · MONK MODE · 2026"
+ *             with FooterCliPrompt + LiveCustomerCounter inlined
+ *             as a single editorial transmission.
+ *    Download CV is removed — Sub-PR 12.2 relocated it to the
+ *    navbar as a quiet Résumé link.
+ *
+ *  Server Component. Hover transitions are CSS-only.
+ * ────────────────────────────────────────────────────────────── */
+
 export default function Footer() {
+  if (process.env.NEXT_PUBLIC_V6_FOOTER_RECOMPOSE === "1") {
+    return <V6Footer />;
+  }
+  return <LegacyFooter />;
+}
+
+/* ── Legacy footer (rollback path) ─────────────────────────────── */
+
+function LegacyFooter() {
   return (
     /* Safe-area-aware insets — extra padding ensures the home
        indicator strip on iOS doesn't sit on top of the footer's
@@ -103,6 +130,98 @@ export default function Footer() {
             Download CV
           </a>
         </nav>
+      </div>
+    </footer>
+  );
+}
+
+/* ── V6 footer (Sub-PR 12.5 layout) ───────────────────────────── */
+
+function V6Footer() {
+  return (
+    <footer
+      className="border-t border-white/[0.05] pt-12 pb-12"
+      style={{
+        paddingBottom: "calc(3rem + env(safe-area-inset-bottom))",
+        paddingLeft: "env(safe-area-inset-left)",
+        paddingRight: "env(safe-area-inset-right)",
+      }}
+    >
+      {/* Row 1 — edge-to-edge thin cyan rule.
+          The existing top border (`border-t border-white/[0.05]`)
+          stays as the structural separator from page content; this
+          additional rule sits 6 px below as the V6 footer's own
+          opening hairline at 12 % cyan opacity per spec. */}
+      <div className="max-w-6xl mx-auto px-6 md:px-12 mb-10">
+        <div
+          aria-hidden="true"
+          className="h-px w-full"
+          style={{
+            background:
+              "linear-gradient(to right, transparent, rgba(0,210,255,0.12) 20%, rgba(0,210,255,0.12) 80%, transparent)",
+          }}
+        />
+      </div>
+
+      {/* Row 2 — TWO blocks side-by-side on md+.
+          LEFT: quiet signature paragraph + BuildBeacon BELOW (not
+                inline). Spec drops the "ED. —" prefix; the wordmark
+                lives in the navbar (12.3) so the footer signature is
+                content-only.
+          RIGHT: three quiet links stacked vertically with the brand
+                 icons aligned left. */}
+      <div className="max-w-6xl mx-auto px-6 md:px-12 mb-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+        <div className="space-y-3">
+          <p className="text-xs text-tertiary leading-relaxed max-w-xs">
+            Long-arc systems, hand-built infra.
+            <br />
+            Adana, GMT+3. © 2026
+          </p>
+          <BuildBeacon />
+        </div>
+
+        <nav className="flex flex-col gap-3 md:items-end" aria-label="Footer links">
+          <Link
+            href="/notes"
+            className="text-xs font-medium text-secondary hover:text-primary transition-colors duration-200"
+          >
+            Notes
+          </Link>
+          <a
+            href="https://github.com/emredogan-cloud"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-xs font-medium text-secondary hover:text-primary transition-colors duration-200"
+            aria-label="GitHub profile"
+          >
+            <GitHubIcon className="w-3.5 h-3.5" />
+            GitHub
+          </a>
+          <a
+            href="https://www.linkedin.com/in/emre-do%C4%9Fan-657a99388/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-xs font-medium text-secondary hover:text-primary transition-colors duration-200"
+            aria-label="LinkedIn profile"
+          >
+            <LinkedInIcon className="w-3.5 h-3.5" />
+            LinkedIn
+          </a>
+        </nav>
+      </div>
+
+      {/* Row 3 — centered editorial transmission.
+          Mono brand line "EMRE DOĞAN · MONK MODE · 2026" + the
+          FooterCliPrompt and LiveCustomerCounter inlined as a single
+          editorial transmission. LiveCustomerCounter still hides
+          itself when count is 0; when it has data it appears as a
+          natural extension of the mono line. */}
+      <div className="max-w-6xl mx-auto px-6 md:px-12">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] font-mono uppercase tracking-[0.18em] text-quiet">
+          <span>Emre Doğan · Monk Mode · 2026</span>
+          <FooterCliPrompt />
+          <LiveCustomerCounter />
+        </div>
       </div>
     </footer>
   );
