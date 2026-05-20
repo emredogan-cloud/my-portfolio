@@ -12,6 +12,8 @@ import {
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import { TechCard } from "./_components/TechCard";
+import StackLane from "./_components/StackLane";
+import StackAccordion from "./_components/StackAccordion";
 import CertificationRadar from "@/components/sections/CertificationRadar";
 
 export const metadata: Metadata = {
@@ -147,10 +149,131 @@ const STACK: Category[] = [
 ];
 
 export default function StackPage() {
+  if (process.env.NEXT_PUBLIC_V6_STACK_COMPRESSION === "1") {
+    return <V6StackPage />;
+  }
+  return <LegacyStackPage />;
+}
+
+/* ──────────────────────────────────────────────────────────────
+ *  V6 stack layout (Sub-PR 14.5 — Phase 14 closer)
+ *
+ *  Compresses the V5 vertical 7-section rhythm into a single
+ *  composed grid:
+ *
+ *    Desktop (lg+):    4-col lane grid, 7 lanes fill 2 rows (4+3).
+ *    Tablet (md):      2-col lane grid, 4 rows (2+2+2+1).
+ *    Mobile (< md):    Single-column accordion via StackAccordion.
+ *
+ *  Each lane = one category. Category title at the top, tech items
+ *  stacked beneath as mono rows (no chip containers). Mobile rows
+ *  collapse to title-only by default; tap expands inline.
+ *
+ *  Certifications Radar moves from "section 08" inside the same
+ *  page to its own tight micro-section at the bottom, separated
+ *  from the compressed grid by a margin gap + hairline divider.
+ *
+ *  Spec ref: PORTFOLYO_V6_UI_EXECUTION_SYSTEM.md § Sub-PR 14.5.
+ *  Audit ref: PORTFOLYO_V6_UI_AUDIT.md § 9.1 (7 identical category
+ *             sections), § 9.2 (cert pulse pill out of place).
+ * ────────────────────────────────────────────────────────────── */
+
+function V6StackPage() {
   return (
     <main id="main" className="relative min-h-screen bg-black">
-      {/* Ambient atmosphere — V6 11.1 typed variant.
-          Lab: cyan blob top-left + horizontal cyan rule bisecting viewport. */}
+      <PageAtmosphere
+        variant="lab"
+        legacy={{
+          primary: {
+            color: "rgba(14,165,233,0.10)",
+            position: "top-left",
+            size: "lg",
+          },
+          secondary: {
+            color: "rgba(147,51,234,0.08)",
+            position: "bottom-right",
+            size: "md",
+          },
+        }}
+      />
+
+      <div className="relative z-10 max-w-5xl mx-auto px-6 pt-36 pb-32">
+
+        {/* ───────── HERO ───────── */}
+        <Reveal mode="mount" duration={0.8} className="mb-20">
+          <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+            The Stack
+          </span>
+          <h1 className="text-5xl md:text-7xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5">
+            <span className="block">Tools I use</span>
+            <span className="block text-tertiary">to ship production.</span>
+          </h1>
+          <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
+            Every layer of this stack runs in production today — across cloud
+            infrastructure, AI systems, billing, and observability. No
+            speculative tooling. No frameworks I haven&apos;t deployed.
+          </p>
+        </Reveal>
+
+        {/* ───────── COMPRESSED LANE GRID — md+ ─────────
+            Tablet (md): 2-col. Desktop (lg+): 4-col. CSS Grid handles
+            the row packing for 7 lanes; the last cell in the desktop
+            row sits empty, the last row in tablet has 1 lane. */}
+        <Reveal duration={0.7} margin="-60px" className="hidden md:block">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+            {STACK.map((cat) => (
+              <StackLane
+                key={cat.id}
+                index={cat.index}
+                title={cat.title}
+                icon={cat.icon}
+                items={cat.items}
+              />
+            ))}
+          </div>
+        </Reveal>
+
+        {/* ───────── MOBILE ACCORDION — < md ─────────
+            Reduces 7 stacked sections to ~7 small tappable rows.
+            Each row expands inline. SSR-deterministic. */}
+        <Reveal duration={0.7} margin="-60px" className="md:hidden">
+          <StackAccordion categories={STACK} />
+        </Reveal>
+
+        {/* ───────── CERTIFICATIONS — separate micro-section ─────────
+            V6 § 9.2: the cert pulse pill section moves from "section 08
+            inside the same page" to its own tight composition. The
+            margin gap + the divider hairline give it visual separation
+            from the compressed grid above. CertificationRadar's own
+            mt-20 + pt-12 + border-t deliver the separator naturally. */}
+        <CertificationRadar />
+
+        {/* ───────── FOOTER NOTE ───────── */}
+        <Reveal duration={0.7} margin="-50px" className="mt-24 pt-12 border-t border-white/[0.06]">
+          <p className="text-tertiary text-sm leading-relaxed max-w-2xl">
+            The list grows when there&apos;s a real problem to solve. It
+            shrinks when something stops earning its complexity budget.
+          </p>
+        </Reveal>
+      </div>
+    </main>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────
+ *  Legacy stack layout (V5 baseline, rollback path)
+ *
+ *  Preserved verbatim from the pre-14.5 page body. When
+ *  NEXT_PUBLIC_V6_STACK_COMPRESSION is off (default) the page
+ *  renders through this branch — byte-identical to the V5 surface
+ *  with 7 vertical category sections each containing a 2/3/4-col
+ *  TechCard chip grid, followed by CertificationRadar, followed by
+ *  the footer note.
+ * ────────────────────────────────────────────────────────────── */
+
+function LegacyStackPage() {
+  return (
+    <main id="main" className="relative min-h-screen bg-black">
       <PageAtmosphere
         variant="lab"
         legacy={{
