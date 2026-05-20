@@ -237,7 +237,24 @@ function V6StackPage() {
             Reduces 7 stacked sections to ~7 small tappable rows.
             Each row expands inline. SSR-deterministic. */}
         <Reveal duration={0.7} margin="-60px" className="md:hidden">
-          <StackAccordion categories={STACK} />
+          <StackAccordion
+            categories={STACK.map((cat) => {
+              const Icon = cat.icon;
+              return {
+                id: cat.id,
+                index: cat.index,
+                title: cat.title,
+                iconNode: (
+                  <Icon
+                    className="w-4 h-4 text-[#00d2ff]/65 shrink-0"
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                  />
+                ),
+                items: cat.items,
+              };
+            })}
+          />
         </Reveal>
 
         {/* ───────── CERTIFICATIONS — separate micro-section ─────────
