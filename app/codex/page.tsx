@@ -6,6 +6,8 @@ import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import { secondaryButton } from "@/lib/v6/glass";
 import { codexBooks } from "@/data/codex";
+import CodexShelf from "./_components/CodexShelf";
+import CodexLineage from "./_components/CodexLineage";
 
 export const metadata: Metadata = {
   title: "Codex — Emre Doğan",
@@ -30,6 +32,15 @@ const ATMOSPHERE_TINTS = [
 ] as const;
 
 export default function CodexIndex() {
+  if (process.env.NEXT_PUBLIC_V6_CODEX_SHELF === "1") {
+    return <V6CodexPage />;
+  }
+  return <LegacyCodexPage />;
+}
+
+/* ── Legacy /codex hub (V5 baseline, vertical folios) ──────────── */
+
+function LegacyCodexPage() {
   return (
     <main id="main" className="relative min-h-screen bg-black">
       {/* Ambient atmosphere — V6 11.1 typed variant.
@@ -207,6 +218,200 @@ export default function CodexIndex() {
           className="mt-24 pt-10 border-t border-white/[0.06]"
         >
           <p className="text-tertiary text-sm leading-relaxed max-w-2xl inline-flex items-start gap-2">
+            <BookOpen
+              className="w-3.5 h-3.5 mt-0.5 text-quiet flex-shrink-0"
+              aria-hidden="true"
+            />
+            <span>
+              Each codex is a static folder — no framework, no build step,
+              no backend. The engines are mine and are themselves part of
+              the work: paginators, atlases, ambient drones, print
+              compositors. The worlds inside them are also mine.
+            </span>
+          </p>
+        </Reveal>
+      </div>
+    </main>
+  );
+}
+
+/* ── V6 /codex hub (Sub-PR 13.2 composed shelf) ────────────────── */
+
+function V6CodexPage() {
+  return (
+    <main id="main" className="relative min-h-screen bg-black">
+      <PageAtmosphere
+        variant="narrative"
+        legacy={{
+          primary: {
+            color: "rgba(0,210,255,0.06)",
+            position: "top-right",
+            size: "lg",
+          },
+          secondary: {
+            color: "rgba(168,132,44,0.07)",
+            position: "bottom-left",
+            size: "md",
+          },
+        }}
+      />
+
+      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-32 pb-32">
+
+        {/* ───────── HERO ─────────
+            Preserved from V5 — the codex page identity carries
+            through. The new composition lands directly below the
+            framing paragraph. */}
+        <Reveal mode="mount" duration={0.8} className="mb-16">
+          <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+            Codex
+          </span>
+          <h1 className="text-5xl md:text-7xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5">
+            <span className="block">A handcrafted</span>
+            <span className="block text-tertiary">archive of worlds.</span>
+          </h1>
+          <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
+            Three self-contained digital editions, each engineered as a
+            zero-dependency single-page reader and inhabited as a fully
+            built world. Custom paginators, illuminated atlases, ambient
+            audio synthesis, browser-native PDF export — and inside each
+            engine, a finished narrative universe with its own houses,
+            calendars, oaths, and grief.
+          </p>
+        </Reveal>
+
+        {/* ───────── SECTION 1 — THE COVERS ─────────
+            Three covers at uneven heights, leaning on a shared
+            shelf floor. Hover/tap lifts the cover and reveals the
+            atmosphere chip cluster beside it on lg+ (mobile shows
+            chips below the cover always). */}
+        <Reveal duration={0.8} margin="-80px" className="mb-4 lg:mb-2">
+          <CodexShelf books={codexBooks} />
+        </Reveal>
+
+        {/* ───────── SECTION 2 — THE LINEAGE ─────────
+            Horizontal cyan timeline connecting the three covers
+            by their in-world years. Mobile collapses to a
+            vertical timeline. */}
+        <Reveal duration={0.7} margin="-50px" className="mb-24 lg:mb-32">
+          <CodexLineage books={codexBooks} />
+        </Reveal>
+
+        {/* ───────── SECTION 3 — THE EDITORIAL COLUMN ─────────
+            A single-column long-read about the three books,
+            with each book's tagline embedded as a cyan-tick'd
+            pull-quote at the appropriate paragraph. The codex
+            is the work; the work is the codex. */}
+        <Reveal duration={0.7} margin="-60px" className="mb-24">
+          <div className="max-w-2xl mx-auto space-y-8 text-secondary text-[15px] leading-[1.85]">
+            <p>
+              The codex is the work, the work is the codex. Three
+              editions, three temperaments, the same uncompromising
+              posture toward the engineering and the storytelling
+              underneath each one. No framework. No build step. No
+              backend. Each book is a static folder that pages
+              itself, tolls its own bells, exports its own PDF.
+            </p>
+
+            <p>
+              <em className="not-italic text-primary">Mendîran</em>{" "}
+              begins on a continent stratified in ash, where the
+              oldest mages tried to seal what they could not name —
+              and what was never bound has just begun to crack open
+              again.
+            </p>
+
+            <blockquote className="relative pl-5">
+              <span
+                aria-hidden="true"
+                className="absolute left-0 top-1.5 inline-block w-px h-[calc(100%-0.75rem)] bg-[#00d2ff]/40"
+              />
+              <p className="text-primary/90 italic text-[15.5px] leading-[1.7]">
+                Six houses, eight wounded oath-bearers, and a seal
+                seven hundred years old that has just begun to crack.
+              </p>
+            </blockquote>
+
+            <p>
+              <em className="not-italic text-primary">Mythologica</em>{" "}
+              binds nineteen mythological traditions into one
+              illuminated codex — not to flatten them, but to let
+              them speak to each other across the spread for the
+              first time in their thousands of years.
+            </p>
+
+            <blockquote className="relative pl-5">
+              <span
+                aria-hidden="true"
+                className="absolute left-0 top-1.5 inline-block w-px h-[calc(100%-0.75rem)] bg-[#00d2ff]/40"
+              />
+              <p className="text-primary/90 italic text-[15.5px] leading-[1.7]">
+                Seventy-six illuminated chapters binding nineteen
+                civilisations into one tactile spread.
+              </p>
+            </blockquote>
+
+            <p>
+              <em className="not-italic text-primary">Solgun Kitabe</em>{" "}
+              is the unpermitted archive of an empire that did not
+              have the courtesy of dying — the cathedral cities,
+              the masked council, the relics nobody is allowed to
+              own, the throne nobody is allowed to sit on.
+            </p>
+
+            <blockquote className="relative pl-5">
+              <span
+                aria-hidden="true"
+                className="absolute left-0 top-1.5 inline-block w-px h-[calc(100%-0.75rem)] bg-[#00d2ff]/40"
+              />
+              <p className="text-primary/90 italic text-[15.5px] leading-[1.7]">
+                Fifty-seven entries from a forbidden archive of the
+                empire that did not finish dying.
+              </p>
+            </blockquote>
+          </div>
+        </Reveal>
+
+        {/* ───────── SECTION 4 — CTA ─────────
+            Three small entry-pills. Single closing line above. */}
+        <Reveal duration={0.7} margin="-40px" className="mb-24">
+          <div className="text-center">
+            <p className="text-primary text-lg md:text-xl font-medium tracking-tight mb-6">
+              Three books. Three worlds. Choose one.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {codexBooks.map((book) => (
+                <Link
+                  key={book.slug}
+                  href={`/codex/${book.slug}`}
+                  className="group inline-flex items-center gap-2 rounded-full border border-[#00d2ff]/35 hover:border-[#00d2ff]/70 hover:bg-[#00d2ff]/[0.06] text-primary text-sm font-medium px-4 py-1.5 transition-colors duration-200"
+                  aria-label={`Open ${book.title}`}
+                >
+                  <span
+                    className="text-[#00d2ff] text-[13px] leading-none"
+                    aria-hidden="true"
+                  >
+                    {book.sigil}
+                  </span>
+                  <span>{book.title}</span>
+                  <ArrowRight
+                    className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+
+        {/* ───────── COLOPHON ─────────
+            Editorial closer; same content as legacy. */}
+        <Reveal
+          duration={0.7}
+          margin="-50px"
+          className="mt-16 pt-10 border-t border-white/[0.06] max-w-2xl mx-auto"
+        >
+          <p className="text-tertiary text-sm leading-relaxed inline-flex items-start gap-2">
             <BookOpen
               className="w-3.5 h-3.5 mt-0.5 text-quiet flex-shrink-0"
               aria-hidden="true"
