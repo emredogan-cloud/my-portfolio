@@ -28,6 +28,7 @@ import {
   Database,
 } from "lucide-react";
 import { LuminaAvatar } from "./LuminaAvatar";
+import LuminaPrivacyPopover from "./LuminaPrivacyPopover";
 import LuminaVoice from "./LuminaVoice";
 import { confirmHaptic } from "@/lib/haptic";
 
@@ -131,6 +132,10 @@ interface Props {
  *   - isLoading flips false on error.
  */
 export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
+  /* V6 Sub-PR 15.5 — Privacy popover compresses Memory + Forget into
+     a single hairline trigger. Default off → 3-button strip returns. */
+  const v6Header = process.env.NEXT_PUBLIC_V6_LUMINA_HEADER === "1";
+
   const [input, setInput] = useState("");
   const [isReady, setIsReady] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -603,55 +608,68 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
                 AAA touch-target minimum. Previously p-2.5 (~36px),
                 which was tight on mobile and a frequent fat-finger
                 miss into the input below. */}
-            {/* Memory toggle (Sub-PR 4.4) — explicit opt-out
-                control. Default state is ON (memory enabled,
-                matches Phase 3 behaviour); OFF stops the chat
-                route writing to KV and the client fetching from
-                /api/chat/load. Persisted to localStorage so a
-                visitor who opts out stays opted out across
-                visits. Amber accent in the off state signals
-                "you have intentionally disabled this" without
-                shouting. */}
-            <button
-              type="button"
-              onClick={handleMemoryToggle}
-              aria-pressed={!memoryOptOut}
-              aria-label={
-                memoryOptOut
-                  ? "Conversation memory — currently off, tap to enable"
-                  : "Conversation memory — currently on, tap to disable"
-              }
-              title={
-                memoryOptOut
-                  ? "Memory off — chat is not persisted (tap to enable)"
-                  : "Memory on — 14-day persistence with PII redacted (tap to disable)"
-              }
-              className={[
-                "inline-flex items-center justify-center transition-colors duration-200 p-3.5 -m-1.5 rounded",
-                memoryOptOut
-                  ? "text-amber-300/80 hover:text-amber-300"
-                  : "text-tertiary hover:text-primary",
-              ].join(" ")}
-            >
-              <Database className="w-4 h-4" />
-            </button>
-            {/* Forget-Me — privacy control. Clears the thread server-
-                side AND client-side. Same hit-target sizing as the
-                minimize button (44 × 44, WCAG 2.5.5 AAA). Cinematic
-                quiet aesthetic: text-tertiary → /85 on hover, no
-                destructive red, no confirmation dialog (the action
-                is fully reversible only in the sense that the next
-                conversation is also private; we don't pretend to
-                "undo" privacy). */}
-            <button
-              type="button"
-              onClick={handleForgetMe}
-              className="inline-flex items-center justify-center text-tertiary hover:text-primary transition-colors duration-200 p-3.5 -m-1.5 rounded"
-              aria-label="Forget conversation"
-              title="Forget conversation — clears stored history"
-            >
-              <Eraser className="w-4 h-4" />
-            </button>
+            {v6Header ? (
+              /* V6 Sub-PR 15.5 — Memory + Forget clustered behind a
+                 single Privacy popover trigger. Audit § 16.3 closed:
+                 header now reads title + status + Privacy + Close. */
+              <LuminaPrivacyPopover
+                memoryOptOut={memoryOptOut}
+                onMemoryToggle={handleMemoryToggle}
+                onForgetMe={handleForgetMe}
+              />
+            ) : (
+              <>
+                {/* Memory toggle (Sub-PR 4.4) — explicit opt-out
+                    control. Default state is ON (memory enabled,
+                    matches Phase 3 behaviour); OFF stops the chat
+                    route writing to KV and the client fetching from
+                    /api/chat/load. Persisted to localStorage so a
+                    visitor who opts out stays opted out across
+                    visits. Amber accent in the off state signals
+                    "you have intentionally disabled this" without
+                    shouting. */}
+                <button
+                  type="button"
+                  onClick={handleMemoryToggle}
+                  aria-pressed={!memoryOptOut}
+                  aria-label={
+                    memoryOptOut
+                      ? "Conversation memory — currently off, tap to enable"
+                      : "Conversation memory — currently on, tap to disable"
+                  }
+                  title={
+                    memoryOptOut
+                      ? "Memory off — chat is not persisted (tap to enable)"
+                      : "Memory on — 14-day persistence with PII redacted (tap to disable)"
+                  }
+                  className={[
+                    "inline-flex items-center justify-center transition-colors duration-200 p-3.5 -m-1.5 rounded",
+                    memoryOptOut
+                      ? "text-amber-300/80 hover:text-amber-300"
+                      : "text-tertiary hover:text-primary",
+                  ].join(" ")}
+                >
+                  <Database className="w-4 h-4" />
+                </button>
+                {/* Forget-Me — privacy control. Clears the thread server-
+                    side AND client-side. Same hit-target sizing as the
+                    minimize button (44 × 44, WCAG 2.5.5 AAA). Cinematic
+                    quiet aesthetic: text-tertiary → /85 on hover, no
+                    destructive red, no confirmation dialog (the action
+                    is fully reversible only in the sense that the next
+                    conversation is also private; we don't pretend to
+                    "undo" privacy). */}
+                <button
+                  type="button"
+                  onClick={handleForgetMe}
+                  className="inline-flex items-center justify-center text-tertiary hover:text-primary transition-colors duration-200 p-3.5 -m-1.5 rounded"
+                  aria-label="Forget conversation"
+                  title="Forget conversation — clears stored history"
+                >
+                  <Eraser className="w-4 h-4" />
+                </button>
+              </>
+            )}
             <button
               type="button"
               onClick={onClose}
