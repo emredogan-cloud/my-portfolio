@@ -588,8 +588,16 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
         className="absolute inset-0 flex flex-col rounded-2xl border border-white/[0.10] overflow-hidden"
         style={{
           backgroundColor: "rgba(10,10,10,0.95)",
+          /* Drop-shadow blur reduced from 80 px → 48 px and offset
+             tightened from -22 to -14 to preserve the cinematic depth
+             at a fraction of the per-frame paint cost. The shadow's
+             paint area used to extend ~80 px beyond the panel on every
+             frame of the y + scale open transition; 48 px keeps the
+             same visual weight (slight opacity bump 0.75 → 0.78
+             compensates for the smaller blur radius) at roughly half
+             the GPU compositing cost. */
           boxShadow:
-            "0 32px 80px -22px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.02), inset 0 1px 0 rgba(255,255,255,0.06)",
+            "0 24px 48px -14px rgba(0,0,0,0.78), 0 0 0 1px rgba(255,255,255,0.02), inset 0 1px 0 rgba(255,255,255,0.06)",
         }}
       >
         {/* Header — divider removed so the avatar's lower half doesn't

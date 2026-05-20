@@ -50,21 +50,20 @@ export default function AmbientBackground() {
         style={{ boxShadow: "inset 0 0 280px rgba(0,0,0,0.85)" }}
       />
 
-      {/* d) Film grain */}
-      <svg
-        className="absolute inset-0 w-full h-full opacity-[0.10] pointer-events-none mix-blend-overlay"
+      {/* d) Film grain.
+            Was an inline <svg> with a live <feTurbulence> filter — that
+            filter is one of the most expensive paint operations in the
+            browser and was recomputing every frame of the intro's
+            scale-1.04 exit animation. The bg-noise utility in
+            globals.css renders the same fractal-noise pattern from a
+            pre-baked data URI (200 × 200 tile, base-frequency 0.9,
+            numOctaves 4), which paints once and then GPU-tiles for
+            free. The opacity + mix-blend-overlay treatment is
+            preserved so the visual reads as identical film grain. */}
+      <div
+        className="absolute inset-0 bg-noise opacity-[0.10] pointer-events-none mix-blend-overlay"
         aria-hidden="true"
-      >
-        <filter id="intro-grain">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.85"
-            numOctaves="3"
-            stitchTiles="stitch"
-          />
-        </filter>
-        <rect width="100%" height="100%" filter="url(#intro-grain)" />
-      </svg>
+      />
     </>
   );
 }

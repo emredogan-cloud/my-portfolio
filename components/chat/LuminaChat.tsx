@@ -45,9 +45,17 @@ export default function LuminaChat() {
       /* ignore */
     }
 
-    /* No sessionStorage flag → fresh first visit. Auto-open at 1.5s —
-       snappy enough that Lumina feels like a reactive intelligence,
-       late enough that the hero's identity reveal lands first.
+    /* No sessionStorage flag → fresh first visit. Auto-open at 3.2 s —
+       LATE enough that the OpeningSequence (2.85 s lifetime) has fully
+       cleared, so the heaviest concurrent paint period (intro
+       feTurbulence + scale-1.04 exit, hero entrance Motion stagger,
+       Lumina open transform + 48 px box-shadow recompute, Lumina trigger
+       fade-out) no longer overlap on the same compositor frames.
+       Originally 1.5 s — the overlap is the dominant cause of the
+       "initial landing experience" stutter reported in the V6
+       performance forensic. Cinematic feel preserved: Lumina still
+       greets the visitor within the first 4 s of the page lifetime,
+       just after the intro has lifted away.
        Strict Mode-safe: cleanup clears the timer; even if React
        re-runs the effect, only one final timer fires. */
     const timer = setTimeout(() => {
@@ -58,7 +66,7 @@ export default function LuminaChat() {
       } catch {
         setIsOpen(true);
       }
-    }, 1500);
+    }, 3200);
 
     return () => clearTimeout(timer);
   }, []);
