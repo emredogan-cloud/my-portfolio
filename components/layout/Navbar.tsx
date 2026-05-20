@@ -68,20 +68,32 @@ const LEGACY_CONTACT_LINK = { label: "Contact", href: "/contact" } as const;
 /**
  * Primary surfaces — flat, identity-defining, no dropdown.
  * `matches` lists the route prefixes for which the link is active.
- * "Work" matches both `/projects` and `/architecture` so the
- * link stays highlighted across the future Phase 14.1 hub merge
- * (when /projects + /architecture redirect to `/work#...`).
+ *
+ * V6 14.1 — when the unified /work hub is enabled, the Work entry
+ * points directly to `/work` (skipping the /projects → /work
+ * redirect bounce). The `matches` array gains `/work` so the link
+ * highlights on the new surface as well as on /projects +
+ * /architecture (the legacy hubs that now redirect to /work).
  */
-const V6_PRIMARY_LINKS = [
+const V6_WORK_HUB_ENABLED =
+  process.env.NEXT_PUBLIC_V6_WORK_HUB === "1";
+
+const V6_PRIMARY_LINKS: readonly {
+  readonly label: string;
+  readonly href: string;
+  readonly matches: readonly string[];
+}[] = [
   {
     label: "Work",
-    href: "/projects",
-    matches: ["/projects", "/architecture"],
+    href: V6_WORK_HUB_ENABLED ? "/work" : "/projects",
+    matches: V6_WORK_HUB_ENABLED
+      ? ["/work", "/projects", "/architecture"]
+      : ["/projects", "/architecture"],
   },
   { label: "Lab", href: "/lab", matches: ["/lab"] },
   { label: "Notes", href: "/notes", matches: ["/notes"] },
   { label: "Codex", href: "/codex", matches: ["/codex"] },
-] as const;
+];
 
 /**
  * Operate — the single remaining dropdown. The parent link

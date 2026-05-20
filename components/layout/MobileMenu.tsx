@@ -22,14 +22,24 @@ interface NavLink {
 }
 
 /* The drawer's primary surfaces mirror V6Navbar's V6_PRIMARY_LINKS
-   verbatim. "Work" stays prefix-matched to /projects + /architecture
-   in anticipation of the Phase 14.1 hub merge. */
+   verbatim. V6 14.1 — when the unified /work hub is enabled, Work
+   points directly to /work and matches /work + /projects +
+   /architecture. */
+const WORK_HUB_ENABLED =
+  process.env.NEXT_PUBLIC_V6_WORK_HUB === "1";
+
 const PRIMARY_LINKS: readonly NavLink[] = [
-  { label: "Work", href: "/projects", matches: ["/projects", "/architecture"] },
+  {
+    label: "Work",
+    href: WORK_HUB_ENABLED ? "/work" : "/projects",
+    matches: WORK_HUB_ENABLED
+      ? ["/work", "/projects", "/architecture"]
+      : ["/projects", "/architecture"],
+  },
   { label: "Lab", href: "/lab", matches: ["/lab"] },
   { label: "Notes", href: "/notes", matches: ["/notes"] },
   { label: "Codex", href: "/codex", matches: ["/codex"] },
-] as const;
+];
 
 /* Operate parent — the single in-drawer expandable. Per V6 § 12.4
    spec ("The Operate item expands inline (no second drawer)") the
