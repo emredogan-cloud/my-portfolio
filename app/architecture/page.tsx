@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import ArchitectureHubGrid, {
   type HubEntry,
@@ -72,6 +73,15 @@ const ENTRIES: readonly HubEntry[] = [
  * Server Component — the page is fully static, no client state.
  */
 export default function ArchitectureHubPage() {
+  /* V6 14.1 — when the unified /work hub is enabled, /architecture
+     redirects to /work#architecture (the architecture reading
+     mode). Default off → legacy /architecture renders verbatim
+     as the rollback path. Spec: "Both /projects and /architecture
+     continue to work (redirect or render same content)." */
+  if (process.env.NEXT_PUBLIC_V6_WORK_HUB === "1") {
+    redirect("/work#architecture");
+  }
+
   return (
     <main id="main" className="relative min-h-screen bg-black overflow-hidden">
       {/* Ambient atmosphere — V6 11.1 typed variant.

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { projectsData } from "@/data/projects";
 import { Reveal } from "@/components/ui/Reveal";
@@ -37,6 +38,15 @@ const TECH_CHIP_MORE_LEGACY =
   "px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-tertiary";
 
 export default function ProjectsPage() {
+  /* V6 14.1 — when the unified /work hub is enabled, /projects
+     redirects to /work#outcomes (the outcomes reading mode).
+     Default off → legacy /projects renders verbatim as the
+     rollback path. Spec: "Both /projects and /architecture
+     continue to work (redirect or render same content)." */
+  if (process.env.NEXT_PUBLIC_V6_WORK_HUB === "1") {
+    redirect("/work#outcomes");
+  }
+
   return (
     <main id="main" className="min-h-screen bg-black">
       {/* Ambient atmosphere — V6 11.1 typed variant.
