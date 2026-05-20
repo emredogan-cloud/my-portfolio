@@ -65,6 +65,15 @@ export interface NoteFormats {
   diagram?: NoteDiagram;
 }
 
+/**
+ * Closed allow-list of topic clusters surfaced by the V6 Sub-PR
+ * 13.1 atlas / chronicle filter. Each note maps to AT MOST one
+ * cluster; a note without a `cluster` field is uncategorised and
+ * appears only in the unfiltered chronicle. V5-safe — the field
+ * is optional, existing data shapes are unchanged.
+ */
+export type NoteCluster = "cloud" | "ai" | "mobile" | "discipline";
+
 export interface Note {
   slug: string;
   title: string;
@@ -79,6 +88,11 @@ export interface Note {
    *  without `formats` render exactly as before — single Read
    *  layout, no tab strip. */
   formats?: NoteFormats;
+  /** V6 Sub-PR 13.1 — topic cluster surfaced by the notes atlas.
+   *  One of the four canonical clusters: cloud / ai / mobile /
+   *  discipline. Optional — uncategorised notes still appear in
+   *  the unfiltered chronicle but don't anchor an atlas node. */
+  cluster?: NoteCluster;
 }
 
 /**
@@ -98,6 +112,7 @@ export const notesData: Note[] = [
     date: "2026-05-01",
     readTime: "4 min read",
     tags: ["AWS", "FinOps", "Serverless", "Bedrock"],
+    cluster: "cloud",
     body: `Finding unused AWS resources is easy. Building a multi-tenant SaaS that does it securely across hundreds of AWS accounts without hardcoding credentials is the real engineering challenge.
 
 When I started building Cloud Waste Hunter, the primary constraint was security. I couldn't ask users for permanent IAM Access Keys. The solution was implementing **Cross-Account AWS scanning via STS AssumeRole**. By providing an external ID and a strict, read-only IAM policy template, the system dynamically assumes roles across customer environments, scans resources (EC2, RDS, EBS, IAM), and drops the temporary credentials.
@@ -140,6 +155,7 @@ But identifying waste isn't enough; remediation is the bottleneck. Instead of wr
     date: "2026-04-01",
     readTime: "3 min read",
     tags: ["Discipline", "Workflow", "Monk Mode"],
+    cluster: "discipline",
     body: `Most 19-year-olds are figuring out college applications. I am figuring out how to balance high school exams, 01:30 AM physically demanding bakery shifts, and architecting scalable cloud infrastructure.
 
 People ask how I find the time to learn Terraform, AWS multi-region patterns, and build SaaS products like VibingCoderAI. The answer isn't a magical productivity app; it's a framework I call "Monk Mode."
@@ -172,6 +188,7 @@ Discipline compounds faster than intellect. I don't rely on motivation; I rely o
     date: "2026-03-01",
     readTime: "4 min read",
     tags: ["Mobile", "Flutter", "ML Kit", "Edge AI"],
+    cluster: "mobile",
     body: `Bringing machine learning to mobile environments usually means dealing with severe performance bottlenecks. For FormAI — a Flutter fitness application designed to track and correct workout form in real-time — sending video frames to a cloud server API was out of the question. The latency would ruin the user experience.
 
 The architecture had to be edge-first. I built the application natively using **Flutter** for cross-platform fluidity. For the ML layer, I integrated Google's ML Kit directly on the device. This allows the app to process pose detection algorithms at 30+ FPS without a single network request.
