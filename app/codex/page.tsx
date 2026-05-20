@@ -4,6 +4,7 @@ import Image from "next/image";
 import { ArrowRight, BookOpen, ExternalLink } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
+import { secondaryButton } from "@/lib/v6/glass";
 import { codexBooks } from "@/data/codex";
 
 export const metadata: Metadata = {
@@ -184,7 +185,7 @@ export default function CodexIndex() {
                           href={book.deployUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 rounded-full px-4 py-2 glass-panel text-xs font-medium text-white/75 hover:text-white transition-colors"
+                          className={`inline-flex items-center gap-2 rounded-full px-4 py-2 ${secondaryButton()} text-xs font-medium text-white/75 hover:text-white transition-colors`}
                           aria-label={`Read ${book.title} on its live reader (opens in new tab)`}
                         >
                           <ExternalLink className="w-3 h-3" aria-hidden="true" />

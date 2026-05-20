@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowRight, Check, AlertCircle } from "lucide-react";
+import { cardSurface } from "@/lib/v6/glass";
 import { sendContactEmail, type ContactResult } from "./actions";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -34,7 +35,7 @@ export default function ContactForm() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.5, ease: EASE }}
-            className="glass-panel rounded-2xl p-10 text-center"
+            className={`${cardSurface()} rounded-2xl p-10 text-center`}
           >
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/15 border border-emerald-500/30 mb-5">
               <Check className="w-5 h-5 text-emerald-400" />
@@ -56,7 +57,7 @@ export default function ContactForm() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.5, ease: EASE }}
-            className="glass-panel rounded-2xl p-8 sm:p-10 space-y-6"
+            className={`${cardSurface()} rounded-2xl p-8 sm:p-10 space-y-6`}
           >
             {/* Honeypot field — hidden from real users */}
             <input

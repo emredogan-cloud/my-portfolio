@@ -5,6 +5,7 @@ import { projectsData } from "@/data/projects";
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import Pill, { type PillKind } from "@/components/ui/Pill";
+import { cardSurface } from "@/lib/v6/glass";
 import { ProjectCardAnimator } from "./_components/ProjectCardAnimator";
 
 export const metadata: Metadata = {
@@ -90,7 +91,7 @@ export default function ProjectsPage() {
           {projectsData.map((project, i) => (
             <ProjectCardAnimator key={project.id} delay={0.2 + i * 0.08}>
               <Link href={`/projects/${project.id}`} className="block h-full">
-                <div className="liquid-glass rounded-2xl p-8 flex flex-col gap-6 h-full cursor-pointer transition-colors duration-300">
+                <div className={`${cardSurface()} rounded-2xl p-8 flex flex-col gap-6 h-full cursor-pointer transition-colors duration-300`}>
                   {/* Card header */}
                   <div className="flex items-start justify-between gap-4">
                     <h2 className="text-xl font-semibold text-white leading-snug">

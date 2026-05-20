@@ -6,6 +6,7 @@ import Link from "next/link";
 import WordsPullUp from "@/components/ui/WordsPullUp";
 import HeroTopology from "@/components/home/HeroTopology";
 import Pill from "@/components/ui/Pill";
+import { secondaryButton } from "@/lib/v6/glass";
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
@@ -115,7 +116,7 @@ export default function HeroSection() {
                   href="/resume/emre-dogan.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 glass-panel text-sm font-medium text-white/80 hover:text-white transition-colors"
+                  className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 ${secondaryButton()} text-sm font-medium text-white/80 hover:text-white transition-colors`}
                 >
                   <Download className="w-4 h-4" aria-hidden="true" />
                   Download CV

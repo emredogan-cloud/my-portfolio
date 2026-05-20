@@ -42,8 +42,22 @@
 
 /* ─────────────────────────────────────────────────────────────
    Glassmorphism primitives
+   ─────────────────────────────────────────────────────────────
+   V6 Sub-PR 11.3 — Glass-Panel Retirement.
+   Audit § 1.3 verdict: `.liquid-glass` and `.glass-panel` had
+   drifted from primitive to template aesthetic. The two classes
+   are retained here as DEPRECATED so the V6_GLASS_RETIREMENT flag
+   can revert by className swap, and so the LuminaTrigger button —
+   the single legitimate dimmable-orb consumer — keeps its
+   backdrop-blur surface. Every other consumer migrates to
+   `.edge-lit-card` (containers) or `.ghost-outline-button`
+   (rounded-full secondary CTAs).
    ───────────────────────────────────────────────────────────── */
 @layer utilities {
+  /* @deprecated 2026-05-20 — retained only for the LuminaTrigger
+     button (components/chat/LuminaTrigger.tsx) and as the
+     V6_GLASS_RETIREMENT off-flag fallback. New consumers must
+     use `.edge-lit-card` instead. */
   .liquid-glass {
     background: rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(16px);
@@ -60,6 +74,10 @@
     border-color: rgba(255, 255, 255, 0.14);
   }
 
+  /* @deprecated 2026-05-20 — retained only as the
+     V6_GLASS_RETIREMENT off-flag fallback. New consumers must
+     use `.ghost-outline-button` (rounded-full CTAs) or
+     `.edge-lit-card` (containers). */
   .glass-panel {
     background: rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(20px);
@@ -78,6 +96,63 @@
       inset 0 1px 1px rgba(255, 255, 255, 0.2),
       0 8px 40px rgba(0, 0, 0, 0.35),
       0 0 28px rgba(255, 255, 255, 0.06);
+  }
+
+  /* V6 Sub-PR 11.3 — edge-lit card.
+     Solid #0a0a0a background, hairline white/6 border, single
+     inset highlight scan-line, and a cyan hairline 1px on the top
+     edge at 20 % opacity that rises to 90 % on hover. Extends the
+     existing `inset-x-7 top-0 h-px bg-[#00d2ff]/20` motif into a
+     reusable primitive — no backdrop-filter, no semitransparent
+     fill, no glass signature. */
+  .edge-lit-card {
+    position: relative;
+    background: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    transition: border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .edge-lit-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 1.75rem; /* matches the existing inset-x-7 hairline motif */
+    right: 1.75rem;
+    height: 1px;
+    background: rgba(0, 210, 255, 0.2);
+    transition: background 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+
+  .edge-lit-card:hover {
+    border-color: rgba(255, 255, 255, 0.10);
+  }
+
+  .edge-lit-card:hover::before {
+    background: rgba(0, 210, 255, 0.9);
+  }
+
+  /* V6 Sub-PR 11.3 — ghost-outline secondary CTA.
+     Replaces every rounded-full `.glass-panel` secondary button.
+     No backdrop-blur, no semi-transparent fill — just a hairline
+     outline that brightens on hover. Reads as the operator-tone
+     companion to the white "primary" pill (Get in touch / Visit
+     website) without competing with it. */
+  .ghost-outline-button {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.75);
+    transition:
+      border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      background 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .ghost-outline-button:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    color: rgb(255, 255, 255);
+    background: rgba(255, 255, 255, 0.04);
   }
 }
 
