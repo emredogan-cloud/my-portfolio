@@ -10,7 +10,33 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 const INITIAL: ContactResult = { ok: false };
 
-export default function ContactForm() {
+/* V6 Sub-PR 15.4 — visitor-driven intent classification.
+   The V5 8.5 adaptive classifier inferred reading mode from session
+   memory; 15.4 inverts that to a self-classification chip group so
+   no inferred-intent copy ever ships ("we noticed…" was the explicit
+   spec validation gate). 'default' is the unselected state — no chip
+   is active and the lead paragraph carries the V5-style baseline
+   framing. */
+export type Intent = "default" | "role" | "engineering" | "other";
+
+const INTENT_OPTIONS: ReadonlyArray<{ id: Intent; label: string }> = [
+  { id: "role", label: "A role / opportunity" },
+  { id: "engineering", label: "Engineering / Architecture" },
+  { id: "other", label: "Other" },
+];
+
+interface Props {
+  /** V6 path: current intent. Omit for V5 byte-identical rendering. */
+  intent?: Intent;
+  /** V6 path: callback fired when the visitor picks an intent chip.
+   *  Presence of this prop is what flips the form into adaptive mode —
+   *  the parent AdaptiveContactSection passes it when the
+   *  NEXT_PUBLIC_V6_ADAPTIVE_CONTACT flag is on. */
+  onIntentChange?: (next: Intent) => void;
+}
+
+export default function ContactForm({ intent, onIntentChange }: Props = {}) {
+  const isAdaptive = typeof onIntentChange === "function";
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, isPending] = useActionState(
     sendContactEmail,
@@ -68,6 +94,48 @@ export default function ContactForm() {
               aria-hidden="true"
               className="absolute opacity-0 pointer-events-none -left-[9999px] w-0 h-0"
             />
+
+            {/* V6 — intent chip group, only on adaptive path. */}
+            {isAdaptive && (
+              <div role="group" aria-labelledby="intent-prompt">
+                <span
+                  id="intent-prompt"
+                  className="text-[10px] uppercase tracking-widest text-primary/40 mb-3 block"
+                >
+                  I am reaching out regarding
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {INTENT_OPTIONS.map((opt) => {
+                    const active = intent === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => onIntentChange?.(opt.id)}
+                        disabled={isPending}
+                        className={[
+                          "inline-flex items-center gap-2 rounded-full px-4 py-2",
+                          "text-xs font-medium tracking-tight transition-colors duration-200",
+                          "disabled:opacity-60 disabled:cursor-not-allowed",
+                          active
+                            ? "border border-[#00d2ff]/45 bg-[#00d2ff]/[0.06] text-primary"
+                            : "border border-white/[0.08] bg-transparent text-tertiary hover:text-secondary hover:border-white/[0.16]",
+                        ].join(" ")}
+                      >
+                        {active && (
+                          <span
+                            aria-hidden="true"
+                            className="w-1.5 h-1.5 rounded-full bg-[#00d2ff] shadow-[0_0_6px_rgba(0,210,255,0.6)]"
+                          />
+                        )}
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <Field
@@ -128,27 +196,41 @@ export default function ContactForm() {
                 </a>
               </p>
 
-              <button
-                type="submit"
-                disabled={isPending}
-                className="group inline-flex items-center gap-2 rounded-full pl-5 pr-1 py-1 bg-primary hover:gap-3 disabled:opacity-60 disabled:cursor-wait transition-all duration-300 flex-shrink-0"
-              >
-                <span className="text-black font-medium text-sm">
-                  {isPending ? "Sending…" : "Send Message"}
-                </span>
-                <div className="bg-black rounded-full w-9 h-9 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
-                  {isPending ? (
-                    <Spinner />
-                  ) : (
-                    <ArrowRight className="w-4 h-4 text-primary" />
-                  )}
+              {isAdaptive ? (
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <span className="margin-tick" aria-hidden="true" />
+                  <SubmitButton isPending={isPending} />
                 </div>
-              </button>
+              ) : (
+                <SubmitButton isPending={isPending} />
+              )}
             </div>
           </motion.form>
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/* ─── Submit button ──────────────────────────────────────── */
+function SubmitButton({ isPending }: { isPending: boolean }) {
+  return (
+    <button
+      type="submit"
+      disabled={isPending}
+      className="group inline-flex items-center gap-2 rounded-full pl-5 pr-1 py-1 bg-primary hover:gap-3 disabled:opacity-60 disabled:cursor-wait transition-all duration-300 flex-shrink-0"
+    >
+      <span className="text-black font-medium text-sm">
+        {isPending ? "Sending…" : "Send Message"}
+      </span>
+      <div className="bg-black rounded-full w-9 h-9 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+        {isPending ? (
+          <Spinner />
+        ) : (
+          <ArrowRight className="w-4 h-4 text-primary" />
+        )}
+      </div>
+    </button>
   );
 }
 
