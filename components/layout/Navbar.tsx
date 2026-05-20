@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import MobileMenu, { MobileMenuTrigger } from "./MobileMenu";
 
 const MotionLink = motion.create(Link);
 
@@ -328,15 +329,17 @@ function LegacyNavbar() {
   );
 }
 
-/* ── V6 navbar (Sub-PR 12.1 + 12.2 layout) ───────────────────── */
+/* ── V6 navbar (Sub-PR 12.1 + 12.2 + 12.3 + 12.4 layout) ─────── */
 
 function V6Navbar() {
   const [operateOpen, setOperateOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const pathname = usePathname();
 
   /* Global Esc-to-close. Same posture as the legacy navbar — the
-   * listener attaches only while the menu is open. */
+   * listener attaches only while the menu is open. The MobileMenu
+   * has its own internal Esc-listener bound to its own state. */
   useEffect(() => {
     if (!operateOpen) return;
     function onKey(e: KeyboardEvent) {
@@ -346,9 +349,21 @@ function V6Navbar() {
     return () => window.removeEventListener("keydown", onKey);
   }, [operateOpen]);
 
+  /* Note: in-drawer Link clicks call onClose explicitly, so the
+   * common close path is covered without an effect. Browser
+   * back/forward while the drawer is open is an edge case;
+   * visitors can still close via Esc or backdrop click. */
+
   const fadeDuration = prefersReducedMotion ? 0 : 0.18;
 
   const operateActive = matchesAny(pathname, V6_OPERATE_PARENT.matches);
+
+  /* V6 12.4 — mobile-drawer flag. Separate from V6_NAV_PROMOTION so
+   * the operator can ship the drawer independently. When the flag
+   * is off, the V6 mobile layout keeps the 12.3 state (brand glyph
+   * on the left + Get in touch pill on the right). */
+  const mobileNavEnabled =
+    process.env.NEXT_PUBLIC_V6_MOBILE_NAV === "1";
 
   return (
     <motion.nav
@@ -464,26 +479,14 @@ function V6Navbar() {
         </div>
 
         {/* SECONDARY CLUSTER — About · Contact · Résumé · [Get in touch].
-            About and Contact sit smaller (text-xs mono) to the
-            right of the centred primary block, and collapse below
-            md (mobile path explicitly unchanged — the real mobile
-            drawer ships in Sub-PR 12.4).
+            About / Contact / Résumé collapse below md.
 
-            V6 12.2: the white "View Résumé" pill that previously
-            dominated every page is retired. Résumé becomes a quiet
-            inline link (mono uppercase, text-tertiary per the
-            canonical ramp); the cyan-bordered "Get in touch" pill
-            becomes the visual anchor pointing to /contact (the
-            higher-leverage conversion).
-
-            The cyan-bordered rectangle is visually distinct from
-            the LuminaTrigger's circular liquid-glass orb (different
-            shape, different page position) — no conflict.
-
-            Mobile: Résumé inline link is hidden; "Get in touch"
-            pill remains as the always-visible right-edge anchor.
-            The Sub-PR 12.4 mobile drawer will absorb the Résumé
-            link into its overlay. */}
+            V6 12.4: when the mobile-nav flag is on, the "Get in
+            touch" pill is also hidden on mobile (it migrates into
+            the drawer footer alongside the Résumé link); the mobile
+            trigger glyph takes its place on the right edge. When
+            the flag is off, the pill stays as the always-visible
+            mobile right-edge anchor (the 12.3 state). */}
         <div className="flex items-center gap-5 shrink-0">
           {V6_SECONDARY_LINKS.map((link) => {
             const active = matchesAny(pathname, link.matches);
@@ -515,12 +518,38 @@ function V6Navbar() {
 
           <Link
             href="/contact"
-            className="inline-flex items-center justify-center rounded-full border border-[#00d2ff]/40 hover:border-[#00d2ff]/70 hover:bg-[#00d2ff]/[0.06] text-primary text-sm font-medium px-4 py-1.5 transition-colors duration-200"
+            className={`${
+              mobileNavEnabled ? "hidden md:inline-flex" : "inline-flex"
+            } items-center justify-center rounded-full border border-[#00d2ff]/40 hover:border-[#00d2ff]/70 hover:bg-[#00d2ff]/[0.06] text-primary text-sm font-medium px-4 py-1.5 transition-colors duration-200`}
           >
             Get in touch
           </Link>
+
+          {/* V6 12.4 — mobile trigger glyph. Replaces the visible
+              Get in touch pill on mobile when the flag is on.
+              The pill migrates into the drawer footer so visitors
+              still get one-tap access to /contact, plus access to
+              the full primary navigation that V5 / 12.3 hid behind
+              hidden md:flex. */}
+          {mobileNavEnabled ? (
+            <MobileMenuTrigger
+              onOpen={() => setMobileMenuOpen(true)}
+              ariaControls="mobile-menu-dialog"
+              open={mobileMenuOpen}
+            />
+          ) : null}
         </div>
       </div>
+
+      {/* V6 12.4 — mobile drawer. Mounts conditionally; when the
+          flag is off it never enters the DOM. When the flag is on
+          and the trigger fires, AnimatePresence animates it in. */}
+      {mobileNavEnabled ? (
+        <MobileMenu
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+        />
+      ) : null}
     </motion.nav>
   );
 }
