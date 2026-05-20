@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import { cardSurface, secondaryButton } from "@/lib/v6/glass";
+import { isMarginTickEnabled } from "@/lib/v6/marginTick";
 import GithubActivity from "./_components/GithubActivity";
 
 export const metadata: Metadata = {
@@ -182,6 +183,11 @@ const FEATURED = [
 ] as const;
 
 export default function AboutPage() {
+  /* V6 11.5 — margin tick. Server-side env read; the className is
+     emitted only when V6_MARGIN_TICK=1, otherwise the about page
+     renders its V5-style hairline-rule decor only. */
+  const tickEnabled = isMarginTickEnabled();
+
   return (
     <main id="main" className="relative min-h-screen bg-black">
       {/* Ambient atmosphere — V6 11.1 typed variant.
@@ -239,12 +245,24 @@ export default function AboutPage() {
                        with the "What keeps the noise low" breath
                        moment mid-page; added a hairline cyan rule
                        beneath so both breath beats share the same
-                       cinematic vocabulary.  ───────── */}
+                       cinematic vocabulary.
+
+                       V6 11.5: introduces the margin-tick second
+                       motif — a 1px × 12px vertical cyan rule anchored
+                       to the left of the italic paragraph. Co-equal
+                       to the cyan hairline-on-card-top motif; identity
+                       becomes multi-axis. Renders only when
+                       V6_MARGIN_TICK=1.  ───────── */}
         <Reveal duration={0.8} margin="-50px" className="mb-28 md:mb-32">
-          <p className="text-2xl md:text-3xl lg:text-[2.1rem] font-medium tracking-[-0.02em] leading-[1.4] text-tertiary italic max-w-3xl">
-            The system that builds the system matters more than the
-            system that ships this quarter.
-          </p>
+          <div className="flex items-start gap-5 max-w-3xl">
+            {tickEnabled ? (
+              <span aria-hidden="true" className="margin-tick mt-4" />
+            ) : null}
+            <p className="text-2xl md:text-3xl lg:text-[2.1rem] font-medium tracking-[-0.02em] leading-[1.4] text-tertiary italic">
+              The system that builds the system matters more than the
+              system that ships this quarter.
+            </p>
+          </div>
           <span
             aria-hidden="true"
             className="block mt-10 h-px w-24 bg-gradient-to-r from-[#00d2ff]/40 via-white/10 to-transparent"
@@ -380,19 +398,35 @@ export default function AboutPage() {
 
             The text picks up the "solitude / decisions made outside"
             beat that previously lived as a tile in the lifestyle grid,
-            so this is a recompose, not new content. */}
+            so this is a recompose, not new content.
+
+            V6 11.5: margin-tick mounts to the left of the eyebrow,
+            the second deployment of the new motif. The two breath
+            beats share the tick + hairline-beneath composition so
+            they rhyme structurally. Renders only when
+            V6_MARGIN_TICK=1. */}
         <section className="mb-32 md:mb-36">
           <Reveal duration={0.8} margin="-80px">
-            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
-              What keeps the noise low
-            </span>
-            <p className="mt-7 text-2xl md:text-3xl lg:text-[2.1rem] font-medium tracking-[-0.02em] leading-[1.4] text-primary/85 max-w-3xl">
-              A walk before the keyboard sees a problem. Long stretches
-              with no input. The day&apos;s most useful sentence is
-              usually the one written down at the end of one of those
-              walks — solitude isn&apos;t the goal, it&apos;s the
-              operating condition.
-            </p>
+            <div className="flex items-start gap-5 max-w-3xl">
+              {tickEnabled ? (
+                <span
+                  aria-hidden="true"
+                  className="margin-tick mt-1.5"
+                />
+              ) : null}
+              <div>
+                <span className="text-[10px] sm:text-xs uppercase tracking-widest text-primary/40">
+                  What keeps the noise low
+                </span>
+                <p className="mt-7 text-2xl md:text-3xl lg:text-[2.1rem] font-medium tracking-[-0.02em] leading-[1.4] text-primary/85">
+                  A walk before the keyboard sees a problem. Long
+                  stretches with no input. The day&apos;s most useful
+                  sentence is usually the one written down at the end
+                  of one of those walks — solitude isn&apos;t the
+                  goal, it&apos;s the operating condition.
+                </p>
+              </div>
+            </div>
             <span
               aria-hidden="true"
               className="block mt-12 h-px w-24 bg-gradient-to-r from-[#00d2ff]/40 via-white/10 to-transparent"
