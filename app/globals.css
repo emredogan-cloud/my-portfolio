@@ -3,17 +3,16 @@
 
 /* ─────────────────────────────────────────────────────────────
    Design tokens — text palette truth.
-   Five-stop monochrome ramp replaces the ad-hoc `text-white/45`,
-   `text-white/65`, `text-primary/75` etc. that accumulated across
-   the codebase. Anchor brightness levels:
+   Five-stop monochrome ramp consolidated by V6 Sub-PR 11.4
+   (text token consolidation). Anchor brightness levels:
      primary    100% — headings, name, focused text
      secondary   70% — body copy, eyebrow taglines, nav links
      tertiary   45% — supporting metadata, "View project" links
      quiet      30% — labels, status pills, decorative badges
      faint      15% — dividers, hairline tones
    Tailwind v4 generates `text-secondary`, `bg-tertiary`, etc.
-   from each entry. Opacity modifiers (`text-secondary/50`)
-   still work but should be avoided to keep the palette closed.
+   from each entry. Opacity modifiers on these tokens still work
+   but should be avoided to keep the palette closed.
    ───────────────────────────────────────────────────────────── */
 @theme {
   --color-primary: #ffffff;

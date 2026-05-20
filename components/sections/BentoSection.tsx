@@ -16,7 +16,7 @@ const HEADER_SEGMENTS = [
   },
   {
     text: "Shipped with intention. Powered by craft.",
-    className: "text-gray-500",
+    className: "text-tertiary",
   },
 ] as const;
 

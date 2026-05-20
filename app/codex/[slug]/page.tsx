@@ -100,12 +100,12 @@ export default async function CodexDetailPage({
                 <span className="text-sm font-medium text-[#00d2ff] tracking-widest uppercase">
                   Codex
                 </span>
-                <span className="text-white/20">·</span>
-                <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-white/60">
+                <span className="text-faint">·</span>
+                <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary">
                   {book.inWorldYear}
                 </span>
-                <span className="text-white/20">·</span>
-                <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-white/60">
+                <span className="text-faint">·</span>
+                <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary">
                   {book.language}
                 </span>
               </div>
@@ -146,7 +146,7 @@ export default async function CodexDetailPage({
                     href={book.githubUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`${secondaryButton()} rounded-full inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white/75 hover:text-white transition-colors duration-200`}
+                    className={`${secondaryButton()} rounded-full inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-primary hover:text-primary transition-colors duration-200`}
                   >
                     Source
                   </a>
@@ -189,8 +189,8 @@ export default async function CodexDetailPage({
                 className="inline-flex items-baseline gap-1.5 px-2.5 py-1 rounded-full border border-white/[0.10] bg-white/[0.03] font-mono uppercase tracking-[0.18em] text-[10px]"
               >
                 <span className="text-[#00d2ff]/90">{atm.name}</span>
-                <span className="text-white/30">·</span>
-                <span className="text-white/65 normal-case tracking-normal italic">
+                <span className="text-quiet">·</span>
+                <span className="text-secondary normal-case tracking-normal italic">
                   {atm.mood}
                 </span>
               </span>
@@ -204,7 +204,7 @@ export default async function CodexDetailPage({
             {book.themes.map((theme) => (
               <span
                 key={theme}
-                className="px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-white/70"
+                className="px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-secondary"
               >
                 {theme}
               </span>
@@ -225,7 +225,7 @@ export default async function CodexDetailPage({
           {paragraphs.map((para, i) => (
             <p
               key={i}
-              className="text-white/75 text-base leading-[1.85] max-w-2xl"
+              className="text-primary text-base leading-[1.85] max-w-2xl"
             >
               {para}
             </p>
@@ -252,7 +252,7 @@ export default async function CodexDetailPage({
                 orbits.
               </p>
             </div>
-            <span className="text-[10px] uppercase tracking-[0.18em] text-white/30">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-quiet">
               Drag to rotate · hover for context
             </span>
           </div>
@@ -298,7 +298,7 @@ export default async function CodexDetailPage({
                   <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]">
                     {t.era}
                   </span>
-                  <span className="text-white/15">·</span>
+                  <span className="text-faint">·</span>
                   <span className="text-primary text-sm font-medium">
                     {t.label}
                   </span>

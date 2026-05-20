@@ -66,7 +66,7 @@ export default async function NoteDetailPage({
         <Reveal mode="mount" duration={0.5} y={0}>
           <Link
             href="/notes"
-            className="inline-flex items-center gap-2 text-white/40 hover:text-white/80 text-sm transition-colors duration-200 mb-16 group"
+            className="inline-flex items-center gap-2 text-tertiary hover:text-primary text-sm transition-colors duration-200 mb-16 group"
           >
             <ArrowRight
               size={14}
@@ -86,9 +86,9 @@ export default async function NoteDetailPage({
           </h1>
 
           {/* Meta row */}
-          <div className="flex items-center gap-3 text-[11px] text-gray-500 mt-6">
+          <div className="flex items-center gap-3 text-[11px] text-tertiary mt-6">
             <time dateTime={note.date}>{formatMonthYear(note.date)}</time>
-            <span className="text-white/15">·</span>
+            <span className="text-faint">·</span>
             <span className="inline-flex items-center gap-1">
               <Clock className="w-3 h-3" aria-hidden="true" />
               {note.readTime}
@@ -126,10 +126,10 @@ export default async function NoteDetailPage({
                   className="
                     prose prose-invert max-w-none
                     prose-headings:font-medium prose-headings:tracking-tight prose-headings:text-primary
-                    prose-p:text-white/80 prose-p:leading-[1.85]
+                    prose-p:text-primary prose-p:leading-[1.85]
                     prose-strong:text-primary prose-strong:font-semibold
-                    prose-em:text-white/90
-                    prose-li:text-white/80 prose-li:leading-[1.7] prose-li:my-1
+                    prose-em:text-primary
+                    prose-li:text-primary prose-li:leading-[1.7] prose-li:my-1
                     prose-ol:my-6 prose-ul:my-6
                     prose-a:text-[#00d2ff] prose-a:no-underline hover:prose-a:underline
                     prose-code:text-[#00d2ff] prose-code:bg-white/[0.04] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
@@ -151,7 +151,7 @@ export default async function NoteDetailPage({
         >
           <Link
             href="/notes"
-            className="group inline-flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors"
+            className="group inline-flex items-center gap-2 text-sm text-tertiary hover:text-primary transition-colors"
           >
             <ArrowRight
               size={14}

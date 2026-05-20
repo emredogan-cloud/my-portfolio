@@ -273,7 +273,7 @@ export default async function AmbientPage() {
         <Reveal mode="mount" duration={0.8} className="mb-12">
           <h1 className="text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary">
             <span className="block">Ambient.</span>
-            <span className="block text-white/55">
+            <span className="block text-tertiary">
               The ecosystem&apos;s typed nervous system.
             </span>
           </h1>

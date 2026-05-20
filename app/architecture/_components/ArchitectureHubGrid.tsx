@@ -108,7 +108,7 @@ function ReadyCard({ entry }: { entry: HubEntry }) {
       <CardTitle>{entry.title}</CardTitle>
       <Tagline>{entry.tagline}</Tagline>
       <StackPills tags={entry.stack} />
-      <div className="mt-6 inline-flex items-center gap-1.5 text-xs font-medium text-white/50 group-hover:text-[#00d2ff] transition-colors">
+      <div className="mt-6 inline-flex items-center gap-1.5 text-xs font-medium text-tertiary group-hover:text-[#00d2ff] transition-colors">
         {STATE_LABEL.ready}
         <ArrowRight
           className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
@@ -157,7 +157,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 
 function CardTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="mt-3 text-2xl sm:text-3xl font-semibold tracking-[-0.03em] leading-tight text-white">
+    <h2 className="mt-3 text-2xl sm:text-3xl font-semibold tracking-[-0.03em] leading-tight text-primary">
       {children}
     </h2>
   );
@@ -165,7 +165,7 @@ function CardTitle({ children }: { children: React.ReactNode }) {
 
 function Tagline({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-4 text-sm leading-relaxed text-white/55 flex-grow">
+    <p className="mt-4 text-sm leading-relaxed text-tertiary flex-grow">
       {children}
     </p>
   );
@@ -222,7 +222,7 @@ function DraftingModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-3 right-3 inline-flex items-center justify-center w-9 h-9 text-white/40 hover:text-white/85 transition-colors rounded-full"
+          className="absolute top-3 right-3 inline-flex items-center justify-center w-9 h-9 text-tertiary hover:text-primary transition-colors rounded-full"
           aria-label="Close"
         >
           <X className="w-4 h-4" aria-hidden="true" />
@@ -231,20 +231,20 @@ function DraftingModal({
         <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/85">
           {entry.eyebrow}
         </p>
-        <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-white">
+        <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-primary">
           {entry.title}
         </h3>
         <div className="mt-3 inline-flex">
           <Pill kind={STATE_KIND[entry.state]}>{STATE_LABEL[entry.state]}</Pill>
         </div>
 
-        <p className="mt-5 text-sm leading-relaxed text-white/65">
+        <p className="mt-5 text-sm leading-relaxed text-secondary">
           Architecture design is currently being drafted. A full
           scroll-through walkthrough will appear here once {entry.title}{" "}
           reaches alpha — the same shape as the other stories in this
           hub.
         </p>
-        <p className="mt-3 text-xs leading-relaxed text-white/40">
+        <p className="mt-3 text-xs leading-relaxed text-tertiary">
           Want to follow the build?{" "}
           <Link
             href="/contact"

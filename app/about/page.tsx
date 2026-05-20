@@ -218,7 +218,7 @@ export default function AboutPage() {
           </span>
           <h1 className="text-5xl md:text-7xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5">
             <span className="block">Built slowly.</span>
-            <span className="block text-white/55">On purpose.</span>
+            <span className="block text-tertiary">On purpose.</span>
           </h1>
           <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
             I&apos;m Emre Doğan. I design and operate production AWS
@@ -715,7 +715,7 @@ export default function AboutPage() {
             </span>
             <h2 className="text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5 mb-8">
               <span className="block">Building tools</span>
-              <span className="block text-white/55">engineers actually use.</span>
+              <span className="block text-tertiary">engineers actually use.</span>
             </h2>
             <p className="text-secondary max-w-2xl text-base md:text-lg leading-relaxed">
               Smaller systems, sharper edges, fewer dashboards.
@@ -734,9 +734,9 @@ export default function AboutPage() {
                 className="w-1.5 h-1.5 rounded-full bg-[#00d2ff]/80"
               />
               <span>Build window · open</span>
-              <span className="text-white/15">·</span>
+              <span className="text-faint">·</span>
               <span>Adana</span>
-              <span className="text-white/15">·</span>
+              <span className="text-faint">·</span>
               <span>GMT+3</span>
             </p>
 
@@ -795,9 +795,9 @@ export default function AboutPage() {
                 className="w-1 h-1 rounded-full bg-[#00d2ff]/50"
               />
               <span>End transmission</span>
-              <span className="text-white/10">·</span>
+              <span className="text-faint">·</span>
               <span>ED.</span>
-              <span className="text-white/10">·</span>
+              <span className="text-faint">·</span>
               <span>2026</span>
             </div>
           </Reveal>

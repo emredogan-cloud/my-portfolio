@@ -32,7 +32,7 @@ const STATUS_KIND: Record<string, PillKind> = {
 };
 
 const TECH_CHIP_LEGACY =
-  "px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs text-white/70";
+  "px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs text-secondary";
 
 /* Inline GitHub mark — server-renderable (no client state). lucide v1.14
    does not ship a Github icon, so we provide our own. */
@@ -110,7 +110,7 @@ export default async function ProjectDetailPage({
         <Reveal mode="mount" duration={0.5} y={0}>
           <Link
             href="/projects"
-            className="inline-flex items-center gap-2 text-white/40 hover:text-white/80 text-sm transition-colors duration-200 mb-16 group"
+            className="inline-flex items-center gap-2 text-tertiary hover:text-primary text-sm transition-colors duration-200 mb-16 group"
           >
             <ArrowRight
               size={14}
@@ -127,19 +127,19 @@ export default async function ProjectDetailPage({
             <span className="text-sm font-medium text-[#00d2ff] tracking-widest uppercase">
               Project
             </span>
-            <span className="text-white/20">·</span>
+            <span className="text-faint">·</span>
             <Pill kind={STATUS_KIND[project.status]}>
               {STATUS_LABEL[project.status]}
             </Pill>
           </div>
 
           {/* Title */}
-          <h1 className="text-5xl md:text-7xl font-bold tracking-[-0.04em] leading-[0.95] text-white">
+          <h1 className="text-5xl md:text-7xl font-bold tracking-[-0.04em] leading-[0.95] text-primary">
             {project.title}
           </h1>
 
           {/* Short description */}
-          <p className="text-white/55 text-lg leading-relaxed max-w-2xl">
+          <p className="text-tertiary text-lg leading-relaxed max-w-2xl">
             {project.shortDescription}
           </p>
 
@@ -161,7 +161,7 @@ export default async function ProjectDetailPage({
                 href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`${secondaryButton()} rounded-full inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white/75 hover:text-white transition-colors duration-200`}
+                className={`${secondaryButton()} rounded-full inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-primary hover:text-primary transition-colors duration-200`}
               >
                 <GitHubIcon className="w-3.5 h-3.5" />
                 GitHub
@@ -172,7 +172,7 @@ export default async function ProjectDetailPage({
 
         {/* ── Tech stack ── */}
         <Reveal mode="mount" duration={0.65} delay={0.3} className="mt-14 pt-10 border-t border-white/[0.08]">
-          <p className="text-xs font-medium text-white/30 tracking-widest uppercase mb-4">
+          <p className="text-xs font-medium text-quiet tracking-widest uppercase mb-4">
             Tech Stack
           </p>
           <div className="flex flex-wrap gap-2">
@@ -200,10 +200,10 @@ export default async function ProjectDetailPage({
             className="mt-14 pt-10 border-t border-white/[0.08]"
           >
             <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
-              <p className="text-xs font-medium text-white/30 tracking-widest uppercase">
+              <p className="text-xs font-medium text-quiet tracking-widest uppercase">
                 AWS Topology
               </p>
-              <span className="text-[10px] uppercase tracking-[0.18em] text-white/30">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-quiet">
                 Drag to rotate · hover for context
               </span>
             </div>
@@ -234,7 +234,7 @@ export default async function ProjectDetailPage({
             className="mt-14 pt-10 border-t border-white/[0.08]"
           >
             <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
-              <p className="text-xs font-medium text-white/30 tracking-widest uppercase">
+              <p className="text-xs font-medium text-quiet tracking-widest uppercase">
                 Try the auditor
               </p>
               <Pill kind="state-live">Live · Bedrock</Pill>
@@ -255,13 +255,13 @@ export default async function ProjectDetailPage({
 
         {/* ── Detailed description ── */}
         <Reveal mode="mount" duration={0.65} delay={0.4} className="mt-14 pt-10 border-t border-white/[0.08] space-y-6">
-          <p className="text-xs font-medium text-white/30 tracking-widest uppercase mb-6">
+          <p className="text-xs font-medium text-quiet tracking-widest uppercase mb-6">
             Overview
           </p>
           {paragraphs.map((para, i) => (
             <p
               key={i}
-              className="text-white/70 text-base leading-[1.85] max-w-2xl"
+              className="text-secondary text-base leading-[1.85] max-w-2xl"
             >
               {para}
             </p>
@@ -271,7 +271,7 @@ export default async function ProjectDetailPage({
         {/* ── Image gallery ── */}
         {project.images.length > 0 && (
           <Reveal mode="mount" duration={0.65} delay={0.55} className="mt-14 pt-10 border-t border-white/[0.08]">
-            <p className="text-xs font-medium text-white/30 tracking-widest uppercase mb-8">
+            <p className="text-xs font-medium text-quiet tracking-widest uppercase mb-8">
               Gallery
             </p>
             <div

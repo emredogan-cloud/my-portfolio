@@ -79,7 +79,7 @@ export default function Navbar() {
       transition={{ duration: 0.8, ease: EASE }}
     >
       <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
-        <Link href="/" className="text-white font-semibold tracking-tight">
+        <Link href="/" className="text-primary font-semibold tracking-tight">
           ED.
         </Link>
 
@@ -88,7 +88,7 @@ export default function Navbar() {
             <MotionLink
               key={link.label}
               href={link.href}
-              className="text-white/60 text-sm transition-colors duration-200 hover:text-white"
+              className="text-tertiary text-sm transition-colors duration-200 hover:text-primary"
               whileHover={{ opacity: 1 }}
             >
               {link.label}
@@ -111,12 +111,12 @@ export default function Navbar() {
               aria-expanded={systemsOpen}
               aria-controls="systems-menu"
               onClick={() => setSystemsOpen((v) => !v)}
-              className="flex items-center text-white/60 text-sm transition-colors duration-200 hover:text-white focus:text-white focus-visible:outline-none"
+              className="flex items-center text-tertiary text-sm transition-colors duration-200 hover:text-primary focus:text-primary focus-visible:outline-none"
             >
               Systems
               <span
                 aria-hidden="true"
-                className={`ml-1.5 text-[9px] text-white/30 transition-transform duration-200 ${
+                className={`ml-1.5 text-[9px] text-quiet transition-transform duration-200 ${
                   systemsOpen ? "rotate-180" : ""
                 }`}
               >
@@ -148,7 +148,7 @@ export default function Navbar() {
                       href={link.href}
                       role="menuitem"
                       onClick={() => setSystemsOpen(false)}
-                      className="block px-4 py-2 text-sm text-white/60 hover:text-white transition-colors duration-200"
+                      className="block px-4 py-2 text-sm text-tertiary hover:text-primary transition-colors duration-200"
                     >
                       {link.label}
                     </Link>
@@ -160,7 +160,7 @@ export default function Navbar() {
 
           <MotionLink
             href={CONTACT_LINK.href}
-            className="text-white/60 text-sm transition-colors duration-200 hover:text-white"
+            className="text-tertiary text-sm transition-colors duration-200 hover:text-primary"
             whileHover={{ opacity: 1 }}
           >
             {CONTACT_LINK.label}

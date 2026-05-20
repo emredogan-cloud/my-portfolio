@@ -199,12 +199,12 @@ function Node({ node, hovered, onHover }: NodeProps) {
         <span
           className={`whitespace-nowrap font-mono uppercase tracking-[0.16em] ${
             isCenter
-              ? "text-[13px] text-white"
+              ? "text-[13px] text-primary"
               : node.ring === "projects"
-                ? "text-[11px] text-white/90"
+                ? "text-[11px] text-primary"
                 : node.ring === "focus"
-                  ? "text-[10px] text-white/65"
-                  : "text-[9px] text-white/45"
+                  ? "text-[10px] text-secondary"
+                  : "text-[9px] text-tertiary"
           }`}
           style={{ textShadow: "0 1px 6px rgba(0,0,0,0.85)" }}
         >
@@ -402,7 +402,7 @@ export default function HeroTopologyScene({ reducedMotion }: Props) {
        *  bottom-left so it never collides with the centre node. */}
       {hoveredNode && hoveredNode.blurb && (
         <div
-          className="absolute bottom-4 left-4 max-w-xs rounded-lg border border-[#00d2ff]/20 bg-black/80 px-3 py-2 text-xs leading-relaxed text-white/85 shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-sm pointer-events-none"
+          className="absolute bottom-4 left-4 max-w-xs rounded-lg border border-[#00d2ff]/20 bg-black/80 px-3 py-2 text-xs leading-relaxed text-primary shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-sm pointer-events-none"
           role="status"
           aria-live="polite"
         >

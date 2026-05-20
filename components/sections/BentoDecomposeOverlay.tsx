@@ -116,7 +116,7 @@ export default function BentoDecomposeOverlay({ isActive }: Props) {
             >
               {node.glyph}
             </span>
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/85 whitespace-nowrap">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-primary whitespace-nowrap">
               {node.label}
             </span>
           </div>

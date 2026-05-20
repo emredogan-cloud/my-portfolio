@@ -591,10 +591,10 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             visually cross a border line awkwardly. */}
         <header className="flex items-center justify-between px-5 py-3.5">
           <div className="flex items-baseline gap-2.5">
-            <span className="text-sm font-semibold text-white tracking-tight">
+            <span className="text-sm font-semibold text-primary tracking-tight">
               Lumina
             </span>
-            <span className="text-[10px] uppercase tracking-[0.18em] text-white/30">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-quiet">
               {statusLabel}
             </span>
           </div>
@@ -630,7 +630,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
                 "inline-flex items-center justify-center transition-colors duration-200 p-3.5 -m-1.5 rounded",
                 memoryOptOut
                   ? "text-amber-300/80 hover:text-amber-300"
-                  : "text-white/40 hover:text-white/85",
+                  : "text-tertiary hover:text-primary",
               ].join(" ")}
             >
               <Database className="w-4 h-4" />
@@ -638,7 +638,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             {/* Forget-Me — privacy control. Clears the thread server-
                 side AND client-side. Same hit-target sizing as the
                 minimize button (44 × 44, WCAG 2.5.5 AAA). Cinematic
-                quiet aesthetic: text-white/40 → /85 on hover, no
+                quiet aesthetic: text-tertiary → /85 on hover, no
                 destructive red, no confirmation dialog (the action
                 is fully reversible only in the sense that the next
                 conversation is also private; we don't pretend to
@@ -646,7 +646,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             <button
               type="button"
               onClick={handleForgetMe}
-              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-3.5 -m-1.5 rounded"
+              className="inline-flex items-center justify-center text-tertiary hover:text-primary transition-colors duration-200 p-3.5 -m-1.5 rounded"
               aria-label="Forget conversation"
               title="Forget conversation — clears stored history"
             >
@@ -655,7 +655,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center justify-center text-white/40 hover:text-white/85 transition-colors duration-200 p-3.5 -m-1.5 rounded"
+              className="inline-flex items-center justify-center text-tertiary hover:text-primary transition-colors duration-200 p-3.5 -m-1.5 rounded"
               aria-label="Minimize Lumina"
               title="Minimize"
             >
@@ -701,7 +701,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
                 >
                   {isUser ? (
                     /* User: right, subtle bubble */
-                    <div className="max-w-[78%] px-4 py-2.5 rounded-xl bg-white/[0.10] text-sm text-white/95 leading-relaxed whitespace-pre-line">
+                    <div className="max-w-[78%] px-4 py-2.5 rounded-xl bg-white/[0.10] text-sm text-primary leading-relaxed whitespace-pre-line">
                       {text}
                     </div>
                   ) : (
@@ -717,7 +717,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
                         />
                       ))}
                       {text && (
-                        <div className="text-sm text-white/90 leading-[1.7] whitespace-pre-line">
+                        <div className="text-sm text-primary leading-[1.7] whitespace-pre-line">
                           {text}
                         </div>
                       )}
@@ -725,7 +725,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
                         <button
                           type="button"
                           onClick={() => handleCopy(message.id, text)}
-                          className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-white/30 hover:text-white/70 transition-colors opacity-40 group-hover:opacity-100 focus:opacity-100"
+                          className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-quiet hover:text-secondary transition-colors opacity-40 group-hover:opacity-100 focus:opacity-100"
                           aria-label={
                             copiedId === message.id
                               ? "Copied"
@@ -757,7 +757,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex items-center gap-1.5 text-xs text-white/40 px-1"
+              className="flex items-center gap-1.5 text-xs text-tertiary px-1"
             >
               <span className="inline-flex gap-1">
                 <span className="w-1 h-1 rounded-full bg-white/40 terminal-cursor-blink" />
@@ -794,7 +794,7 @@ export function LuminaWindow({ isOpen, onClose, hasBeenMinimized }: Props) {
             placeholder={isOnboarding ? "" : "Ask Lumina anything..."}
             disabled={inputDisabled}
             autoComplete="off"
-            className="lumina-input flex-1 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="lumina-input flex-1 rounded-xl px-4 py-3 text-sm text-primary placeholder-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <LuminaVoice
             onTranscript={handleVoiceTranscript}
@@ -875,7 +875,7 @@ function ToolStatusPill({ part }: ToolStatusPillProps) {
   }
   if (done) {
     return (
-      <div className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.16em] text-white/35">
+      <div className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.16em] text-tertiary">
         <Check className="w-3 h-3" aria-hidden="true" />
         <span>{label}</span>
       </div>

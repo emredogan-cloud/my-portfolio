@@ -192,7 +192,7 @@ export default function InfrastructureCore() {
       {/* Static caption underneath — anchors the visual semantically
           for visitors who don't read the labels and helps SEO. */}
       <p
-        className="absolute bottom-0 left-0 right-0 text-center text-[10px] font-mono uppercase tracking-[0.22em] text-white/35"
+        className="absolute bottom-0 left-0 right-0 text-center text-[10px] font-mono uppercase tracking-[0.22em] text-tertiary"
         aria-hidden="true"
       >
         Cloud · AI · Production

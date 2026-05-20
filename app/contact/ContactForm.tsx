@@ -43,7 +43,7 @@ export default function ContactForm() {
             <h3 className="text-primary text-xl font-medium mb-2">
               Message sent.
             </h3>
-            <p className="text-gray-400 text-sm">
+            <p className="text-secondary text-sm">
               I&apos;ll reply within a day or two. Talk soon.
             </p>
           </motion.div>
@@ -118,7 +118,7 @@ export default function ContactForm() {
 
             {/* Submit */}
             <div className="flex items-center justify-between gap-4 pt-2">
-              <p className="text-gray-500 text-xs leading-relaxed">
+              <p className="text-tertiary text-xs leading-relaxed">
                 Or write directly to{" "}
                 <a
                   href="mailto:emre30283@gmail.com"
@@ -175,7 +175,7 @@ function Field({
   as = "input",
 }: FieldProps) {
   const baseClasses =
-    "w-full bg-white/[0.02] border border-white/[0.08] rounded-lg px-4 py-3 text-primary placeholder:text-gray-600 text-sm focus:outline-none focus:border-white/25 focus:bg-white/[0.04] transition-colors duration-200 disabled:opacity-50";
+    "w-full bg-white/[0.02] border border-white/[0.08] rounded-lg px-4 py-3 text-primary placeholder:text-tertiary text-sm focus:outline-none focus:border-white/25 focus:bg-white/[0.04] transition-colors duration-200 disabled:opacity-50";
 
   return (
     <label className="block">

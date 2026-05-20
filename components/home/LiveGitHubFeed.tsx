@@ -112,8 +112,8 @@ export default function LiveGitHubFeed() {
       <div className="mx-auto max-w-3xl px-4">
         <div className="flex items-center gap-3 rounded-full border border-white/[0.08] bg-black/40 px-4 py-2.5 text-xs font-mono">
           <span className="inline-flex w-2 h-2 rounded-full bg-white/15" aria-hidden="true" />
-          <GitCommit className="w-3.5 h-3.5 text-white/25 flex-shrink-0" aria-hidden="true" />
-          <span className="text-white/35">{label}</span>
+          <GitCommit className="w-3.5 h-3.5 text-quiet flex-shrink-0" aria-hidden="true" />
+          <span className="text-tertiary">{label}</span>
         </div>
       </div>
     );
@@ -166,11 +166,11 @@ export default function LiveGitHubFeed() {
           className="w-3.5 h-3.5 text-[#00d2ff]/80 flex-shrink-0"
           aria-hidden="true"
         />
-        <span className="text-white/45 whitespace-nowrap">
-          last shipped <span className="text-white/75">{timeago}</span> to{" "}
-          <span className="text-white/85">{repo}</span>:
+        <span className="text-tertiary whitespace-nowrap">
+          last shipped <span className="text-primary">{timeago}</span> to{" "}
+          <span className="text-primary">{repo}</span>:
         </span>
-        <span className="text-white/55 truncate min-w-0" title={commitMsg}>
+        <span className="text-tertiary truncate min-w-0" title={commitMsg}>
           &ldquo;{truncate(commitMsg, 60)}&rdquo;
         </span>
       </div>

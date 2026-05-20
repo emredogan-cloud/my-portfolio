@@ -75,7 +75,7 @@ export default function PlaygroundError({
         <Reveal mode="mount" duration={0.8} className="mb-10">
           <h1 className="text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary">
             <span className="block">Experiment crashed.</span>
-            <span className="block text-white/55">Rest of the site is fine.</span>
+            <span className="block text-tertiary">Rest of the site is fine.</span>
           </h1>
           <p className="text-secondary max-w-2xl mt-7 text-base md:text-lg leading-relaxed">
             This is research surface — failure modes are expected

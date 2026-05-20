@@ -32,9 +32,9 @@ const STATUS_KIND: Record<string, PillKind> = {
 };
 
 const TECH_CHIP_LEGACY =
-  "px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-white/70";
+  "px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-secondary";
 const TECH_CHIP_MORE_LEGACY =
-  "px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-white/40";
+  "px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-tertiary";
 
 export default function ProjectsPage() {
   return (
@@ -62,7 +62,7 @@ export default function ProjectsPage() {
         <Reveal mode="mount" duration={0.5} y={0}>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-white/40 hover:text-white/80 text-sm transition-colors duration-200 mb-12 group"
+            className="inline-flex items-center gap-2 text-tertiary hover:text-primary text-sm transition-colors duration-200 mb-12 group"
           >
             <ArrowRight
               size={14}
@@ -77,10 +77,10 @@ export default function ProjectsPage() {
           <span className="text-sm font-medium text-[#00d2ff] tracking-widest uppercase">
             Work
           </span>
-          <h1 className="text-4xl md:text-6xl font-bold mt-4 tracking-tight text-white">
+          <h1 className="text-4xl md:text-6xl font-bold mt-4 tracking-tight text-primary">
             Things I&apos;ve shipped.
           </h1>
-          <p className="mt-5 text-white/50 text-base md:text-lg max-w-xl leading-relaxed">
+          <p className="mt-5 text-tertiary text-base md:text-lg max-w-xl leading-relaxed">
             A collection of products, infrastructure tools, and AI-native
             applications — from idea to production.
           </p>
@@ -94,7 +94,7 @@ export default function ProjectsPage() {
                 <div className={`${cardSurface()} rounded-2xl p-8 flex flex-col gap-6 h-full cursor-pointer transition-colors duration-300`}>
                   {/* Card header */}
                   <div className="flex items-start justify-between gap-4">
-                    <h2 className="text-xl font-semibold text-white leading-snug">
+                    <h2 className="text-xl font-semibold text-primary leading-snug">
                       {project.title}
                     </h2>
                     <Pill
@@ -106,7 +106,7 @@ export default function ProjectsPage() {
                   </div>
 
                   {/* Description */}
-                  <p className="text-white/55 text-sm leading-relaxed grow">
+                  <p className="text-tertiary text-sm leading-relaxed grow">
                     {project.shortDescription}
                   </p>
 
@@ -126,10 +126,10 @@ export default function ProjectsPage() {
 
                   {/* Footer */}
                   <div className="flex items-center justify-between pt-1 border-t border-white/5">
-                    <span className="text-xs text-white/30">
+                    <span className="text-xs text-quiet">
                       View case study
                     </span>
-                    <ArrowRight size={14} className="text-white/30" />
+                    <ArrowRight size={14} className="text-quiet" />
                   </div>
                 </div>
               </Link>

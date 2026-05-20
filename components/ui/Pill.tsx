@@ -74,7 +74,7 @@ function isPillFlagOn(): boolean {
 }
 
 const LEGACY_FALLBACK_CHIP =
-  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] font-mono uppercase tracking-[0.18em] text-white/55";
+  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] font-mono uppercase tracking-[0.18em] text-tertiary";
 
 function cx(...classes: Array<string | undefined>): string {
   return classes.filter(Boolean).join(" ");
@@ -140,7 +140,7 @@ export default function Pill({
       return (
         <span
           className={cx(
-            "inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.18em] text-white/45",
+            "inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.18em] text-tertiary",
             className,
           )}
           title={title}
@@ -157,7 +157,7 @@ export default function Pill({
       return (
         <span
           className={cx(
-            "inline-flex items-center text-[10px] font-mono uppercase tracking-[0.18em] text-white/30",
+            "inline-flex items-center text-[10px] font-mono uppercase tracking-[0.18em] text-quiet",
             className,
           )}
           title={title}
@@ -170,7 +170,7 @@ export default function Pill({
       return (
         <span
           className={cx(
-            "inline-flex items-center px-2.5 py-0.5 rounded-full border border-white/[0.12] text-[10px] font-mono uppercase tracking-[0.14em] text-white/55",
+            "inline-flex items-center px-2.5 py-0.5 rounded-full border border-white/[0.12] text-[10px] font-mono uppercase tracking-[0.14em] text-tertiary",
             className,
           )}
           title={title}
@@ -196,7 +196,7 @@ export default function Pill({
       return (
         <span
           className={cx(
-            "inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] text-white/55 border-b border-dotted border-transparent hover:border-white/30 pb-0.5 transition-colors",
+            "inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] text-tertiary border-b border-dotted border-transparent hover:border-white/30 pb-0.5 transition-colors",
             className,
           )}
           title={title}
@@ -209,7 +209,7 @@ export default function Pill({
       return (
         <span
           className={cx(
-            "font-mono uppercase tracking-[0.18em] text-[10px] text-white/30",
+            "font-mono uppercase tracking-[0.18em] text-[10px] text-quiet",
             className,
           )}
           title={title}

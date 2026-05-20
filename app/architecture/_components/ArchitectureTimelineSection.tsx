@@ -82,10 +82,10 @@ export default function ArchitectureTimelineSection({
         <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/80 mb-2">
           Memory
         </p>
-        <h2 className="text-2xl font-medium tracking-[-0.02em] mb-4 text-white">
+        <h2 className="text-2xl font-medium tracking-[-0.02em] mb-4 text-primary">
           This system&apos;s evolution
         </h2>
-        <p className="text-white/55 text-[14px] leading-relaxed mb-7 max-w-2xl">
+        <p className="text-tertiary text-[14px] leading-relaxed mb-7 max-w-2xl">
           A scrubbable cursor over the architectural events the
           registry remembers about this project. Drag the thumb,
           step with arrows, or hit play to advance the cursor

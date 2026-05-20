@@ -91,7 +91,7 @@ export default function LuminaFailuresPage() {
         <Reveal mode="mount" duration={0.8} className="mb-12">
           <h1 className="text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary">
             <span className="block">Failures.</span>
-            <span className="block text-white/55">Documented, not hidden.</span>
+            <span className="block text-tertiary">Documented, not hidden.</span>
           </h1>
           <p className="text-secondary max-w-2xl mt-7 text-base md:text-lg leading-relaxed">
             Every time Lumina — or the engineering loop that builds her —

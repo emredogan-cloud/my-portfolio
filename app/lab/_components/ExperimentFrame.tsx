@@ -108,7 +108,7 @@ export default function ExperimentFrame({
         <Reveal mode="mount" duration={0.8} className="mb-10">
           <h1 className="text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary">
             <span className="block">{experiment.name}.</span>
-            <span className="block text-white/55">{tagline}</span>
+            <span className="block text-tertiary">{tagline}</span>
           </h1>
           <p className="text-secondary max-w-2xl mt-7 text-base md:text-lg leading-relaxed">
             {framing}
