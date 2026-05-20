@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "motion/react";
 import type { LucideIcon } from "lucide-react";
 import { DollarSign, Network, Zap } from "lucide-react";
+import Pill from "@/components/ui/Pill";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -132,25 +133,26 @@ export default function ProductionMetrics() {
         <p className="text-xs font-medium text-quiet tracking-widest uppercase">
           Production Metrics
         </p>
+        {/* V6 14.2 — pill vocabulary consolidated to Phase 11.2.
+            Projection → state-planning (palette-neutral hollow dot,
+            semantically "not yet measuring live data"). Live →
+            state-live with breathing pulse (cyan filled dot). The
+            previous inline amber spans are retired — amber broke
+            the closed cyan + white-opacity palette discipline of
+            audit § 1.2 / 5.3. With no `legacy` prop, Pill renders
+            its canonical palette-neutral fallback when
+            V6_PILL_VOCABULARY is off. */}
         {isProjection ? (
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-400/[0.07] px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-amber-200/90"
+          <Pill
+            kind="state-planning"
             title="Operational metrics shown are pre-launch projections, not live readings from a customer-bearing CWH deployment."
           >
-            <span
-              className="w-1 h-1 rounded-full bg-amber-400"
-              aria-hidden="true"
-            />
             Projection
-          </span>
+          </Pill>
         ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#00d2ff]/25 bg-[#00d2ff]/[0.06] px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-[#00d2ff]/90">
-            <span
-              className="w-1 h-1 rounded-full bg-[#00d2ff]"
-              aria-hidden="true"
-            />
+          <Pill kind="state-live" pulse>
             Live
-          </span>
+          </Pill>
         )}
       </div>
 
