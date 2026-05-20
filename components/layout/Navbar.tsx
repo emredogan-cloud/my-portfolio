@@ -2,39 +2,54 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const MotionLink = motion.create(Link);
 
-/**
- * Primary navigation surfaces (always visible on desktop).
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+/* ──────────────────────────────────────────────────────────────
+ *  Primary navigation surface.
  *
- * Phase 2 polish — nav refinement. The previous flat row carried
- * seven items: About / Projects / Architecture / Stack / Notes /
- * Codex / Contact. Two new Phase 2 surfaces (/lab, /telemetry)
- * landed without a discovery path. Adding them as #8 and #9 on
- * the flat row would inflate density at the moment of maturity —
- * the opposite of the intended atmosphere.
+ *  Two coexisting layouts (selected by the V6 Sub-PR 12.1 env
+ *  flag `NEXT_PUBLIC_V6_NAV_PROMOTION`):
  *
- * The grouped row now: About · Projects · Systems ▾ · Contact.
- * Everything that previously sat between Projects and Contact
- * moves into the Systems dropdown.
- */
-const PRIMARY_LINKS = [
+ *  Legacy (V5, flag OFF — default):
+ *    ED. | About · Projects · Systems ▾ · Contact | View Résumé
+ *    The "Systems" dropdown buries the most identity-native
+ *    surfaces (Architecture, Lab, Codex, Telemetry, Brain) one
+ *    chevron deep. The audit (§ 3.2) flagged this as a recruiter-
+ *    perception blocker.
+ *
+ *  V6 (flag ON):
+ *    ED. | Work · Lab · Notes · Codex · Operate ▾ |
+ *         About · Contact · View Résumé
+ *    The five identity-defining surfaces sit flat on the primary
+ *    row. The only remaining dropdown is "Operate" — collecting
+ *    the operator-grade surfaces (Telemetry, Evolution, Journal,
+ *    Changelog, Brain) the recruiter doesn't need front-door but
+ *    the senior engineer enjoys finding. About/Contact move
+ *    right, smaller, in front of the right-edge action.
+ *
+ *  Either layout sets `aria-current="page"` on the active link
+ *  (fixes audit § 3.3). The Operate parent matches any of its
+ *  submenu routes; the "Work" link matches both /projects and
+ *  /architecture in anticipation of the Phase 14.1 hub merge.
+ *
+ *  Mobile path (< md): unchanged in 12.1. Sub-PR 12.4 ships the
+ *  real mobile drawer. The current `hidden md:flex` collapse
+ *  remains in place until then.
+ * ────────────────────────────────────────────────────────────── */
+
+/* ── Legacy structure (V5 baseline, retained for rollback) ───── */
+
+const LEGACY_PRIMARY_LINKS = [
   { label: "About", href: "/about" },
   { label: "Projects", href: "/projects" },
 ] as const;
 
-/**
- * Grouped under "Systems". Order is intentional — the most
- * architecturally-flavoured surfaces (Architecture / Stack) lead;
- * the editorial reads (Notes / Codex) sit in the middle; the
- * operating-system surfaces (Lab / Telemetry / Changelog) close;
- * Lumina Brain anchors the row as the transparency surface for
- * the chat itself. Each link still routes to the exact same href
- * as before; the dropdown is presentation only.
- */
-const SYSTEMS_LINKS = [
+const LEGACY_SYSTEMS_LINKS = [
   { label: "Architecture", href: "/architecture" },
   { label: "Stack", href: "/stack" },
   { label: "Notes", href: "/notes" },
@@ -45,17 +60,94 @@ const SYSTEMS_LINKS = [
   { label: "Brain", href: "/lumina/brain" },
 ] as const;
 
-const CONTACT_LINK = { label: "Contact", href: "/contact" } as const;
+const LEGACY_CONTACT_LINK = { label: "Contact", href: "/contact" } as const;
 
-const EASE = [0.22, 1, 0.36, 1] as const;
+/* ── V6 structure (Sub-PR 12.1 → ON) ─────────────────────────── */
+
+/**
+ * Primary surfaces — flat, identity-defining, no dropdown.
+ * `matches` lists the route prefixes for which the link is active.
+ * "Work" matches both `/projects` and `/architecture` so the
+ * link stays highlighted across the future Phase 14.1 hub merge
+ * (when /projects + /architecture redirect to `/work#...`).
+ */
+const V6_PRIMARY_LINKS = [
+  {
+    label: "Work",
+    href: "/projects",
+    matches: ["/projects", "/architecture"],
+  },
+  { label: "Lab", href: "/lab", matches: ["/lab"] },
+  { label: "Notes", href: "/notes", matches: ["/notes"] },
+  { label: "Codex", href: "/codex", matches: ["/codex"] },
+] as const;
+
+/**
+ * Operate — the single remaining dropdown. The parent link
+ * navigates to `/v5/operating` (the primary operator surface)
+ * on click; the dropdown reveals the rest of the operator
+ * family on hover/focus. None of these routes is recruiter
+ * front-door; they reward operator-tone visitors.
+ */
+const V6_OPERATE_PARENT = {
+  label: "Operate",
+  href: "/v5/operating",
+  matches: [
+    "/v5/operating",
+    "/v5/journal",
+    "/telemetry",
+    "/evolution",
+    "/changelog",
+    "/lumina/brain",
+  ],
+} as const;
+
+const V6_OPERATE_LINKS = [
+  { label: "Telemetry", href: "/telemetry" },
+  { label: "Evolution", href: "/evolution" },
+  { label: "Journal", href: "/v5/journal" },
+  { label: "Changelog", href: "/changelog" },
+  { label: "Brain", href: "/lumina/brain" },
+] as const;
+
+/**
+ * Secondary surfaces — calmer right-edge cluster. Sit before the
+ * right-edge action (View Résumé in 12.1; replaced by a cyan
+ * "Get in touch" pill in Sub-PR 12.2).
+ */
+const V6_SECONDARY_LINKS = [
+  { label: "About", href: "/about", matches: ["/about"] },
+  { label: "Contact", href: "/contact", matches: ["/contact"] },
+] as const;
+
+/* ── Route-matching helper ───────────────────────────────────── */
+
+function matchesAny(
+  pathname: string | null,
+  patterns: readonly string[],
+): boolean {
+  if (!pathname) return false;
+  return patterns.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+}
+
+/* ── Entry point ─────────────────────────────────────────────── */
 
 export default function Navbar() {
+  if (process.env.NEXT_PUBLIC_V6_NAV_PROMOTION === "1") {
+    return <V6Navbar />;
+  }
+  return <LegacyNavbar />;
+}
+
+/* ── Legacy navbar (rollback path) ───────────────────────────── */
+
+function LegacyNavbar() {
   const [systemsOpen, setSystemsOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
+  const pathname = usePathname();
 
-  /* Global Esc-to-close. Only attaches the listener when the
-   * menu is open so we don't leak a keydown subscriber site-wide
-   * for a feature that's idle 99% of the time. */
   useEffect(() => {
     if (!systemsOpen) return;
     function onKey(e: KeyboardEvent) {
@@ -65,10 +157,6 @@ export default function Navbar() {
     return () => window.removeEventListener("keydown", onKey);
   }, [systemsOpen]);
 
-  /* Motion-safe duration. The global CSS reduced-motion guard
-   * collapses CSS transitions but motion/react drives its
-   * animations via RAF — useReducedMotion is the canonical
-   * path. Mirrors the BuildBeacon precedent in this repo. */
   const fadeDuration = prefersReducedMotion ? 0 : 0.18;
 
   return (
@@ -84,22 +172,25 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          {PRIMARY_LINKS.map((link) => (
-            <MotionLink
-              key={link.label}
-              href={link.href}
-              className="text-tertiary text-sm transition-colors duration-200 hover:text-primary"
-              whileHover={{ opacity: 1 }}
-            >
-              {link.label}
-            </MotionLink>
-          ))}
+          {LEGACY_PRIMARY_LINKS.map((link) => {
+            const active = matchesAny(pathname, [link.href]);
+            return (
+              <MotionLink
+                key={link.label}
+                href={link.href}
+                aria-current={active ? "page" : undefined}
+                className={`text-sm transition-colors duration-200 ${
+                  active
+                    ? "text-primary"
+                    : "text-tertiary hover:text-primary"
+                }`}
+                whileHover={{ opacity: 1 }}
+              >
+                {link.label}
+              </MotionLink>
+            );
+          })}
 
-          {/* Systems dropdown.
-              The wrapper unifies the hover region so the mouse can
-              travel from trigger to panel without losing hover —
-              the panel sits inside this same div and inherits the
-              mouseenter/leave scope. */}
           <div
             className="relative"
             onMouseEnter={() => setSystemsOpen(true)}
@@ -134,37 +225,49 @@ export default function Navbar() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: fadeDuration, ease: EASE }}
-                  /* `top-full + mt-3` lands the panel 12px below
-                     the trigger baseline. The wrapper extends
-                     vertically to enclose that 12px gap because
-                     the absolute-positioned panel still counts as
-                     a child for mouseenter/leave purposes — the
-                     mouse can cross the gap without losing hover. */
                   className="absolute top-full left-1/2 -translate-x-1/2 mt-3 min-w-[176px] rounded-xl border border-white/[0.06] bg-[#0c0c0c]/95 backdrop-blur-md py-2"
                 >
-                  {SYSTEMS_LINKS.map((link) => (
-                    <Link
-                      key={link.label}
-                      href={link.href}
-                      role="menuitem"
-                      onClick={() => setSystemsOpen(false)}
-                      className="block px-4 py-2 text-sm text-tertiary hover:text-primary transition-colors duration-200"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
+                  {LEGACY_SYSTEMS_LINKS.map((link) => {
+                    const active = matchesAny(pathname, [link.href]);
+                    return (
+                      <Link
+                        key={link.label}
+                        href={link.href}
+                        role="menuitem"
+                        aria-current={active ? "page" : undefined}
+                        onClick={() => setSystemsOpen(false)}
+                        className={`block px-4 py-2 text-sm transition-colors duration-200 ${
+                          active
+                            ? "text-primary"
+                            : "text-tertiary hover:text-primary"
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    );
+                  })}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          <MotionLink
-            href={CONTACT_LINK.href}
-            className="text-tertiary text-sm transition-colors duration-200 hover:text-primary"
-            whileHover={{ opacity: 1 }}
-          >
-            {CONTACT_LINK.label}
-          </MotionLink>
+          {(() => {
+            const active = matchesAny(pathname, [LEGACY_CONTACT_LINK.href]);
+            return (
+              <MotionLink
+                href={LEGACY_CONTACT_LINK.href}
+                aria-current={active ? "page" : undefined}
+                className={`text-sm transition-colors duration-200 ${
+                  active
+                    ? "text-primary"
+                    : "text-tertiary hover:text-primary"
+                }`}
+                whileHover={{ opacity: 1 }}
+              >
+                {LEGACY_CONTACT_LINK.label}
+              </MotionLink>
+            );
+          })()}
         </div>
 
         <a
@@ -175,6 +278,172 @@ export default function Navbar() {
         >
           View Résumé
         </a>
+      </div>
+    </motion.nav>
+  );
+}
+
+/* ── V6 navbar (Sub-PR 12.1 layout) ──────────────────────────── */
+
+function V6Navbar() {
+  const [operateOpen, setOperateOpen] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const pathname = usePathname();
+
+  /* Global Esc-to-close. Same posture as the legacy navbar — the
+   * listener attaches only while the menu is open. */
+  useEffect(() => {
+    if (!operateOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOperateOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [operateOpen]);
+
+  const fadeDuration = prefersReducedMotion ? 0 : 0.18;
+
+  const operateActive = matchesAny(pathname, V6_OPERATE_PARENT.matches);
+
+  return (
+    <motion.nav
+      className="fixed top-0 inset-x-0 z-40 h-16 border-b border-white/5 bg-[#0c0c0c]/70 backdrop-blur-md"
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.8, ease: EASE }}
+    >
+      <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between gap-8">
+        <Link
+          href="/"
+          className="text-primary font-semibold tracking-tight shrink-0"
+        >
+          ED.
+        </Link>
+
+        {/* PRIMARY ROW — Work / Lab / Notes / Codex / Operate ▾ */}
+        <div className="hidden md:flex items-center gap-7 flex-1 justify-center">
+          {V6_PRIMARY_LINKS.map((link) => {
+            const active = matchesAny(pathname, link.matches);
+            return (
+              <MotionLink
+                key={link.label}
+                href={link.href}
+                aria-current={active ? "page" : undefined}
+                className={`text-sm transition-colors duration-200 ${
+                  active
+                    ? "text-primary"
+                    : "text-tertiary hover:text-primary"
+                }`}
+                whileHover={{ opacity: 1 }}
+              >
+                {link.label}
+              </MotionLink>
+            );
+          })}
+
+          {/* Operate — split-button: hover opens dropdown, click navigates. */}
+          <div
+            className="relative"
+            onMouseEnter={() => setOperateOpen(true)}
+            onMouseLeave={() => setOperateOpen(false)}
+          >
+            <Link
+              href={V6_OPERATE_PARENT.href}
+              aria-current={operateActive ? "page" : undefined}
+              aria-haspopup="menu"
+              aria-expanded={operateOpen}
+              aria-controls="operate-menu"
+              onFocus={() => setOperateOpen(true)}
+              className={`flex items-center text-sm transition-colors duration-200 focus-visible:outline-none ${
+                operateActive
+                  ? "text-primary"
+                  : "text-tertiary hover:text-primary focus:text-primary"
+              }`}
+            >
+              {V6_OPERATE_PARENT.label}
+              <span
+                aria-hidden="true"
+                className={`ml-1.5 text-[9px] text-quiet transition-transform duration-200 ${
+                  operateOpen ? "rotate-180" : ""
+                }`}
+              >
+                ▾
+              </span>
+            </Link>
+
+            <AnimatePresence>
+              {operateOpen && (
+                <motion.div
+                  id="operate-menu"
+                  role="menu"
+                  aria-label="Operate"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: fadeDuration, ease: EASE }}
+                  className="absolute top-full left-1/2 -translate-x-1/2 mt-3 min-w-[176px] rounded-xl border border-white/[0.06] bg-[#0c0c0c]/95 backdrop-blur-md py-2"
+                >
+                  {V6_OPERATE_LINKS.map((link) => {
+                    const active = matchesAny(pathname, [link.href]);
+                    return (
+                      <Link
+                        key={link.label}
+                        href={link.href}
+                        role="menuitem"
+                        aria-current={active ? "page" : undefined}
+                        onClick={() => setOperateOpen(false)}
+                        className={`block px-4 py-2 text-sm transition-colors duration-200 ${
+                          active
+                            ? "text-primary"
+                            : "text-tertiary hover:text-primary"
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* SECONDARY CLUSTER — About · Contact · View Résumé.
+            About and Contact sit smaller (text-xs mono) to the
+            right of the centred primary block, and collapse below
+            md (mobile path explicitly unchanged in 12.1 — the
+            real mobile drawer ships in Sub-PR 12.4). The View
+            Résumé pill stays in 12.1; Sub-PR 12.2 replaces it
+            with the cyan "Get in touch" pill. */}
+        <div className="flex items-center gap-5 shrink-0">
+          {V6_SECONDARY_LINKS.map((link) => {
+            const active = matchesAny(pathname, link.matches);
+            return (
+              <MotionLink
+                key={link.label}
+                href={link.href}
+                aria-current={active ? "page" : undefined}
+                className={`hidden md:inline-flex text-xs uppercase tracking-[0.14em] transition-colors duration-200 ${
+                  active
+                    ? "text-primary"
+                    : "text-quiet hover:text-primary"
+                }`}
+                whileHover={{ opacity: 1 }}
+              >
+                {link.label}
+              </MotionLink>
+            );
+          })}
+
+          <a
+            href="https://www.linkedin.com/in/emre-do%C4%9Fan-657a99388/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center rounded-full bg-white text-black font-medium text-sm px-5 py-2 transition-all hover:bg-white/90 active:scale-[0.98]"
+          >
+            View Résumé
+          </a>
+        </div>
       </div>
     </motion.nav>
   );
