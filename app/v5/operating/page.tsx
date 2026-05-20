@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import VisitPing from "@/components/telemetry/VisitPing";
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
+import Pill, { type PillKind } from "@/components/ui/Pill";
 import { getSiteUrl } from "@/lib/site-url";
 import { isOperatingTwinEnabled } from "@/lib/v5/operating/flags";
 import type {
@@ -163,12 +164,11 @@ const SOURCE_LINKS: readonly SourceLink[] = [
   },
 ];
 
-const STATUS_PILL_CLASS: Record<InfrastructureStatus, string> = {
-  active:
-    "border-[#00d2ff]/40 bg-[#00d2ff]/[0.06] text-[#00d2ff]",
-  dormant:
-    "border-white/[0.12] bg-white/[0.02] text-secondary",
-  archived: "border-white/[0.06] bg-transparent text-tertiary",
+/* V6 11.2 — typed Pill kind per infrastructure status. */
+const STATUS_KIND: Record<InfrastructureStatus, PillKind> = {
+  active: "state-live",
+  dormant: "state-planning",
+  archived: "state-archived",
 };
 
 const PLANNED_STATUS_LABEL: Record<PlannedItem["status"], string> = {
@@ -178,12 +178,12 @@ const PLANNED_STATUS_LABEL: Record<PlannedItem["status"], string> = {
   draft: "draft",
 };
 
-const PLANNED_STATUS_PILL: Record<PlannedItem["status"], string> = {
-  "in-progress":
-    "border-[#00d2ff]/40 bg-[#00d2ff]/[0.06] text-[#00d2ff]",
-  "next-up": "border-white/[0.15] bg-white/[0.04] text-primary",
-  considering: "border-white/[0.10] bg-white/[0.02] text-secondary",
-  draft: "border-white/[0.06] bg-transparent text-tertiary",
+/* V6 11.2 — typed Pill kind per planned-item status. */
+const PLANNED_STATUS_KIND: Record<PlannedItem["status"], PillKind> = {
+  "in-progress": "state-live",
+  "next-up": "state-building",
+  considering: "state-planning",
+  draft: "state-archived",
 };
 
 function formatTimestamp(iso: string, now: number): string {
@@ -430,11 +430,7 @@ export default async function OperatingPage() {
                   </span>
                 </span>
                 <span className="flex items-center md:justify-end gap-2">
-                  <span
-                    className={`px-2 py-0.5 rounded-full border font-mono uppercase tracking-[0.18em] text-[9px] ${STATUS_PILL_CLASS[entry.status]}`}
-                  >
-                    {entry.status}
-                  </span>
+                  <Pill kind={STATUS_KIND[entry.status]}>{entry.status}</Pill>
                   {entry.last_seen_at ? (
                     <time
                       dateTime={entry.last_seen_at}
@@ -484,9 +480,7 @@ export default async function OperatingPage() {
                   </span>
                 </span>
                 <span className="md:justify-end flex items-center">
-                  <span className="font-mono uppercase tracking-[0.18em] text-[9px] text-tertiary px-2 py-0.5 rounded-full border border-white/[0.06]">
-                    {entry.status}
-                  </span>
+                  <Pill kind="meta">{entry.status}</Pill>
                 </span>
               </li>
             ))}
@@ -521,11 +515,9 @@ export default async function OperatingPage() {
                   <h3 className="text-primary text-[15px] font-medium leading-snug">
                     {item.title}
                   </h3>
-                  <span
-                    className={`px-2 py-0.5 rounded-full border font-mono uppercase tracking-[0.18em] text-[9px] ${PLANNED_STATUS_PILL[item.status]}`}
-                  >
+                  <Pill kind={PLANNED_STATUS_KIND[item.status]}>
                     {PLANNED_STATUS_LABEL[item.status]}
-                  </span>
+                  </Pill>
                 </div>
                 <p className="text-secondary text-[13px] leading-relaxed mb-3">
                   {item.description}

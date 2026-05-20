@@ -5,6 +5,7 @@ import { ArrowRight, Download } from "lucide-react";
 import Link from "next/link";
 import WordsPullUp from "@/components/ui/WordsPullUp";
 import HeroTopology from "@/components/home/HeroTopology";
+import Pill from "@/components/ui/Pill";
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
@@ -74,23 +75,19 @@ export default function HeroSection() {
                 self-taught. Zero shortcuts.
               </motion.p>
 
-              {/* Availability indicator */}
+              {/* Availability indicator — V6 11.2 typed Pill (state-live
+                  with the breathing cyan pulse). The dot lives inside
+                  Pill's PillPulseDot and shares its motion grammar with
+                  the certification radar. */}
               <motion.div
-                className="inline-flex items-center gap-2 self-start rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[11px] sm:text-xs text-gray-300"
+                className="self-start"
                 initial={{ y: 16, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.9, delay: 0.7, ease: EASE }}
               >
-                <motion.span
-                  className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"
-                  animate={{ opacity: [1, 0.4, 1], scale: [1, 1.3, 1] }}
-                  transition={{
-                    duration: 2.6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-                Available for Cloud, SaaS &amp; Mobile work.
+                <Pill kind="state-live" pulse>
+                  Available for Cloud, SaaS &amp; Mobile work.
+                </Pill>
               </motion.div>
 
               {/* CTAs — primary for general visitors, secondary for recruiters. */}

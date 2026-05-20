@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowRight, X } from "lucide-react";
+import Pill, { type PillKind } from "@/components/ui/Pill";
 
 /**
  * ArchitectureHubGrid — the interactive surface of /architecture.
@@ -39,6 +40,13 @@ const STATE_LABEL: Record<HubEntry["state"], string> = {
   ready: "Walk through",
   "in-development": "Development Started",
   concept: "Concept Phase",
+};
+
+/* V6 11.2 — state pill kind per drafting state. */
+const STATE_KIND: Record<HubEntry["state"], PillKind> = {
+  ready: "state-live",
+  "in-development": "state-building",
+  concept: "state-planning",
 };
 
 interface Props {
@@ -120,12 +128,6 @@ function DraftingCard({
   entry: HubEntry;
   onOpen: () => void;
 }) {
-  const badgeLabel = STATE_LABEL[entry.state];
-  const badgeTone =
-    entry.state === "in-development"
-      ? "border-[#00d2ff]/25 bg-[#00d2ff]/[0.06] text-[#00d2ff]/85"
-      : "border-white/[0.12] bg-white/[0.04] text-white/55";
-
   return (
     <button
       type="button"
@@ -137,19 +139,7 @@ function DraftingCard({
       <Tagline>{entry.tagline}</Tagline>
       <StackPills tags={entry.stack} />
       <div className="mt-6 inline-flex items-center gap-1.5">
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.16em] ${badgeTone}`}
-        >
-          <span
-            className={`w-1 h-1 rounded-full ${
-              entry.state === "in-development"
-                ? "bg-[#00d2ff]"
-                : "bg-white/40"
-            }`}
-            aria-hidden="true"
-          />
-          {badgeLabel}
-        </span>
+        <Pill kind={STATE_KIND[entry.state]}>{STATE_LABEL[entry.state]}</Pill>
       </div>
     </button>
   );
@@ -185,11 +175,8 @@ function StackPills({ tags }: { tags: readonly string[] }) {
   return (
     <ul className="mt-6 flex flex-wrap gap-1.5">
       {tags.map((tag) => (
-        <li
-          key={tag}
-          className="text-[10px] font-mono uppercase tracking-[0.14em] text-white/60 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1"
-        >
-          {tag}
+        <li key={tag}>
+          <Pill kind="meta">{tag}</Pill>
         </li>
       ))}
     </ul>
@@ -247,9 +234,9 @@ function DraftingModal({
         <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-white">
           {entry.title}
         </h3>
-        <span className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.16em] text-white/55">
-          {STATE_LABEL[entry.state]}
-        </span>
+        <div className="mt-3 inline-flex">
+          <Pill kind={STATE_KIND[entry.state]}>{STATE_LABEL[entry.state]}</Pill>
+        </div>
 
         <p className="mt-5 text-sm leading-relaxed text-white/65">
           Architecture design is currently being drafted. A full

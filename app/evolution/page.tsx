@@ -5,6 +5,7 @@ import AdoptionBeacon from "@/app/evolution/_components/AdoptionBeacon";
 import VisitPing from "@/components/telemetry/VisitPing";
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
+import Pill from "@/components/ui/Pill";
 import TimelineSlider from "@/components/v5/TimelineSlider";
 import { getSiteUrl } from "@/lib/site-url";
 import {
@@ -290,12 +291,13 @@ export default async function EvolutionPage({
             <span className="font-mono uppercase tracking-[0.20em] text-[10px] text-[#00d2ff]/80">
               Evolution
             </span>
-            <span
-              className="ml-auto px-2.5 py-1 rounded-full border font-mono uppercase tracking-[0.18em] text-[9px] border-[#00d2ff]/30 bg-[#00d2ff]/[0.04] text-[#00d2ff]/80"
+            <Pill
+              kind="state-live"
+              className="ml-auto"
               title="Phase 7 complete (foundation → playback → slider → architecture integration). Observation window opens before Phase 8 (cinematic topology)."
             >
               Phase 7 · complete
-            </span>
+            </Pill>
           </div>
         </Reveal>
 
@@ -645,15 +647,15 @@ function CategoryPill({
   count: number;
   active: boolean;
 }) {
-  const base =
-    "inline-flex items-center gap-2 rounded-full px-3 py-1.5 font-mono uppercase tracking-[0.18em] text-[10px] transition-colors";
-  const variant = active
-    ? "border border-[#00d2ff]/40 bg-[#00d2ff]/[0.06] text-[#00d2ff]"
-    : "border border-white/[0.08] bg-white/[0.02] text-secondary hover:border-white/[0.18] hover:text-primary";
+  /* V6 11.2 — filter-active / filter-inactive Pill kind retires the
+     rounded-full bordered container in favour of an underline-driven
+     filter vocabulary. */
   return (
-    <Link href={href} className={`${base} ${variant}`}>
-      <span>{label}</span>
-      <span className="text-tertiary tabular-nums">{count}</span>
+    <Link href={href}>
+      <Pill kind={active ? "filter-active" : "filter-inactive"}>
+        <span>{label}</span>
+        <span className="text-tertiary tabular-nums">{count}</span>
+      </Pill>
     </Link>
   );
 }
