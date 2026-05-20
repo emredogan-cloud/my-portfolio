@@ -100,7 +100,7 @@ export default function BuildBeacon() {
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.18em] text-white/40"
+      className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.18em] text-tertiary"
       title={state.commit?.message}
       aria-label={`Build status: ${repoLabel}`}
     >

@@ -299,7 +299,7 @@ export default async function V5PerceptionPage() {
         <Reveal mode="mount" duration={0.8} className="mb-12">
           <h1 className="text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary">
             <span className="block">Perception.</span>
-            <span className="block text-white/55">
+            <span className="block text-tertiary">
               Ambient context, never identity.
             </span>
           </h1>

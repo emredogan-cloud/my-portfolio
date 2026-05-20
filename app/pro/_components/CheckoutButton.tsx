@@ -89,7 +89,7 @@ export default function CheckoutButton({ tier, label, highlight }: Props) {
 
   const styleClasses = highlight
     ? "bg-white text-black hover:bg-white/90 disabled:opacity-60"
-    : "bg-white/[0.06] text-white/85 hover:bg-white/[0.10] hover:text-white disabled:opacity-60";
+    : "bg-white/[0.06] text-primary hover:bg-white/[0.10] hover:text-primary disabled:opacity-60";
 
   return (
     <div className="space-y-2">

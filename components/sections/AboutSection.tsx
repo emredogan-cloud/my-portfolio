@@ -11,11 +11,11 @@ const BODY_TEXT =
 const HEADING_SEGMENTS = [
   {
     text: "I build AI-native infrastructure systems",
-    className: "font-normal text-white",
+    className: "font-normal text-primary",
   },
   {
     text: "designed for scale, automation, and operational leverage.",
-    className: "font-normal text-white/55",
+    className: "font-normal text-tertiary",
   },
 ] as const;
 
@@ -58,7 +58,7 @@ export default function AboutSection() {
 
           {/* Label */}
           <div className="mb-5 sm:mb-7">
-            <span className="text-white/40 text-[10px] sm:text-xs uppercase tracking-[0.2em]">
+            <span className="text-tertiary text-[10px] sm:text-xs uppercase tracking-[0.2em]">
               Manifesto
             </span>
           </div>

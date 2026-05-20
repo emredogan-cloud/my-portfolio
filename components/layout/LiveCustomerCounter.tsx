@@ -82,7 +82,7 @@ export default function LiveCustomerCounter() {
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.18em] text-white/45"
+      className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.18em] text-tertiary"
       aria-label={`CWH live customer count: ${label}`}
     >
       {prefersReducedMotion ? (

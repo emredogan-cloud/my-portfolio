@@ -36,7 +36,7 @@ export default function VCAIArchitecturePage() {
         <header className="space-y-6">
           <Link
             href="/architecture"
-            className="inline-flex items-center gap-2 text-white/40 hover:text-white/80 text-sm transition-colors duration-200 group"
+            className="inline-flex items-center gap-2 text-tertiary hover:text-primary text-sm transition-colors duration-200 group"
           >
             <ArrowRight
               size={14}
@@ -47,10 +47,10 @@ export default function VCAIArchitecturePage() {
           <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/80">
             VibingCoderAI · LLM Agent Architecture
           </p>
-          <h1 className="text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-white">
+          <h1 className="text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-primary">
             How VibingCoderAI works.
           </h1>
-          <p className="text-white/55 text-lg leading-relaxed max-w-2xl">
+          <p className="text-tertiary text-lg leading-relaxed max-w-2xl">
             A casual developer idea goes in. A senior-grade AI agent brief
             comes out. Four steps from a Vercel-hosted Next.js frontend to
             a Claude-powered Lambda brain — entirely provisioned in

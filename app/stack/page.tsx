@@ -176,9 +176,9 @@ export default function StackPage() {
           </span>
           <h1 className="text-5xl md:text-7xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5">
             <span className="block">Tools I use</span>
-            <span className="block text-white/60">to ship production.</span>
+            <span className="block text-tertiary">to ship production.</span>
           </h1>
-          <p className="text-gray-400 max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
+          <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
             Every layer of this stack runs in production today — across cloud
             infrastructure, AI systems, billing, and observability. No
             speculative tooling. No frameworks I haven&apos;t deployed.
@@ -205,7 +205,7 @@ export default function StackPage() {
                     {cat.title}
                   </h2>
                 </div>
-                <p className="text-gray-500 text-sm md:text-base leading-relaxed max-w-2xl mb-8">
+                <p className="text-tertiary text-sm md:text-base leading-relaxed max-w-2xl mb-8">
                   {cat.intro}
                 </p>
 
@@ -229,7 +229,7 @@ export default function StackPage() {
 
         {/* ───────── FOOTER NOTE ───────── */}
         <Reveal duration={0.7} margin="-50px" className="mt-24 pt-12 border-t border-white/[0.06]">
-          <p className="text-gray-500 text-sm leading-relaxed max-w-2xl">
+          <p className="text-tertiary text-sm leading-relaxed max-w-2xl">
             The list grows when there&apos;s a real problem to solve. It
             shrinks when something stops earning its complexity budget.
           </p>

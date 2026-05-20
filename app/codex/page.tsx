@@ -61,9 +61,9 @@ export default function CodexIndex() {
           </span>
           <h1 className="text-5xl md:text-7xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5">
             <span className="block">A handcrafted</span>
-            <span className="block text-white/55">archive of worlds.</span>
+            <span className="block text-tertiary">archive of worlds.</span>
           </h1>
-          <p className="text-gray-400 max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
+          <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
             Three self-contained digital editions, each engineered as a
             zero-dependency single-page reader and inhabited as a fully
             built world. Custom paginators, illuminated atlases, ambient
@@ -124,7 +124,7 @@ export default function CodexIndex() {
                           >
                             {book.sigil}
                           </span>
-                          <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-white/80">
+                          <span className="font-mono uppercase tracking-[0.18em] text-[10px] text-primary">
                             {book.inWorldYear}
                           </span>
                         </div>
@@ -136,9 +136,9 @@ export default function CodexIndex() {
                       {/* Eyebrow */}
                       <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] text-quiet">
                         <span>{`Folio ${String(i + 1).padStart(2, "0")}`}</span>
-                        <span className="text-white/15">·</span>
+                        <span className="text-faint">·</span>
                         <span>{book.language}</span>
-                        <span className="text-white/15">·</span>
+                        <span className="text-faint">·</span>
                         <span>{`Shipped ${book.shippedYear}`}</span>
                       </div>
 
@@ -164,8 +164,8 @@ export default function CodexIndex() {
                             className="inline-flex items-baseline gap-1.5 px-2.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.025] font-mono uppercase tracking-[0.18em] text-[10px]"
                           >
                             <span className="text-[#00d2ff]/90">{atm.name}</span>
-                            <span className="text-white/35">·</span>
-                            <span className="text-white/55 normal-case tracking-normal italic">
+                            <span className="text-tertiary">·</span>
+                            <span className="text-tertiary normal-case tracking-normal italic">
                               {atm.mood}
                             </span>
                           </span>
@@ -185,7 +185,7 @@ export default function CodexIndex() {
                           href={book.deployUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`inline-flex items-center gap-2 rounded-full px-4 py-2 ${secondaryButton()} text-xs font-medium text-white/75 hover:text-white transition-colors`}
+                          className={`inline-flex items-center gap-2 rounded-full px-4 py-2 ${secondaryButton()} text-xs font-medium text-primary hover:text-primary transition-colors`}
                           aria-label={`Read ${book.title} on its live reader (opens in new tab)`}
                         >
                           <ExternalLink className="w-3 h-3" aria-hidden="true" />
@@ -206,9 +206,9 @@ export default function CodexIndex() {
           margin="-50px"
           className="mt-24 pt-10 border-t border-white/[0.06]"
         >
-          <p className="text-gray-500 text-sm leading-relaxed max-w-2xl inline-flex items-start gap-2">
+          <p className="text-tertiary text-sm leading-relaxed max-w-2xl inline-flex items-start gap-2">
             <BookOpen
-              className="w-3.5 h-3.5 mt-0.5 text-white/30 flex-shrink-0"
+              className="w-3.5 h-3.5 mt-0.5 text-quiet flex-shrink-0"
               aria-hidden="true"
             />
             <span>

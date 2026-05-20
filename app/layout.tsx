@@ -120,7 +120,7 @@ export default function RootLayout({
            perceived tap-to-feedback latency drops from ~350ms to
            ~50ms on iOS — the single biggest mobile-UX win that
            ships without any visual change. */
-        className={`${geist.className} bg-black text-white antialiased overflow-x-hidden touch-manipulation`}
+        className={`${geist.className} bg-black text-primary antialiased overflow-x-hidden touch-manipulation`}
       >
         {/* Skip-to-content — invisible until Tab focus, then a white pill in
             the top-left corner. Bypasses the navbar + cinematic intro for

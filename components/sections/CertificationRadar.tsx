@@ -50,7 +50,7 @@ export default function CertificationRadar() {
           Certifications & Objectives
         </h2>
       </div>
-      <p className="text-gray-500 text-sm md:text-base leading-relaxed max-w-2xl mb-8">
+      <p className="text-tertiary text-sm md:text-base leading-relaxed max-w-2xl mb-8">
         Production-grade work first, paper second. These exams are on the
         roadmap to formalise what&apos;s already shipping in production.
       </p>

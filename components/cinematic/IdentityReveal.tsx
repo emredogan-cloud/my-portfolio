@@ -34,7 +34,7 @@ export default function IdentityReveal() {
 
       {/* Tagline — letter-spaced multi-discipline positioning */}
       <motion.p
-        className="mt-5 text-[10px] sm:text-xs tracking-[0.32em] uppercase text-white/40"
+        className="mt-5 text-[10px] sm:text-xs tracking-[0.32em] uppercase text-tertiary"
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 1.0, ease: EASE }}

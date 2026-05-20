@@ -58,7 +58,7 @@ export function LuminaTrigger({ isOpen, onClick }: Props) {
         animate={{ opacity: [1, 0.55, 1] }}
         transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
       >
-        <Sparkles className="w-5 h-5 text-white/85" aria-hidden="true" />
+        <Sparkles className="w-5 h-5 text-primary" aria-hidden="true" />
       </motion.span>
     </motion.button>
   );

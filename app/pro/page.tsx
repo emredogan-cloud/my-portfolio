@@ -117,12 +117,12 @@ export default function ProPricingPage() {
           <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/80">
             CWH Pro · Pricing
           </p>
-          <h1 className="text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-white">
+          <h1 className="text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-primary">
             Find the waste.
             <br />
             Remove the waste.
           </h1>
-          <p className="text-white/55 text-lg leading-relaxed">
+          <p className="text-tertiary text-lg leading-relaxed">
             Cross-account AWS scanning, CUR 2.0 cost attribution,
             Claude-powered remediation. Same engine on every tier — the
             difference is scale, retention, and how loud the alerts get.
@@ -138,7 +138,7 @@ export default function ProPricingPage() {
           ))}
         </section>
 
-        <p className="mt-12 text-xs text-white/35 leading-relaxed max-w-2xl">
+        <p className="mt-12 text-xs text-tertiary leading-relaxed max-w-2xl">
           Plus and Pro billed monthly via Lemon Squeezy. Cancel any time —
           your data stays read-only until you re-subscribe or export it.
           Annual billing available on request.
@@ -172,19 +172,19 @@ function TierCard({ tier }: { tier: PricingTier }) {
         <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/85">
           {tier.name}
         </p>
-        <h2 className="text-2xl font-semibold tracking-[-0.02em] text-white">
+        <h2 className="text-2xl font-semibold tracking-[-0.02em] text-primary">
           {tier.tagline}
         </h2>
       </header>
       <div className="mt-5 flex items-baseline gap-2">
-        <span className="text-4xl sm:text-5xl font-semibold tracking-[-0.03em] text-white">
+        <span className="text-4xl sm:text-5xl font-semibold tracking-[-0.03em] text-primary">
           {tier.price}
         </span>
-        <span className="text-sm text-white/40">{tier.cadence}</span>
+        <span className="text-sm text-tertiary">{tier.cadence}</span>
       </div>
       <ul className="mt-6 space-y-2.5 flex-grow">
         {tier.features.map((f) => (
-          <li key={f} className="flex items-start gap-2 text-sm text-white/70 leading-relaxed">
+          <li key={f} className="flex items-start gap-2 text-sm text-secondary leading-relaxed">
             <Check className="w-3.5 h-3.5 mt-1 flex-shrink-0 text-[#00d2ff]/80" aria-hidden="true" />
             <span>{f}</span>
           </li>

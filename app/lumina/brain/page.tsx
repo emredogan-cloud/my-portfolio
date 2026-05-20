@@ -356,7 +356,7 @@ export default async function LuminaBrainPage() {
         <Reveal mode="mount" duration={0.8} className="mb-12">
           <h1 className="text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary">
             <span className="block">Brain.</span>
-            <span className="block text-white/55">The system behind the chat.</span>
+            <span className="block text-tertiary">The system behind the chat.</span>
           </h1>
           <p className="text-secondary max-w-2xl mt-7 text-base md:text-lg leading-relaxed">
             Lumina is the AI embedded across this portfolio. Everything she

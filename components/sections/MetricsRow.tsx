@@ -31,10 +31,10 @@ export default function MetricsRow() {
                 key={m.label}
                 className="flex-shrink-0 min-w-[140px] md:min-w-0 snap-start"
               >
-                <p className="text-2xl font-semibold text-white tracking-tight">
+                <p className="text-2xl font-semibold text-primary tracking-tight">
                   {m.value}
                 </p>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-gray-500 mt-1.5">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-tertiary mt-1.5">
                   {m.label}
                 </p>
               </div>

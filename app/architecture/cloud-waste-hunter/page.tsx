@@ -40,7 +40,7 @@ export default function CWHArchitecturePage() {
         <header className="space-y-6">
           <Link
             href="/architecture"
-            className="inline-flex items-center gap-2 text-white/40 hover:text-white/80 text-sm transition-colors duration-200 group"
+            className="inline-flex items-center gap-2 text-tertiary hover:text-primary text-sm transition-colors duration-200 group"
           >
             <ArrowRight
               size={14}
@@ -51,10 +51,10 @@ export default function CWHArchitecturePage() {
           <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/80">
             Cloud Waste Hunter · Serverless FinOps
           </p>
-          <h1 className="text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-white">
+          <h1 className="text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-primary">
             How Cloud Waste Hunter works.
           </h1>
-          <p className="text-white/55 text-lg leading-relaxed max-w-2xl">
+          <p className="text-tertiary text-lg leading-relaxed max-w-2xl">
             Eight steps, in order — from the moment a customer connects an
             AWS account to the moment a remediation lands in their inbox.
             Every step is a real piece of the production stack, not a

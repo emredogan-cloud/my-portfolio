@@ -423,7 +423,7 @@ export default function LuminaVoice({
           "shrink-0 w-10 h-10 inline-flex items-center justify-center rounded-xl transition-colors duration-200",
           persistentVoice
             ? "bg-[#00d2ff]/15 text-[#00d2ff] hover:bg-[#00d2ff]/25"
-            : "bg-white/[0.06] text-white/65 hover:bg-white/[0.10] hover:text-white",
+            : "bg-white/[0.06] text-secondary hover:bg-white/[0.10] hover:text-primary",
           "disabled:opacity-40 disabled:cursor-not-allowed",
         ].join(" ")}
       >
@@ -447,7 +447,7 @@ export default function LuminaVoice({
               ? "bg-[#00d2ff]/15 text-[#00d2ff] hover:bg-[#00d2ff]/25"
               : isError
                 ? "bg-amber-400/15 text-amber-300"
-                : "bg-white/[0.06] text-white/65 hover:bg-white/[0.10] hover:text-white",
+                : "bg-white/[0.06] text-secondary hover:bg-white/[0.10] hover:text-primary",
           "disabled:opacity-40 disabled:cursor-not-allowed",
         ].join(" ")}
       >

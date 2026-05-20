@@ -60,7 +60,7 @@ export default function HeroSection() {
               </motion.p>
 
               {/* Giant identity heading */}
-              <h1 className="text-6xl md:text-7xl xl:text-8xl font-semibold tracking-[-0.06em] leading-[0.9] text-white">
+              <h1 className="text-6xl md:text-7xl xl:text-8xl font-semibold tracking-[-0.06em] leading-[0.9] text-primary">
                 <WordsPullUp text="Emre Doğan." />
               </h1>
 
@@ -107,7 +107,7 @@ export default function HeroSection() {
                     Explore Projects
                   </span>
                   <div className="bg-black rounded-full w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
-                    <ArrowRight className="w-4 h-4 text-white" />
+                    <ArrowRight className="w-4 h-4 text-primary" />
                   </div>
                 </Link>
 
@@ -116,7 +116,7 @@ export default function HeroSection() {
                   href="/resume/emre-dogan.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 ${secondaryButton()} text-sm font-medium text-white/80 hover:text-white transition-colors`}
+                  className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 ${secondaryButton()} text-sm font-medium text-primary hover:text-primary transition-colors`}
                 >
                   <Download className="w-4 h-4" aria-hidden="true" />
                   Download CV

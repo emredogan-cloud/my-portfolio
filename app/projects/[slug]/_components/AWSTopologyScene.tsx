@@ -112,7 +112,7 @@ function Node({ node, hovered, onHover }: NodeProps) {
       >
         <span
           className={`whitespace-nowrap font-mono uppercase tracking-[0.16em] text-[10px] ${
-            isCenter ? "text-white" : "text-white/70"
+            isCenter ? "text-primary" : "text-secondary"
           }`}
         >
           {node.label}
@@ -238,7 +238,7 @@ export default function AWSTopologyScene({ reducedMotion }: Props) {
           fights with OrbitControls drag. */}
       {hoveredNode && (
         <div
-          className="absolute bottom-4 left-4 max-w-xs rounded-lg border border-[#00d2ff]/20 bg-black/80 px-3 py-2 text-xs leading-relaxed text-white/80 shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-sm"
+          className="absolute bottom-4 left-4 max-w-xs rounded-lg border border-[#00d2ff]/20 bg-black/80 px-3 py-2 text-xs leading-relaxed text-primary shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-sm"
           role="status"
           aria-live="polite"
         >

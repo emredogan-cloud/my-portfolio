@@ -56,7 +56,7 @@ export default function Footer() {
             renders nothing until paying_customers > 0, so this slot is
             invisible until CWH Pro has its first paying customer. */}
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4 flex-wrap">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-tertiary">
             ED. — Long-arc systems, hand-built infrastructure. Adana, GMT+3. © 2026
           </p>
           <BuildBeacon />
@@ -69,7 +69,7 @@ export default function Footer() {
         <nav className="flex items-center gap-6">
           <Link
             href="/notes"
-            className="text-xs font-medium text-gray-400 hover:text-white transition-colors duration-200"
+            className="text-xs font-medium text-secondary hover:text-primary transition-colors duration-200"
           >
             Notes
           </Link>
@@ -77,7 +77,7 @@ export default function Footer() {
             href="https://github.com/emredogan-cloud"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-white transition-colors duration-200"
+            className="inline-flex items-center gap-2 text-xs font-medium text-secondary hover:text-primary transition-colors duration-200"
             aria-label="GitHub profile"
           >
             <GitHubIcon className="w-3.5 h-3.5" />
@@ -87,7 +87,7 @@ export default function Footer() {
             href="https://www.linkedin.com/in/emre-do%C4%9Fan-657a99388/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-white transition-colors duration-200"
+            className="inline-flex items-center gap-2 text-xs font-medium text-secondary hover:text-primary transition-colors duration-200"
             aria-label="LinkedIn profile"
           >
             <LinkedInIcon className="w-3.5 h-3.5" />
@@ -97,7 +97,7 @@ export default function Footer() {
             href="/resume/emre-dogan.pdf"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors duration-200"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-secondary hover:text-primary transition-colors duration-200"
           >
             <Download className="w-3.5 h-3.5" aria-hidden="true" />
             Download CV

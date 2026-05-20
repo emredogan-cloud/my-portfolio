@@ -146,7 +146,7 @@ function ProgressHeader({ active, activeIndex, total }: ProgressHeaderProps) {
         <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.16em] sm:tracking-[0.18em] text-[#00d2ff]/85 whitespace-nowrap truncate">
           {active.accent}
         </span>
-        <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.14em] sm:tracking-[0.16em] text-white/30 whitespace-nowrap">
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.14em] sm:tracking-[0.16em] text-quiet whitespace-nowrap">
           {activeIndex + 1} / {total}
         </span>
       </div>
@@ -214,10 +214,10 @@ function MilestoneSection({
           <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/80">
             {milestone.accent}
           </p>
-          <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] sm:leading-[1] text-white">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] sm:leading-[1] text-primary">
             {milestone.title}
           </h2>
-          <p className="text-white/65 text-[15px] sm:text-base md:text-lg leading-relaxed max-w-2xl">
+          <p className="text-secondary text-[15px] sm:text-base md:text-lg leading-relaxed max-w-2xl">
             {milestone.body}
           </p>
         </div>

@@ -123,7 +123,7 @@ export default function CWHSandbox({ reducedMotion = false }: Props) {
     <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 md:p-6">
       <form onSubmit={handleSubmit} className="space-y-4">
         <label htmlFor="cwh-policy-input" className="block">
-          <span className="block text-xs font-medium text-white/30 tracking-widest uppercase mb-2">
+          <span className="block text-xs font-medium text-quiet tracking-widest uppercase mb-2">
             IAM Policy JSON
           </span>
           <textarea
@@ -135,13 +135,13 @@ export default function CWHSandbox({ reducedMotion = false }: Props) {
             disabled={isBusy}
             placeholder={PLACEHOLDER}
             aria-describedby="cwh-policy-hint"
-            className="w-full rounded-xl border border-[#00d2ff]/15 bg-[#050505] px-4 py-3 text-xs sm:text-sm font-mono leading-relaxed text-white/85 placeholder-white/30 outline-none focus:border-[#00d2ff]/45 disabled:opacity-60 transition-colors"
+            className="w-full rounded-xl border border-[#00d2ff]/15 bg-[#050505] px-4 py-3 text-xs sm:text-sm font-mono leading-relaxed text-primary placeholder-white/30 outline-none focus:border-[#00d2ff]/45 disabled:opacity-60 transition-colors"
             style={{
               boxShadow:
                 "inset 0 1px 1px rgba(255,255,255,0.04), 0 0 14px rgba(0,210,255,0.10)",
             }}
           />
-          <p id="cwh-policy-hint" className="mt-1.5 text-[11px] text-white/35">
+          <p id="cwh-policy-hint" className="mt-1.5 text-[11px] text-tertiary">
             4KB max. 5 analyses per visitor per hour. Pasted policies aren't stored.
           </p>
         </label>
@@ -164,7 +164,7 @@ export default function CWHSandbox({ reducedMotion = false }: Props) {
               </>
             )}
           </button>
-          <span className="text-[11px] uppercase tracking-[0.18em] text-white/30">
+          <span className="text-[11px] uppercase tracking-[0.18em] text-quiet">
             Live · Claude 3.5 Haiku via AWS Bedrock
           </span>
         </div>
@@ -210,7 +210,7 @@ export default function CWHSandbox({ reducedMotion = false }: Props) {
             <div
               role="status"
               aria-live="polite"
-              className="text-sm leading-relaxed text-white/80 whitespace-pre-wrap font-mono"
+              className="text-sm leading-relaxed text-primary whitespace-pre-wrap font-mono"
             >
               {output}
             </div>
@@ -218,7 +218,7 @@ export default function CWHSandbox({ reducedMotion = false }: Props) {
         )}
 
         {status === "idle" && !output && (
-          <p className="text-[11px] text-white/30 italic">
+          <p className="text-[11px] text-quiet italic">
             Output appears here. The same model and prompt power the
             production CWH remediation feed.
           </p>

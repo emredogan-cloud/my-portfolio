@@ -97,12 +97,12 @@ export default function ArchitectureHubPage() {
           <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/80">
             Architecture
           </p>
-          <h1 className="text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-white">
+          <h1 className="text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-primary">
             Five systems.
             <br />
             Five architectures.
           </h1>
-          <p className="text-white/55 text-lg leading-relaxed">
+          <p className="text-tertiary text-lg leading-relaxed">
             Pick a project to walk through. Each one is a different
             discipline — serverless cloud, an LLM agent stack, edge ML
             on mobile, multimodal triage, eldercare coordination. The

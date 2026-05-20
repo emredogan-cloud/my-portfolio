@@ -41,9 +41,9 @@ export default function NotesPage() {
           </span>
           <h1 className="text-5xl md:text-7xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5">
             <span className="block">Long-form.</span>
-            <span className="block text-white/60">Production-grade.</span>
+            <span className="block text-tertiary">Production-grade.</span>
           </h1>
-          <p className="text-gray-400 max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
+          <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
             Working notes on cloud architecture, AI systems, and what it
             actually takes to ship production infrastructure as a self-taught
             engineer at 19. Each entry is a single deep idea — nothing padded,
@@ -67,11 +67,11 @@ export default function NotesPage() {
               >
                 <article className="grid gap-4">
                   {/* Meta row */}
-                  <div className="flex items-center gap-3 text-[11px] text-gray-500">
+                  <div className="flex items-center gap-3 text-[11px] text-tertiary">
                     <time dateTime={note.date}>
                       {formatMonthYear(note.date)}
                     </time>
-                    <span className="text-white/15">·</span>
+                    <span className="text-faint">·</span>
                     <span className="inline-flex items-center gap-1">
                       <Clock className="w-3 h-3" aria-hidden="true" />
                       {note.readTime}
@@ -90,7 +90,7 @@ export default function NotesPage() {
                   </div>
 
                   {/* Excerpt */}
-                  <p className="text-gray-400 text-sm md:text-base leading-relaxed max-w-2xl">
+                  <p className="text-secondary text-sm md:text-base leading-relaxed max-w-2xl">
                     {note.excerpt}
                   </p>
 
@@ -117,9 +117,9 @@ export default function NotesPage() {
           margin="-50px"
           className="mt-16 pt-10 border-t border-white/[0.06]"
         >
-          <p className="text-gray-500 text-sm leading-relaxed max-w-2xl inline-flex items-start gap-2">
+          <p className="text-tertiary text-sm leading-relaxed max-w-2xl inline-flex items-start gap-2">
             <BookOpen
-              className="w-3.5 h-3.5 mt-0.5 text-white/30 flex-shrink-0"
+              className="w-3.5 h-3.5 mt-0.5 text-quiet flex-shrink-0"
               aria-hidden="true"
             />
             <span>

@@ -206,7 +206,7 @@ export default function HeroTopologyFallback() {
           doesn't shift when the visitor taps a different node. */}
       {activeNode && activeNode.blurb && (
         <div
-          className="mt-3 rounded-lg border border-[#00d2ff]/15 bg-white/[0.03] px-3 py-2 text-xs leading-relaxed text-white/75"
+          className="mt-3 rounded-lg border border-[#00d2ff]/15 bg-white/[0.03] px-3 py-2 text-xs leading-relaxed text-primary"
           role="status"
           aria-live="polite"
         >

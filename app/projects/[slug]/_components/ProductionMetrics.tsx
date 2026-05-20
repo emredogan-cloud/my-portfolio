@@ -129,7 +129,7 @@ export default function ProductionMetrics() {
       className="mt-14 pt-10 border-t border-white/[0.08]"
     >
       <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
-        <p className="text-xs font-medium text-white/30 tracking-widest uppercase">
+        <p className="text-xs font-medium text-quiet tracking-widest uppercase">
           Production Metrics
         </p>
         {isProjection ? (

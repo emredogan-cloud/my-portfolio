@@ -48,10 +48,10 @@ export default function CwhProCta() {
             <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#00d2ff]/85">
               CWH Pro · cloudwastehunter.io
             </p>
-            <h3 className="text-2xl sm:text-3xl font-semibold tracking-[-0.03em] leading-tight text-white">
+            <h3 className="text-2xl sm:text-3xl font-semibold tracking-[-0.03em] leading-tight text-primary">
               Want the same scanner pointed at your own AWS account?
             </h3>
-            <p className="text-white/65 text-sm sm:text-base leading-relaxed">
+            <p className="text-secondary text-sm sm:text-base leading-relaxed">
               Same scanner, same Bedrock remediation, same EventBridge
               schedule. Plus and Pro tiers add multi-account, API
               access, and SSO; Free starts you on a single account

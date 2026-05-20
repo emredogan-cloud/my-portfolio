@@ -223,7 +223,7 @@ export default async function TopologyPage({ params }: TopologyPageProps) {
         <Reveal mode="mount" duration={0.8} className="mb-12">
           <h1 className="text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary">
             <span className="block">{projectNode.label}.</span>
-            <span className="block text-white/55">
+            <span className="block text-tertiary">
               The system describes itself.
             </span>
           </h1>

@@ -38,9 +38,9 @@ export default function ContactPage() {
           </span>
           <h1 className="text-5xl md:text-6xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5">
             <span className="block">Let&apos;s build</span>
-            <span className="block text-white/60">something real.</span>
+            <span className="block text-tertiary">something real.</span>
           </h1>
-          <p className="text-gray-400 max-w-xl mt-8 text-base md:text-lg leading-relaxed">
+          <p className="text-secondary max-w-xl mt-8 text-base md:text-lg leading-relaxed">
             Working on cloud infrastructure, AI systems, or a production SaaS
             that needs an engineer? Send a note and I&apos;ll get back within
             a day or two.

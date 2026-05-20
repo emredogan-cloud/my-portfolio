@@ -76,7 +76,7 @@ export default function LabIndexPage() {
           </span>
           <h1 className="text-5xl md:text-7xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5">
             <span className="block">Working notebook,</span>
-            <span className="block text-white/55">opened slightly.</span>
+            <span className="block text-tertiary">opened slightly.</span>
           </h1>
           <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
             Small focused engineering systems with real operational

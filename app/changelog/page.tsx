@@ -161,7 +161,7 @@ export default async function ChangelogPage({
           </span>
           <h1 className="text-5xl md:text-7xl font-medium tracking-[-0.04em] leading-[0.95] text-primary mt-5">
             <span className="block">Every push,</span>
-            <span className="block text-white/55">annotated.</span>
+            <span className="block text-tertiary">annotated.</span>
           </h1>
           <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
             Public engineering log for the systems powering this
