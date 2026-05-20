@@ -34,6 +34,14 @@ const PRIMARY_LINKS: readonly NavLink[] = [
 /* Operate parent — the single in-drawer expandable. Per V6 § 12.4
    spec ("The Operate item expands inline (no second drawer)") the
    submenu uses a height-auto reveal, not a nested drawer surface. */
+/* V6 13.5 — when the pulse-extraction flag is on, the Operate
+   submenu in the drawer gains a /pulse entry and the parent's
+   prefix-match array includes /pulse so the Operate row
+   highlights when the visitor is on the lifestyle route.
+   Mirrors the V6Navbar's desktop Operate list. */
+const PULSE_ENABLED =
+  process.env.NEXT_PUBLIC_V6_PULSE_EXTRACTION === "1";
+
 const OPERATE_PARENT: NavLink = {
   label: "Operate",
   href: "/v5/operating",
@@ -44,8 +52,9 @@ const OPERATE_PARENT: NavLink = {
     "/evolution",
     "/changelog",
     "/lumina/brain",
+    ...(PULSE_ENABLED ? ["/pulse"] : []),
   ],
-} as const;
+};
 
 const OPERATE_SUBMENU: readonly NavLink[] = [
   { label: "Operating", href: "/v5/operating", matches: ["/v5/operating"] },
@@ -54,7 +63,10 @@ const OPERATE_SUBMENU: readonly NavLink[] = [
   { label: "Journal", href: "/v5/journal", matches: ["/v5/journal"] },
   { label: "Changelog", href: "/changelog", matches: ["/changelog"] },
   { label: "Brain", href: "/lumina/brain", matches: ["/lumina/brain"] },
-] as const;
+  ...(PULSE_ENABLED
+    ? [{ label: "Pulse", href: "/pulse", matches: ["/pulse"] }]
+    : []),
+];
 
 /* ── Route-matching helper ───────────────────────────────────────
  * Section-prefix match: exact pathname OR pathname under the

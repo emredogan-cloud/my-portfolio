@@ -90,7 +90,19 @@ const V6_PRIMARY_LINKS = [
  * family on hover/focus. None of these routes is recruiter
  * front-door; they reward operator-tone visitors.
  */
-const V6_OPERATE_PARENT = {
+/* V6 13.5 — when the pulse-extraction flag is on, the Operate
+   dropdown gains a /pulse entry and the parent's prefix-match
+   array includes /pulse so the Operate label highlights when
+   the visitor is on the lifestyle route. Spec validation #2 of
+   13.5 mandates this addition. */
+const V6_PULSE_ENABLED =
+  process.env.NEXT_PUBLIC_V6_PULSE_EXTRACTION === "1";
+
+const V6_OPERATE_PARENT: {
+  readonly label: string;
+  readonly href: string;
+  readonly matches: readonly string[];
+} = {
   label: "Operate",
   href: "/v5/operating",
   matches: [
@@ -100,16 +112,21 @@ const V6_OPERATE_PARENT = {
     "/evolution",
     "/changelog",
     "/lumina/brain",
+    ...(V6_PULSE_ENABLED ? ["/pulse"] : []),
   ],
-} as const;
+};
 
-const V6_OPERATE_LINKS = [
+const V6_OPERATE_LINKS: readonly {
+  readonly label: string;
+  readonly href: string;
+}[] = [
   { label: "Telemetry", href: "/telemetry" },
   { label: "Evolution", href: "/evolution" },
   { label: "Journal", href: "/v5/journal" },
   { label: "Changelog", href: "/changelog" },
   { label: "Brain", href: "/lumina/brain" },
-] as const;
+  ...(V6_PULSE_ENABLED ? [{ label: "Pulse", href: "/pulse" }] : []),
+];
 
 /**
  * Secondary surfaces — calmer right-edge cluster. Sit before the

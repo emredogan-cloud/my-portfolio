@@ -8,6 +8,7 @@ import { isMarginTickEnabled } from "@/lib/v6/marginTick";
 import Pill from "@/components/ui/Pill";
 import GithubActivity from "./_components/GithubActivity";
 import PhilosophyTiles from "./_components/PhilosophyTiles";
+import { pulseEntries, type PulseEntry } from "@/data/pulse";
 
 export const metadata: Metadata = {
   title: "About — Emre Doğan",
@@ -49,31 +50,12 @@ const PHILOSOPHY = [
   },
 ] as const;
 
-interface LifestyleEntry {
-  eyebrow: string;
-  body: string;
-  href?: string;
-}
-
-const LIFESTYLE: readonly LifestyleEntry[] = [
-  {
-    eyebrow: "Training",
-    body: "Five sessions a week, an iron-only programme built around the squat, deadlift, and press. Strength as a tax on time, not a sport. The discipline transfers.",
-  },
-  {
-    eyebrow: "The motorcycle",
-    body: "Naked sport on the Adana coast roads. The first hour after rain is the cleanest signal a screen will not give back. Helmets clear what monitors do not.",
-  },
-  {
-    eyebrow: "Reading",
-    body: "Long-arc texts — Kleppmann, Hennessy & Patterson, distributed-systems papers a generation old. The books that change which problem you ship, not which framework you reach for.",
-  },
-  {
-    eyebrow: "The codex",
-    body: "Three handcrafted digital editions — Mendîran, Mythologica, Solgun — each shipped as a zero-dependency reader. Worldbuilding as engineering on a different substrate.",
-    href: "/codex",
-  },
-];
+/* V6 13.5 — the lifestyle entries moved to `data/pulse.ts` so the
+   new `/pulse` route (V6_PULSE_EXTRACTION) and this LegacyAboutPage
+   share the same data. The type + the array re-exposed here as
+   `LIFESTYLE` so the inline references below continue to work. */
+type LifestyleEntry = PulseEntry;
+const LIFESTYLE: readonly LifestyleEntry[] = pulseEntries;
 
 const PRINCIPLES = [
   {
@@ -1436,6 +1418,24 @@ function V6AboutPage() {
                 See the work
               </Link>
             </div>
+
+            {/* V6 13.5 — quiet footer link to /pulse.
+                When V6_PULSE_EXTRACTION is on, the lifestyle
+                content lives at /pulse and this line is the
+                single discoverability hint from /about. When the
+                flag is off, the link is omitted (the route 404s
+                anyway). */}
+            {process.env.NEXT_PUBLIC_V6_PULSE_EXTRACTION === "1" ? (
+              <p className="mt-16 font-mono uppercase tracking-[0.20em] text-[10px] text-tertiary">
+                On the hours that aren&apos;t code{" "}
+                <Link
+                  href="/pulse"
+                  className="text-[#00d2ff]/80 hover:text-[#00d2ff] transition-colors inline-flex items-center gap-1"
+                >
+                  → /pulse
+                </Link>
+              </p>
+            ) : null}
 
             <div className="mt-20 pt-6 border-t border-white/[0.05] flex items-center gap-3 font-mono uppercase tracking-[0.22em] text-[10px] text-faint">
               <span
