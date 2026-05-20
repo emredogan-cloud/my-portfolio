@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
+import Pill, { type PillKind } from "@/components/ui/Pill";
 import { LAB_EXPERIMENTS } from "@/lib/lab/registry";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -52,11 +53,12 @@ const STATUS_LABEL = {
   archived: "archived",
 } as const;
 
-const STATUS_PILL = {
-  active: "border-[#00d2ff]/40 bg-[#00d2ff]/[0.05] text-[#00d2ff]/90",
-  "coming-soon": "border-white/[0.08] bg-white/[0.02] text-tertiary",
-  archived: "border-white/[0.08] bg-white/[0.02] text-quiet",
-} as const;
+/* V6 11.2 — typed Pill kind per experiment status. */
+const STATUS_KIND: Record<keyof typeof STATUS_LABEL, PillKind> = {
+  active: "state-live",
+  "coming-soon": "state-planning",
+  archived: "state-archived",
+};
 
 export default function LabIndexPage() {
   return (
@@ -114,14 +116,10 @@ export default function LabIndexPage() {
                       {exp.purpose}
                     </p>
                   </div>
-                  {/* Status pill */}
-                  <span
-                    className={`px-2.5 py-1 rounded-full border font-mono uppercase tracking-[0.18em] text-[9px] whitespace-nowrap ${
-                      STATUS_PILL[exp.status]
-                    }`}
-                  >
+                  {/* Status pill — V6 11.2 typed Pill. */}
+                  <Pill kind={STATUS_KIND[exp.status]} className="whitespace-nowrap">
                     {STATUS_LABEL[exp.status]}
-                  </span>
+                  </Pill>
                 </div>
               );
 

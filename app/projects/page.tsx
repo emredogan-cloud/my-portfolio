@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { projectsData } from "@/data/projects";
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
+import Pill, { type PillKind } from "@/components/ui/Pill";
 import { ProjectCardAnimator } from "./_components/ProjectCardAnimator";
 
 export const metadata: Metadata = {
@@ -18,11 +19,21 @@ const STATUS_LABEL: Record<string, string> = {
   planning: "Planning",
 };
 
-const STATUS_STYLE: Record<string, string> = {
-  shipped: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
-  building: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
-  planning: "bg-white/5 text-white/50 border border-white/10",
+/* V6 11.2 — typed Pill kind per project status.
+   The emerald/blue/white-50 status pills the V5 codebase used are
+   retired wholesale: when V6_PILL_VOCABULARY is off the Pill component
+   renders a palette-neutral generic chip shape (`LEGACY_FALLBACK_CHIP`),
+   so no emerald/blue/purple literals remain anywhere in source. */
+const STATUS_KIND: Record<string, PillKind> = {
+  shipped: "state-live",
+  building: "state-building",
+  planning: "state-planning",
 };
+
+const TECH_CHIP_LEGACY =
+  "px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-white/70";
+const TECH_CHIP_MORE_LEGACY =
+  "px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-white/40";
 
 export default function ProjectsPage() {
   return (
@@ -85,11 +96,12 @@ export default function ProjectsPage() {
                     <h2 className="text-xl font-semibold text-white leading-snug">
                       {project.title}
                     </h2>
-                    <span
-                      className={`shrink-0 px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLE[project.status]}`}
+                    <Pill
+                      kind={STATUS_KIND[project.status]}
+                      className="shrink-0"
                     >
                       {STATUS_LABEL[project.status]}
-                    </span>
+                    </Pill>
                   </div>
 
                   {/* Description */}
@@ -97,20 +109,17 @@ export default function ProjectsPage() {
                     {project.shortDescription}
                   </p>
 
-                  {/* Tech stack — first 4 tags */}
+                  {/* Tech stack — first 4 tags as `meta` Pill vocabulary. */}
                   <div className="flex flex-wrap gap-2">
                     {project.techStack.slice(0, 4).map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-white/70"
-                      >
+                      <Pill key={tag} kind="meta" legacy={TECH_CHIP_LEGACY}>
                         {tag}
-                      </span>
+                      </Pill>
                     ))}
                     {project.techStack.length > 4 && (
-                      <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-white/40">
+                      <Pill kind="meta" legacy={TECH_CHIP_MORE_LEGACY}>
                         +{project.techStack.length - 4} more
-                      </span>
+                      </Pill>
                     )}
                   </div>
 

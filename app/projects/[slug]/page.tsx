@@ -5,6 +5,7 @@ import { ArrowRight, ExternalLink } from "lucide-react";
 import { projectsData } from "@/data/projects";
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
+import Pill, { type PillKind } from "@/components/ui/Pill";
 import { HoverScaleAnchor } from "./_components/HoverScaleAnchor";
 import { GalleryItem } from "./_components/GalleryItem";
 import ProductionMetrics from "./_components/ProductionMetrics";
@@ -19,11 +20,18 @@ const STATUS_LABEL: Record<string, string> = {
   planning: "Planning",
 };
 
-const STATUS_STYLE: Record<string, string> = {
-  shipped: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
-  building: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
-  planning: "bg-white/5 text-white/50 border border-white/10",
+/* V6 11.2 — typed Pill kind per project status.
+   Emerald/blue/white-50 chip palette retired wholesale; the V6_PILL_VOCABULARY
+   off-state falls back to the palette-neutral generic chip in Pill.tsx
+   so no emerald/blue/purple literals remain in source. */
+const STATUS_KIND: Record<string, PillKind> = {
+  shipped: "state-live",
+  building: "state-building",
+  planning: "state-planning",
 };
+
+const TECH_CHIP_LEGACY =
+  "px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs text-white/70";
 
 /* Inline GitHub mark — server-renderable (no client state). lucide v1.14
    does not ship a Github icon, so we provide our own. */
@@ -119,11 +127,9 @@ export default async function ProjectDetailPage({
               Project
             </span>
             <span className="text-white/20">·</span>
-            <span
-              className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLE[project.status]}`}
-            >
+            <Pill kind={STATUS_KIND[project.status]}>
               {STATUS_LABEL[project.status]}
-            </span>
+            </Pill>
           </div>
 
           {/* Title */}
@@ -170,12 +176,9 @@ export default async function ProjectDetailPage({
           </p>
           <div className="flex flex-wrap gap-2">
             {project.techStack.map((tag) => (
-              <span
-                key={tag}
-                className="px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs text-white/70"
-              >
+              <Pill key={tag} kind="meta" legacy={TECH_CHIP_LEGACY}>
                 {tag}
-              </span>
+              </Pill>
             ))}
           </div>
         </Reveal>
@@ -233,10 +236,7 @@ export default async function ProjectDetailPage({
               <p className="text-xs font-medium text-white/30 tracking-widest uppercase">
                 Try the auditor
               </p>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#00d2ff]/25 bg-[#00d2ff]/[0.06] px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-[#00d2ff]/90">
-                <span className="w-1 h-1 rounded-full bg-[#00d2ff]" aria-hidden="true" />
-                Live · Bedrock
-              </span>
+              <Pill kind="state-live">Live · Bedrock</Pill>
             </div>
             <CWHSandbox />
           </Reveal>

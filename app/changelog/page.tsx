@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
+import Pill from "@/components/ui/Pill";
 import VisitPing from "@/components/telemetry/VisitPing";
 import {
   getRecentCommits,
@@ -179,29 +180,18 @@ export default async function ChangelogPage({
               <span className="font-mono uppercase tracking-[0.20em] text-[10px] text-quiet mr-1">
                 Project
               </span>
-              <Link
-                href="/changelog"
-                className={
-                  activeRepo === null
-                    ? "px-3 py-1.5 rounded-full border border-[#00d2ff]/40 bg-[#00d2ff]/[0.05] font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/90"
-                    : "px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.02] font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary transition-colors hover:border-white/[0.16] hover:text-secondary"
-                }
-              >
-                All
+              <Link href="/changelog">
+                <Pill kind={activeRepo === null ? "filter-active" : "filter-inactive"}>
+                  All
+                </Pill>
               </Link>
               {repos.map((r) => {
                 const active = activeRepo === r;
                 return (
-                  <Link
-                    key={r}
-                    href={`/changelog?repo=${encodeURIComponent(r)}`}
-                    className={
-                      active
-                        ? "px-3 py-1.5 rounded-full border border-[#00d2ff]/40 bg-[#00d2ff]/[0.05] font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/90"
-                        : "px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.02] font-mono uppercase tracking-[0.18em] text-[10px] text-tertiary transition-colors hover:border-white/[0.16] hover:text-secondary"
-                    }
-                  >
-                    {r}
+                  <Link key={r} href={`/changelog?repo=${encodeURIComponent(r)}`}>
+                    <Pill kind={active ? "filter-active" : "filter-inactive"}>
+                      {r}
+                    </Pill>
                   </Link>
                 );
               })}
@@ -264,9 +254,9 @@ export default async function ChangelogPage({
                             {c.type}
                           </span>
                         )}
-                        <span className="ml-auto font-mono uppercase tracking-[0.18em] text-[9px] text-quiet">
+                        <Pill kind="timestamp" className="ml-auto">
                           {formatTimestamp(c.timestamp, now)}
-                        </span>
+                        </Pill>
                       </div>
                       <h3 className="text-primary font-medium text-[15.5px] md:text-base leading-snug tracking-[-0.01em]">
                         {c.subject}

@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { Shield } from "lucide-react";
+import Pill from "@/components/ui/Pill";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -72,26 +73,18 @@ export default function CertificationRadar() {
                 <p className="text-tertiary text-xs mt-1.5">{cert.level}</p>
               </div>
 
-              {/* Target pill — pulsing cyan dot signals active work toward
-                  the exam. Phase-staggered per card so the two pulses
-                  don't lock in unison. */}
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#00d2ff]/25 bg-[#00d2ff]/[0.06] px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-[#00d2ff]/90 whitespace-nowrap flex-shrink-0">
-                <motion.span
-                  className="w-1 h-1 rounded-full bg-[#00d2ff]"
-                  animate={{
-                    opacity: [1, 0.35, 1],
-                    scale: [1, 1.4, 1],
-                  }}
-                  transition={{
-                    duration: 2.4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: i * 0.4,
-                  }}
-                  aria-hidden="true"
-                />
+              {/* Target pill — V6 11.2 typed Pill (state-live with the
+                  breathing cyan pulse). Phase-staggered per card via the
+                  Pill's pulseDelay prop so the two pulses don't lock in
+                  unison. */}
+              <Pill
+                kind="state-live"
+                pulse
+                pulseDelay={i * 0.4}
+                className="whitespace-nowrap flex-shrink-0"
+              >
                 Target: {cert.target}
-              </span>
+              </Pill>
             </div>
           </motion.div>
         ))}
