@@ -5,14 +5,22 @@ import type { CodexBook } from "@/data/codex";
 /* ──────────────────────────────────────────────────────────────
  *  CodexShelf — V6 Sub-PR 13.2
  *
- *  Three covers arranged in a horizontal sequence at uneven
- *  heights, like books leaning on a shelf. The bottom edges
- *  align (items-end on the flex container); the tops rise to
+ *  Covers arranged in a horizontal sequence at uneven heights,
+ *  like books leaning on a shelf. The bottom edges align
+ *  (items-end on the flex container); the tops rise to
  *  different heights per the per-book height profile:
  *
- *    Mendîran     — tallest (the elder volume; opens the shelf)
- *    Mythologica  — mid     (the broadest in scope)
- *    Solgun       — shortest (the most recent acquisition)
+ *    Tuzun Hafızası — shortest (the newest, most in-progress
+ *                     acquisition; opens the shelf as the first
+ *                     in display order)
+ *    Mendîran       — tallest  (the elder volume)
+ *    Mythologica    — mid      (the broadest in scope)
+ *    Solgun         — short    (the most recent before Tuzun)
+ *
+ *  The render order (left-to-right on desktop, top-to-bottom on
+ *  mobile) follows the data/codex.ts `codexBooks` array — the
+ *  HEIGHT profile is decoupled from order, so the four covers
+ *  read as an undulating skyline rather than a strict staircase.
  *
  *  Each cover carries the existing sigil ribbon at the bottom
  *  inset; on hover (desktop) the cover lifts ~4 px and a small
@@ -39,9 +47,12 @@ interface ShelfEntry {
 }
 
 /* Height profile per spec: Mendîran tallest, Mythologica mid,
- * Solgun shortest. Width tracks the book cover aspect (~3:5
- * portrait), capped to leave room for the chips column on lg+. */
+ * Solgun and Tuzun shorter (newest acquisitions, most in-progress).
+ * Width tracks the book cover aspect (~3:5 portrait), capped to
+ * leave room for the chips column on lg+. */
 const SHELF_HEIGHT: Record<string, string> = {
+  "tuzun-hafizasi":
+    "h-[185px] sm:h-[215px] md:h-[240px] lg:h-[260px] w-[133px] sm:w-[152px] md:w-[170px] lg:w-[188px]",
   "mendiran-vakayinamesi":
     "h-[260px] sm:h-[300px] md:h-[340px] lg:h-[360px] w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px]",
   "codex-mythologica":
@@ -53,6 +64,7 @@ const SHELF_HEIGHT: Record<string, string> = {
 /* Mobile staggers — small horizontal offsets per cover so the
  * stacked column doesn't read as a strict centred grid. */
 const SHELF_OFFSET: Record<string, string> = {
+  "tuzun-hafizasi": "self-start",
   "mendiran-vakayinamesi": "self-start",
   "codex-mythologica": "self-center",
   "solgun-kitabe": "self-end",
@@ -93,7 +105,7 @@ export default function CodexShelf({ books }: CodexShelfProps) {
           (self-start / self-center / self-end) to stagger the
           stack so it doesn't read as a strict centred grid. */}
       <ul className="flex flex-col lg:flex-row items-stretch lg:items-end gap-10 sm:gap-12 lg:gap-14 lg:justify-center lg:pb-1">
-        {entries.map(({ book, heightClasses, mobileOffsetClass }) => (
+        {entries.map(({ book, heightClasses, mobileOffsetClass }, i) => (
           <li
             key={book.slug}
             className={`group relative flex flex-col lg:flex-row lg:items-end gap-5 lg:gap-6 ${mobileOffsetClass} lg:self-end`}
@@ -112,7 +124,7 @@ export default function CodexShelf({ books }: CodexShelfProps) {
                   fill
                   className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                   sizes="(max-width: 768px) 50vw, (max-width: 1024px) 30vw, 220px"
-                  priority={book.slug === "mendiran-vakayinamesi"}
+                  priority={i === 0}
                 />
 
                 {/* Bottom cinematic wash so the sigil ribbon

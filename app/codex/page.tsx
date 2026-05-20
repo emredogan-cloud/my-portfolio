@@ -26,6 +26,7 @@ const ATMOSPHERE_TINTS = [
   // Subtle radial accents per folio. Each is a translucent gold-ish or
   // ash-ish layer that does NOT compete with cyan — they live below the
   // cyan accent layer in z-stack and read as atmospheric breath.
+  "rgba(190,178,152,0.10)", // Tuzun — limewashed driftwood
   "rgba(168,132,44,0.10)",  // Mendiran — gold-amber
   "rgba(201,161,74,0.10)",  // Mythologica — illuminated parchment gold
   "rgba(118,84,60,0.10)",   // Solgun — ash-bone
@@ -75,7 +76,7 @@ function LegacyCodexPage() {
             <span className="block text-tertiary">archive of worlds.</span>
           </h1>
           <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
-            Three self-contained digital editions, each engineered as a
+            Four self-contained digital editions, each engineered as a
             zero-dependency single-page reader and inhabited as a fully
             built world. Custom paginators, illuminated atlases, ambient
             audio synthesis, browser-native PDF export — and inside each
@@ -271,7 +272,7 @@ function V6CodexPage() {
             <span className="block text-tertiary">archive of worlds.</span>
           </h1>
           <p className="text-secondary max-w-2xl mt-8 text-base md:text-lg leading-relaxed">
-            Three self-contained digital editions, each engineered as a
+            Four self-contained digital editions, each engineered as a
             zero-dependency single-page reader and inhabited as a fully
             built world. Custom paginators, illuminated atlases, ambient
             audio synthesis, browser-native PDF export — and inside each
@@ -305,13 +306,34 @@ function V6CodexPage() {
         <Reveal duration={0.7} margin="-60px" className="mb-24">
           <div className="max-w-2xl mx-auto space-y-8 text-secondary text-[15px] leading-[1.85]">
             <p>
-              The codex is the work, the work is the codex. Three
-              editions, three temperaments, the same uncompromising
+              The codex is the work, the work is the codex. Four
+              editions, four temperaments, the same uncompromising
               posture toward the engineering and the storytelling
               underneath each one. No framework. No build step. No
               backend. Each book is a static folder that pages
               itself, tolls its own bells, exports its own PDF.
             </p>
+
+            <p>
+              <em className="not-italic text-primary">Tuzun Hafızası</em>{" "}
+              opens on a coastal town in the third year of a republic
+              that buried the empire it inherited from, where a
+              returning librarian finds a single salt-grain her family
+              has no record of owning — and the grain holds her
+              sister&apos;s voice.
+            </p>
+
+            <blockquote className="relative pl-5">
+              <span
+                aria-hidden="true"
+                className="absolute left-0 top-1.5 inline-block w-px h-[calc(100%-0.75rem)] bg-[#00d2ff]/40"
+              />
+              <p className="text-primary/90 italic text-[15.5px] leading-[1.7]">
+                Thirty-six chapters in a coastal salt-house, and a
+                sister the empire&apos;s archive insisted had never
+                been born.
+              </p>
+            </blockquote>
 
             <p>
               <em className="not-italic text-primary">Mendîran</em>{" "}
@@ -377,7 +399,7 @@ function V6CodexPage() {
         <Reveal duration={0.7} margin="-40px" className="mb-24">
           <div className="text-center">
             <p className="text-primary text-lg md:text-xl font-medium tracking-tight mb-6">
-              Three books. Three worlds. Choose one.
+              Four books. Four worlds. Choose one.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               {codexBooks.map((book) => (
