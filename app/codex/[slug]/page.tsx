@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
+import { secondaryButton } from "@/lib/v6/glass";
 import { codexBooks, getCodexBookBySlug } from "@/data/codex";
 import CodexTopology from "@/components/codex/CodexTopology";
 
@@ -145,7 +146,7 @@ export default async function CodexDetailPage({
                     href={book.githubUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="glass-panel rounded-full inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white/75 hover:text-white transition-colors duration-200"
+                    className={`${secondaryButton()} rounded-full inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white/75 hover:text-white transition-colors duration-200`}
                   >
                     Source
                   </a>

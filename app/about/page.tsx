@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
+import { cardSurface, secondaryButton } from "@/lib/v6/glass";
 import GithubActivity from "./_components/GithubActivity";
 
 export const metadata: Metadata = {
@@ -511,7 +512,7 @@ export default function AboutPage() {
                   delay={i * 0.1}
                   y={16}
                   margin="-60px"
-                  className="liquid-glass rounded-2xl p-8 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10"
+                  className={`${cardSurface()} rounded-2xl p-8 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10`}
                 >
                   <h3 className="text-primary font-medium text-xl leading-tight">
                     {s.title}
@@ -779,7 +780,7 @@ export default function AboutPage() {
               </Link>
               <Link
                 href="/projects"
-                className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 glass-panel text-sm font-medium text-primary/80 hover:text-primary transition-colors"
+                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 ${secondaryButton()} text-sm font-medium text-primary/80 hover:text-primary transition-colors`}
               >
                 See the work
               </Link>

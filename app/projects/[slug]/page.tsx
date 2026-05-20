@@ -6,6 +6,7 @@ import { projectsData } from "@/data/projects";
 import { Reveal } from "@/components/ui/Reveal";
 import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import Pill, { type PillKind } from "@/components/ui/Pill";
+import { secondaryButton } from "@/lib/v6/glass";
 import { HoverScaleAnchor } from "./_components/HoverScaleAnchor";
 import { GalleryItem } from "./_components/GalleryItem";
 import ProductionMetrics from "./_components/ProductionMetrics";
@@ -160,7 +161,7 @@ export default async function ProjectDetailPage({
                 href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="glass-panel rounded-full inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white/75 hover:text-white transition-colors duration-200"
+                className={`${secondaryButton()} rounded-full inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white/75 hover:text-white transition-colors duration-200`}
               >
                 <GitHubIcon className="w-3.5 h-3.5" />
                 GitHub
