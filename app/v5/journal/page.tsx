@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import VisitPing from "@/components/telemetry/VisitPing";
 import { Reveal } from "@/components/ui/Reveal";
+import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import { getSiteUrl } from "@/lib/site-url";
 import { isJournalEnabled } from "@/lib/v5/journal/flags";
 import { listRecentJournalEntries } from "@/lib/v5/journal/storage";
@@ -102,25 +103,8 @@ export default async function JournalIndexPage() {
 
   return (
     <main id="main" className="relative min-h-screen bg-black">
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        aria-hidden="true"
-      >
-        <div
-          className="absolute top-[-200px] right-[-200px] w-[700px] h-[700px] rounded-full blur-[180px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(0,210,255,0.07) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[-200px] left-[-100px] w-[600px] h-[600px] rounded-full blur-[160px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(0,210,255,0.04) 0%, transparent 70%)",
-          }}
-        />
-      </div>
+      {/* Ambient atmosphere — V6 11.1 typed variant. Operator family. */}
+      <PageAtmosphere variant="operator" />
 
       <VisitPing surface="journal" />
 

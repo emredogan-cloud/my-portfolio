@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
+import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import GithubActivity from "./_components/GithubActivity";
 
 export const metadata: Metadata = {
@@ -182,29 +183,27 @@ const FEATURED = [
 export default function AboutPage() {
   return (
     <main id="main" className="relative min-h-screen bg-black">
-      {/* Ambient atmosphere — restrained, cyan-leaning, no purple
-          since we want the page to read as the same atmospheric
-          family as /codex and /notes rather than as a separate
-          colour district. */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        aria-hidden="true"
-      >
-        <div
-          className="absolute top-[-200px] right-[-200px] w-[700px] h-[700px] rounded-full blur-[180px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(0,210,255,0.07) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[-200px] left-[-100px] w-[600px] h-[600px] rounded-full blur-[160px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(168,132,44,0.05) 0%, transparent 70%)",
-          }}
-        />
-      </div>
+      {/* Ambient atmosphere — V6 11.1 typed variant.
+          Editorial composition (two staggered black-on-black radial pools
+          + off-canvas right-edge cyan tick) reads as the same atmospheric
+          family as /notes and /codex without recolouring the page when
+          the V6 flag is on. With the flag off the legacy cyan + gold
+          pair is preserved verbatim. */}
+      <PageAtmosphere
+        variant="editorial"
+        legacy={{
+          primary: {
+            color: "rgba(0,210,255,0.07)",
+            position: "top-right",
+            size: "lg",
+          },
+          secondary: {
+            color: "rgba(168,132,44,0.05)",
+            position: "bottom-left",
+            size: "md",
+          },
+        }}
+      />
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 pt-36 pb-32">
 

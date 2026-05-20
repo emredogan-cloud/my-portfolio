@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/ui/Reveal";
+import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import VisitPing from "@/components/telemetry/VisitPing";
 import { getSiteUrl } from "@/lib/site-url";
 import {
@@ -327,19 +328,8 @@ export default async function LuminaBrainPage() {
 
   return (
     <main id="main" className="relative min-h-screen bg-black">
-      {/* Ambient cyan atmosphere — same gradient stack as /telemetry,
-          /changelog, /lab/<slug>, /lab/cloud. Visual continuity
-          across the meta-content surfaces. */}
-      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
-        <div
-          className="absolute top-[-200px] right-[-200px] w-[700px] h-[700px] rounded-full blur-[180px]"
-          style={{ background: "radial-gradient(ellipse, rgba(0,210,255,0.07) 0%, transparent 70%)" }}
-        />
-        <div
-          className="absolute bottom-[-200px] left-[-100px] w-[600px] h-[600px] rounded-full blur-[160px]"
-          style={{ background: "radial-gradient(ellipse, rgba(0,210,255,0.04) 0%, transparent 70%)" }}
-        />
-      </div>
+      {/* Ambient atmosphere — V6 11.1 typed variant. Operator family. */}
+      <PageAtmosphere variant="operator" />
 
       <VisitPing surface="lumina-brain" />
 

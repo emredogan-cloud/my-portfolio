@@ -10,6 +10,7 @@ import {
   Activity,
 } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
+import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import { TechCard } from "./_components/TechCard";
 import CertificationRadar from "@/components/sections/CertificationRadar";
 
@@ -148,26 +149,23 @@ const STACK: Category[] = [
 export default function StackPage() {
   return (
     <main id="main" className="relative min-h-screen bg-black">
-      {/* Ambient atmosphere */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        aria-hidden="true"
-      >
-        <div
-          className="absolute top-[-200px] left-[-150px] w-[700px] h-[700px] rounded-full blur-[180px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(14,165,233,0.10) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[-200px] right-[-100px] w-[600px] h-[600px] rounded-full blur-[160px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(147,51,234,0.08) 0%, transparent 70%)",
-          }}
-        />
-      </div>
+      {/* Ambient atmosphere — V6 11.1 typed variant.
+          Lab: cyan blob top-left + horizontal cyan rule bisecting viewport. */}
+      <PageAtmosphere
+        variant="lab"
+        legacy={{
+          primary: {
+            color: "rgba(14,165,233,0.10)",
+            position: "top-left",
+            size: "lg",
+          },
+          secondary: {
+            color: "rgba(147,51,234,0.08)",
+            position: "bottom-right",
+            size: "md",
+          },
+        }}
+      />
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 pt-36 pb-32">
 

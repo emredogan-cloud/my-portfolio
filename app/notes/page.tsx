@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Clock } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
+import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import { notesData, formatMonthYear } from "@/data/notes";
 
 export const metadata: Metadata = {
@@ -13,23 +14,23 @@ export const metadata: Metadata = {
 export default function NotesPage() {
   return (
     <main id="main" className="relative min-h-screen bg-black">
-      {/* Atmosphere */}
-      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
-        <div
-          className="absolute top-[-200px] right-[-150px] w-[700px] h-[700px] rounded-full blur-[180px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(0,210,255,0.06) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[-200px] left-[-100px] w-[600px] h-[600px] rounded-full blur-[160px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(147,51,234,0.06) 0%, transparent 70%)",
-          }}
-        />
-      </div>
+      {/* Ambient atmosphere — V6 11.1 typed variant.
+          Editorial: two staggered black-on-black pools + off-canvas cyan tick. */}
+      <PageAtmosphere
+        variant="editorial"
+        legacy={{
+          primary: {
+            color: "rgba(0,210,255,0.06)",
+            position: "top-right",
+            size: "lg",
+          },
+          secondary: {
+            color: "rgba(147,51,234,0.06)",
+            position: "bottom-left",
+            size: "md",
+          },
+        }}
+      />
 
       <div className="relative z-10 max-w-3xl mx-auto px-6 pt-36 pb-32">
 

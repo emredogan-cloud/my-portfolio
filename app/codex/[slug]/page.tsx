@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
+import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import { codexBooks, getCodexBookBySlug } from "@/data/codex";
 import CodexTopology from "@/components/codex/CodexTopology";
 
@@ -42,25 +43,27 @@ export default async function CodexDetailPage({
 
   return (
     <main id="main" className="relative min-h-screen bg-black">
-      {/* Ambient backdrop — cyan radial north + book-specific tint south.
-          The tint colour is the book's own atmosphere (gold for Mendiran,
-          parchment-gold for Mythologica, ash-bone for Solgun). It never
-          touches the cyan accent layer; it sits below it in z-stack. */}
-      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
-        <div
-          className="absolute top-[-200px] right-[-150px] w-[800px] h-[800px] rounded-full blur-[180px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(0,210,255,0.08) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[-200px] left-[-100px] w-[700px] h-[700px] rounded-full blur-[160px]"
-          style={{
-            background: `radial-gradient(ellipse, ${book.atmosphereTint} 0%, transparent 70%)`,
-          }}
-        />
-      </div>
+      {/* Ambient atmosphere — V6 11.1 typed variant.
+          Narrative: large cyan ellipse + book-specific sigil glyph at 4 %
+          opacity in the corner. When the V6 flag is off, the legacy cyan
+          + book-tint pair is preserved so each folio's atmosphere reads
+          identically to V5. */}
+      <PageAtmosphere
+        variant="narrative"
+        sigil={book.sigil}
+        legacy={{
+          primary: {
+            color: "rgba(0,210,255,0.08)",
+            position: "top-right",
+            size: "lg",
+          },
+          secondary: {
+            color: book.atmosphereTint,
+            position: "bottom-left",
+            size: "md",
+          },
+        }}
+      />
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 pt-36 pb-32">
 

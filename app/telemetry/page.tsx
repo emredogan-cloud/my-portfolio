@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Reveal } from "@/components/ui/Reveal";
+import PageAtmosphere from "@/components/layout/PageAtmosphere";
 import VisitPing from "@/components/telemetry/VisitPing";
 import {
   readMetric,
@@ -298,27 +299,10 @@ export default async function TelemetryPage() {
           visits as one of the surfaced metrics. */}
       <VisitPing surface="telemetry" />
 
-      {/* Ambient cyan atmosphere — same vocabulary as /about and
-          /codex so the page reads as one site, not a tooling chunk. */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        aria-hidden="true"
-      >
-        <div
-          className="absolute top-[-200px] right-[-200px] w-[700px] h-[700px] rounded-full blur-[180px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(0,210,255,0.07) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[-200px] left-[-100px] w-[600px] h-[600px] rounded-full blur-[160px]"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(0,210,255,0.04) 0%, transparent 70%)",
-          }}
-        />
-      </div>
+      {/* Ambient atmosphere — V6 11.1 typed variant.
+          Operator: quadrant-anchored cyan hairlines (Margaret Calvert
+          grid). Legacy is the canonical cyan + cyan operator-family pair. */}
+      <PageAtmosphere variant="operator" />
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 pt-36 pb-32">
         {/* HERO — same posture as /about: small eyebrow, two-line
