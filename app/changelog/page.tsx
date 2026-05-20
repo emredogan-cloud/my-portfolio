@@ -211,7 +211,27 @@ export default async function ChangelogPage({
             </div>
           </Reveal>
         ) : (
-          <section className="space-y-12">
+          /* V6 Sub-PR 15.2 signature: a vertical cyan spine that
+             connects every day-bucket header to the next. When
+             NEXT_PUBLIC_V6_OPERATOR_CHANGELOG is on, the section is
+             wrapped in a left-padded container with an absolute
+             cyan hairline running its full height; each day-bucket
+             gets a small cyan dot anchored to the spine. The DNA
+             (mono eyebrow + edge-lit cards + numbered ordering)
+             is preserved — only the connective tissue changes. */
+          <section
+            className={
+              process.env.NEXT_PUBLIC_V6_OPERATOR_CHANGELOG === "1"
+                ? "relative space-y-12 pl-7"
+                : "space-y-12"
+            }
+          >
+            {process.env.NEXT_PUBLIC_V6_OPERATOR_CHANGELOG === "1" ? (
+              <span
+                aria-hidden="true"
+                className="absolute left-1 top-3 bottom-3 w-px bg-[#00d2ff]/15"
+              />
+            ) : null}
             {grouped.map((bucket, bucketIdx) => (
               <Reveal
                 key={bucket.day}
@@ -220,7 +240,13 @@ export default async function ChangelogPage({
                 y={12}
                 margin="-60px"
               >
-                <div className="flex items-baseline gap-4 mb-4">
+                <div className="relative flex items-baseline gap-4 mb-4">
+                  {process.env.NEXT_PUBLIC_V6_OPERATOR_CHANGELOG === "1" ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -left-[27px] top-[6px] w-2.5 h-2.5 rounded-full bg-[#00d2ff] shadow-[0_0_0_3px_rgba(0,210,255,0.18)]"
+                    />
+                  ) : null}
                   <h2 className="font-mono uppercase tracking-[0.20em] text-[10px] text-[#00d2ff]/80">
                     {bucket.day}
                   </h2>

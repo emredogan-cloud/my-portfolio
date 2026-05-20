@@ -409,23 +409,83 @@ export default async function LuminaBrainPage() {
             via direct fetch to GitHub&apos;s public REST API — KV-cached so
             the same file isn&apos;t fetched twice per hour.
           </p>
-          <div className="space-y-7">
-            {TOOL_GROUPS.map((group) => (
-              <div key={group}>
-                <h3 className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/70 mb-3">
-                  {group}
-                </h3>
-                <ul className="space-y-3">
-                  {TOOLS.filter((t) => t.group === group).map((t) => (
-                    <li key={t.name} className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-2 md:gap-5">
-                      <span className="font-mono text-[13px] text-primary">{t.name}</span>
-                      <span className="text-sm text-secondary leading-relaxed">{t.purpose}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          {/* V6 Sub-PR 15.2 signature: when NEXT_PUBLIC_V6_OPERATOR_BRAIN
+              is on, the tool registry renders as a typed grammar
+              tree — categories as branch labels, tools as leaves on
+              vertical connectors. The existing purpose lines stay
+              intact; only the connective tissue between group and
+              tools changes from "h3 + flat list" to a tree composition
+              with CSS-drawn vertical lines and tick connectors. */}
+          {process.env.NEXT_PUBLIC_V6_OPERATOR_BRAIN === "1" ? (
+            <div className="space-y-8 font-mono text-[13px]">
+              {TOOL_GROUPS.map((group) => {
+                const groupTools = TOOLS.filter((t) => t.group === group);
+                return (
+                  <div key={group} className="relative">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span
+                        aria-hidden="true"
+                        className="inline-block w-1.5 h-1.5 rounded-full bg-[#00d2ff]"
+                      />
+                      <h3 className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/85">
+                        {group}
+                      </h3>
+                    </div>
+                    <ul className="relative pl-4 list-none">
+                      <span
+                        aria-hidden="true"
+                        className="absolute left-[3px] top-0 bottom-3 w-px bg-[#00d2ff]/20"
+                      />
+                      {groupTools.map((t, i) => {
+                        const isLast = i === groupTools.length - 1;
+                        return (
+                          <li
+                            key={t.name}
+                            className="relative grid grid-cols-1 md:grid-cols-[220px_1fr] gap-y-1 md:gap-x-5 py-2"
+                          >
+                            <span
+                              aria-hidden="true"
+                              className="absolute left-[-13px] top-[14px] w-3 h-px bg-[#00d2ff]/30"
+                            />
+                            {isLast ? (
+                              <span
+                                aria-hidden="true"
+                                className="absolute left-[3px] top-[14px] bottom-0 w-px bg-black"
+                              />
+                            ) : null}
+                            <span className="text-primary tracking-tight">
+                              {t.name}
+                            </span>
+                            <span className="text-secondary text-[13.5px] leading-relaxed font-sans">
+                              {t.purpose}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-7">
+              {TOOL_GROUPS.map((group) => (
+                <div key={group}>
+                  <h3 className="font-mono uppercase tracking-[0.18em] text-[10px] text-[#00d2ff]/70 mb-3">
+                    {group}
+                  </h3>
+                  <ul className="space-y-3">
+                    {TOOLS.filter((t) => t.group === group).map((t) => (
+                      <li key={t.name} className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-2 md:gap-5">
+                        <span className="font-mono text-[13px] text-primary">{t.name}</span>
+                        <span className="text-sm text-secondary leading-relaxed">{t.purpose}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
         </Reveal>
 
         {/* MEMORY CONTRACT */}

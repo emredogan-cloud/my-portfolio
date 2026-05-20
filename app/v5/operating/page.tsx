@@ -200,6 +200,38 @@ function formatTimestamp(iso: string, now: number): string {
   return new Date(then).toISOString().slice(0, 10);
 }
 
+/* V6 Sub-PR 15.2 signature: sectional numbering rendered as
+   two-digit large mono anchored OUTSIDE the content column on lg+,
+   like chapter numbers. Mobile + tablet preserve the V5 inline
+   "01 · " ornament. Family DNA (mono eyebrow + tertiary section
+   title vocabulary) preserved. */
+function SectionTitle({ index, label }: { index: string; label: string }) {
+  const v6 = process.env.NEXT_PUBLIC_V6_OPERATOR_OPERATING === "1";
+  if (v6) {
+    return (
+      <div className="relative">
+        <span
+          aria-hidden="true"
+          className="hidden lg:block absolute right-full mr-10 top-0 font-mono text-4xl text-[#00d2ff]/25 tabular-nums leading-none select-none pt-0.5 tracking-[-0.04em]"
+        >
+          {index}
+        </span>
+        <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+          <span className="lg:hidden">
+            {index} · {label}
+          </span>
+          <span className="hidden lg:inline">{label}</span>
+        </h2>
+      </div>
+    );
+  }
+  return (
+    <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
+      {index} · {label}
+    </h2>
+  );
+}
+
 export default async function OperatingPage() {
   /* Single gate: operator flag. */
   if (!isOperatingTwinEnabled()) {
@@ -284,9 +316,7 @@ export default async function OperatingPage() {
         {/* SECTION 01 — THIS WEEK SHIPPED */}
         <Reveal duration={0.7} className="mb-14">
           <OperatingSectionPing kind="section_weekly_inspected" />
-          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            01 · This week shipped
-          </h2>
+          <SectionTitle index="01" label="This week shipped" />
           <p className="text-secondary text-sm leading-relaxed mb-6 max-w-2xl">
             Every commit pushed in the last 7 days, newest first.
             The same source the public{" "}
@@ -380,9 +410,7 @@ export default async function OperatingPage() {
         {/* SECTION 02 — ACTIVE INFRASTRUCTURE */}
         <Reveal duration={0.7} className="mb-14">
           <OperatingSectionPing kind="section_infra_inspected" />
-          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            02 · Active infrastructure
-          </h2>
+          <SectionTitle index="02" label="Active infrastructure" />
           <p className="text-secondary text-sm leading-relaxed mb-6 max-w-2xl">
             Production systems the platform tracks. Status is
             derived from each system&apos;s last-seen telemetry
@@ -450,9 +478,7 @@ export default async function OperatingPage() {
         {/* SECTION 03 — RUNNING EXPERIMENTS */}
         <Reveal duration={0.7} className="mb-14">
           <OperatingSectionPing kind="section_experiments_inspected" />
-          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            03 · Running experiments
-          </h2>
+          <SectionTitle index="03" label="Running experiments" />
           <p className="text-secondary text-sm leading-relaxed mb-6 max-w-2xl">
             Live experimentation slots — the public lab (Bedrock-
             backed AI experiments) and the playground (capability-
@@ -490,9 +516,7 @@ export default async function OperatingPage() {
         {/* SECTION 04 — PLANNED NEXT */}
         <Reveal duration={0.7} className="mb-14">
           <OperatingSectionPing kind="section_planned_inspected" />
-          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            04 · Planned next
-          </h2>
+          <SectionTitle index="04" label="Planned next" />
           <p className="text-secondary text-sm leading-relaxed mb-6 max-w-2xl">
             The operator&apos;s honest declaration of what&apos;s
             next. Hand-curated, append-only. No deadlines, no
@@ -543,9 +567,7 @@ export default async function OperatingPage() {
         {/* SECTION 05 — RECENT FAILURES */}
         <Reveal duration={0.7} className="mb-14">
           <OperatingSectionPing kind="section_failures_inspected" />
-          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            05 · Recent corrections
-          </h2>
+          <SectionTitle index="05" label="Recent corrections" />
           <p className="text-secondary text-sm leading-relaxed mb-6 max-w-2xl">
             Most-recent slice of the public corrections log. The
             full archive lives at{" "}
@@ -609,9 +631,7 @@ export default async function OperatingPage() {
 
         {/* SOURCE FILES */}
         <Reveal duration={0.7} className="mb-14">
-          <h2 className="font-mono uppercase tracking-[0.20em] text-[11px] text-tertiary mb-5">
-            06 · Source files
-          </h2>
+          <SectionTitle index="06" label="Source files" />
           <p className="text-secondary text-sm leading-relaxed mb-5 max-w-2xl">
             Every surface above is grounded in code. Click any row
             to read the file on GitHub.
