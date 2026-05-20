@@ -112,13 +112,20 @@ const V6_OPERATE_LINKS = [
 
 /**
  * Secondary surfaces — calmer right-edge cluster. Sit before the
- * right-edge action (View Résumé in 12.1; replaced by a cyan
- * "Get in touch" pill in Sub-PR 12.2).
+ * calm cluster (Résumé link + Get in touch pill, see V6 § 12.2).
  */
 const V6_SECONDARY_LINKS = [
   { label: "About", href: "/about", matches: ["/about"] },
   { label: "Contact", href: "/contact", matches: ["/contact"] },
 ] as const;
+
+/**
+ * Operator's LinkedIn profile — the destination of the Résumé link.
+ * Centralised so the legacy white pill (LegacyNavbar) and the V6
+ * calm inline link (V6Navbar) both point to the same URL.
+ */
+const RESUME_URL =
+  "https://www.linkedin.com/in/emre-do%C4%9Fan-657a99388/";
 
 /* ── Route-matching helper ───────────────────────────────────── */
 
@@ -271,7 +278,7 @@ function LegacyNavbar() {
         </div>
 
         <a
-          href="https://www.linkedin.com/in/emre-do%C4%9Fan-657a99388/"
+          href={RESUME_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center justify-center rounded-full bg-white text-black font-medium text-sm px-5 py-2 transition-all hover:bg-white/90 active:scale-[0.98]"
@@ -283,7 +290,7 @@ function LegacyNavbar() {
   );
 }
 
-/* ── V6 navbar (Sub-PR 12.1 layout) ──────────────────────────── */
+/* ── V6 navbar (Sub-PR 12.1 + 12.2 layout) ───────────────────── */
 
 function V6Navbar() {
   const [operateOpen, setOperateOpen] = useState(false);
@@ -408,13 +415,27 @@ function V6Navbar() {
           </div>
         </div>
 
-        {/* SECONDARY CLUSTER — About · Contact · View Résumé.
+        {/* SECONDARY CLUSTER — About · Contact · Résumé · [Get in touch].
             About and Contact sit smaller (text-xs mono) to the
             right of the centred primary block, and collapse below
-            md (mobile path explicitly unchanged in 12.1 — the
-            real mobile drawer ships in Sub-PR 12.4). The View
-            Résumé pill stays in 12.1; Sub-PR 12.2 replaces it
-            with the cyan "Get in touch" pill. */}
+            md (mobile path explicitly unchanged — the real mobile
+            drawer ships in Sub-PR 12.4).
+
+            V6 12.2: the white "View Résumé" pill that previously
+            dominated every page is retired. Résumé becomes a quiet
+            inline link (mono uppercase, text-tertiary per the
+            canonical ramp); the cyan-bordered "Get in touch" pill
+            becomes the visual anchor pointing to /contact (the
+            higher-leverage conversion).
+
+            The cyan-bordered rectangle is visually distinct from
+            the LuminaTrigger's circular liquid-glass orb (different
+            shape, different page position) — no conflict.
+
+            Mobile: Résumé inline link is hidden; "Get in touch"
+            pill remains as the always-visible right-edge anchor.
+            The Sub-PR 12.4 mobile drawer will absorb the Résumé
+            link into its overlay. */}
         <div className="flex items-center gap-5 shrink-0">
           {V6_SECONDARY_LINKS.map((link) => {
             const active = matchesAny(pathname, link.matches);
@@ -436,13 +457,20 @@ function V6Navbar() {
           })}
 
           <a
-            href="https://www.linkedin.com/in/emre-do%C4%9Fan-657a99388/"
+            href={RESUME_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center rounded-full bg-white text-black font-medium text-sm px-5 py-2 transition-all hover:bg-white/90 active:scale-[0.98]"
+            className="hidden md:inline-flex text-xs uppercase tracking-[0.14em] text-tertiary hover:text-primary transition-colors duration-200"
           >
-            View Résumé
+            Résumé
           </a>
+
+          <Link
+            href="/contact"
+            className="inline-flex items-center justify-center rounded-full border border-[#00d2ff]/40 hover:border-[#00d2ff]/70 hover:bg-[#00d2ff]/[0.06] text-primary text-sm font-medium px-4 py-1.5 transition-colors duration-200"
+          >
+            Get in touch
+          </Link>
         </div>
       </div>
     </motion.nav>
