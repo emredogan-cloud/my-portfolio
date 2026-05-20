@@ -65,9 +65,15 @@ export default function VCAIArchitecturePage() {
           events={projectEvents}
         />
 
+        {/* V6 14.3 — VCA's LLM-agent architecture benefits from a
+            wider illustration column. The engine inverts the V5 7/5
+            ratio to 5/7 when `variant="wide-illustration"` AND the
+            V6_ARCH_VARIANTS flag is on. With the flag off the engine
+            renders the V5 byte-identical 7/5 default. */}
         <ScrollStory
           milestones={MILESTONES}
           illustrationsById={ILLUSTRATION_BY_ID}
+          variant="wide-illustration"
         />
       </div>
     </main>
