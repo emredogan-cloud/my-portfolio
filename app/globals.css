@@ -153,6 +153,44 @@
     color: rgb(255, 255, 255);
     background: rgba(255, 255, 255, 0.04);
   }
+
+  /* V6 Sub-PR 11.5 — margin tick (second motif).
+     A 1px × 12px vertical cyan rule at 30 % opacity, anchored to
+     the left margin of editorial blocks (heroes, manifestos,
+     narrator surfaces). Co-equal motif alongside the cyan
+     hairline-on-card-top from §§ 1.6 and the edge-lit-card
+     primitive from 11.3. Pure background, no animation surface,
+     reduced-motion safe by construction.
+     Phase 11 introduces the primitive and deploys it on /about's
+     cinematic pause + atmospheric breath. Future phases deploy
+     it on heroes, codex epigraphs, narrator surfaces. */
+  .margin-tick {
+    display: inline-block;
+    width: 1px;
+    height: 12px;
+    background: rgba(0, 210, 255, 0.30);
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  /* V6 Sub-PR 11.5 — margin tick (right-edge horizontal variant).
+     12px × 1px horizontal cyan hairline, intended for operator
+     surfaces' right margin. Rises from 30 % to 90 % opacity on
+     hover. Phase 11 ships the primitive only — no consumer yet;
+     Phases 12+ deploy. */
+  .margin-tick-right {
+    display: inline-block;
+    width: 12px;
+    height: 1px;
+    background: rgba(0, 210, 255, 0.30);
+    vertical-align: middle;
+    flex-shrink: 0;
+    transition: background 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .margin-tick-right:hover {
+    background: rgba(0, 210, 255, 0.90);
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────
